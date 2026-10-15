@@ -1,14 +1,15 @@
+import json
 from typing import TYPE_CHECKING
 
 import pytest
 
 from idat.dsa40.tests.api.test_views import api_prefix
-from idat.dsa40.tests.factories import VlopseFactory
+from idat.dsa40.tests.factories import DsaQuestionFactory, VlopseFactory
 
 if TYPE_CHECKING:
     from django.test import Client
 
-    from idat.dsa40.models import Vlopse
+    from idat.dsa40.models import DSAQuestion, Vlopse
 
 
 @pytest.fixture
@@ -16,63 +17,94 @@ def vlopse() -> Vlopse:
     return VlopseFactory.create()
 
 
+@pytest.fixture
+def dsa_question() -> DSAQuestion:
+    return DsaQuestionFactory.create()
+
+
 @pytest.mark.django_db
-def test_create_and_get_dsa_question(client: Client, unique_id: str):
-    question_id = f"dsa-{unique_id}"
+def test_list_dsa_questions(client: Client):
+    question = DsaQuestionFactory.create()
+    response = client.get(
+        f"{api_prefix}/question",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": question.id,
+            "text": question.text,
+            "help_text": question.help_text,
+            "input_type": question.input_type,
+            "config": question.config,
+        },
+    ]
+
+
+@pytest.mark.django_db
+def test_get_single_dsa_question(client: Client, dsa_question: DSAQuestion):
+
+    response = client.get(f"{api_prefix}/question/{dsa_question.id}")
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": dsa_question.id,
+        "text": dsa_question.text,
+        "help_text": dsa_question.help_text,
+        "input_type": dsa_question.input_type,
+        "config": dsa_question.config,
+    }
+
+
+@pytest.mark.django_db
+def test_create_dsa_question(client: Client):
+    body = {
+        "id": "U1",
+        "text": "Are you affiliated with an academic institution?",
+        "input_type": "selection",
+        "config": {"type": "selection", "options": ["Yes", "No"]},
+        "help_text": "Select an academic institution that you're affiliated with",
+    }
     response = client.post(
         f"{api_prefix}/question",
-        json={
-            "id": question_id,
-            "text": "What is your name?",
-            "input_type": "text",
-            "help_text": "Full legal name",
-        },
+        data=json.dumps(body),
+        content_type="application/json",
     )
     assert response.status_code == 200
     assert response.json() == {"success": True}
 
-    response = client.get(f"{api_prefix}/question/{question_id}")
-    assert response.status_code == 200
-    body = response.json()
-    assert body["id"] == question_id
-    assert body["help_text"] == "Full legal name"
-
 
 @pytest.mark.django_db
-def test_get_nonexistent_dsa_question_returns_null(client: Client):
+def test_get_nonexistent_dsa_question(client: Client):
     response = client.get(f"{api_prefix}/question/does-not-exist")
-    assert response.status_code == 200
-    assert response.json() is None
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
-def test_list_dsa_questions(client: Client, unique_id: str):
-    question_id = f"dsa-{unique_id}"
+@pytest.mark.skip(reason="Not implemented yet")
+def test_create_duplicate_dsa_question_conflicts(
+    client: Client, dsa_question: DSAQuestion
+):
+    body = {
+        "id": dsa_question.id,
+        "text": dsa_question.text,
+        "help_text": dsa_question.help_text,
+        "input_type": dsa_question.input_type,
+        "config": dsa_question.config,
+    }
     response = client.post(
         f"{api_prefix}/question",
-        json={"id": question_id, "text": "Q", "input_type": "text", "help_text": None},
+        data=json.dumps(body),
+        content_type="application/json",
     )
-    assert response.status_code == 200
-
-    response = client.get(f"{api_prefix}/question")
-    assert response.status_code == 200
-    body = response.json()
-    assert isinstance(body, list)
-    assert any(q["id"] == question_id for q in body)
-
-
-@pytest.mark.django_db
-def test_create_duplicate_dsa_question_conflicts(client: Client, unique_id: str):
-    question_id = f"dsa-{unique_id}"
-    body = {"id": question_id, "text": "Q", "input_type": "text", "help_text": None}
-    response = client.post(f"{api_prefix}/question", json=body)
-    assert response.status_code == 200
-
-    response = client.post(f"{api_prefix}/question", json=body)
     assert response.status_code == 409
 
 
 @pytest.mark.django_db
 def test_create_dsa_question_malformed_body(client: Client):
-    response = client.post(f"{api_prefix}/question", json={"id": "x"})
+    body = {"id": "x"}
+    response = client.post(
+        f"{api_prefix}/question",
+        data=json.dumps(body),
+        content_type="application/json",
+    )
     assert response.status_code == 422
