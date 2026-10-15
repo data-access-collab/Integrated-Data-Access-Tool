@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models import BooleanField, CharField, JSONField, TextField, URLField
 from django.utils.translation import gettext_lazy as _
 
+from idat.dsa40.lib.schemas import ConstraintConfig, config_adapter
+
 
 class Vlopse(models.Model):
     """
@@ -78,3 +80,10 @@ class DSAQuestion(models.Model):
 
     def __str__(self) -> str:
         return f"Q[{self.id}]('{self.text}')"
+
+    @property
+    def parsed_config(self) -> ConstraintConfig | None:
+        if self.config is None:
+            return None
+        c = self.config
+        return config_adapter.validate_python(c)

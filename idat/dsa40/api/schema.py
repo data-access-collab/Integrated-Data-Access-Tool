@@ -75,6 +75,9 @@ class CreateVlopseQuestionSchema(ModelSchema):
 
 
 class DSAQuestionOut(ModelSchema):
+    options: list[str] = []
+    required: bool = True
+
     class Meta:
         model = DSAQuestion
         fields = [

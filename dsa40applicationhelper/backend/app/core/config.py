@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from .models import Condition, PlatformMapping
+from idat.dsa40.lib.models import Condition, PlatformMapping  # noqa: TC001
 
 _VLOPSE_CONFIG_DIR = Path(__file__).parent.parent / "data" / "vlopses"
 

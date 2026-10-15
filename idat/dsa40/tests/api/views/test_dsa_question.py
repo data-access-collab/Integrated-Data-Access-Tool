@@ -37,6 +37,8 @@ def test_list_dsa_questions(client: Client):
             "help_text": question.help_text,
             "input_type": question.input_type,
             "config": question.config,
+            "options": [],
+            "required": True,
         },
     ]
 
@@ -52,6 +54,8 @@ def test_get_single_dsa_question(client: Client, dsa_question: DSAQuestion):
         "help_text": dsa_question.help_text,
         "input_type": dsa_question.input_type,
         "config": dsa_question.config,
+        "options": [],
+        "required": True,
     }
 
 
@@ -90,6 +94,8 @@ def test_create_duplicate_dsa_question_conflicts(
         "help_text": dsa_question.help_text,
         "input_type": dsa_question.input_type,
         "config": dsa_question.config,
+        "options": [],
+        "required": True,
     }
     response = client.post(
         f"{api_prefix}/question",
