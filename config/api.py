@@ -13,3 +13,4 @@ api = NinjaAPI(
 api.add_router("/users/", "idat.users.api.views.router")
 api.add_router("/v1/health", "idat.dsa40.api.views.health_router")
 api.add_router("/v1/vlopse", "idat.dsa40.api.views.vlopse_router")
+api.add_router("/v1/question", "idat.dsa40.api.views.dsa_question_router")

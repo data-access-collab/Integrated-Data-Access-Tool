@@ -11,13 +11,15 @@ from ninja.errors import HttpError
 
 from idat.dsa40.api.schema import (
     ActionOut,
+    CreateVlopseQuestionSchema,
     CreateVlopseSchema,
     HealthOut,
     Status,
     UpdateVlopseSchema,
     VlopseOut,
+    VlopseQuestionOut,
 )
-from idat.dsa40.models import Vlopse
+from idat.dsa40.models import Vlopse, VLOPSEQuestion
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -98,4 +100,45 @@ def delete_vlopse(request: HttpRequest, name: str) -> tuple[int, dict[str, bool]
     if vlopse is None:
         return 404, {"success": False}
     vlopse.delete()
+    return 200, {"success": True}
+
+
+# QUESTIONS
+
+
+@vlopse_router.get(
+    "/{vlopse_name}/question", response=list[VlopseQuestionOut], auth=None
+)
+def list_vlopse_questions(
+    request: HttpRequest, vlopse_name: str
+) -> QuerySet[VLOPSEQuestion]:
+    return VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name)
+
+
+@vlopse_router.get(
+    "/{vlopse_name}/question/{question_id}",
+    response=VlopseQuestionOut | None,
+    auth=None,
+)
+def get_vlopse_question(
+    request: HttpRequest, vlopse_name: str, question_id: str
+) -> VLOPSEQuestion:
+    vlopse_qs = VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name, id=question_id)
+    return get_object_or_404(vlopse_qs)
+
+
+@vlopse_router.post("/{vlopse_name}/question", auth=None)
+def create_vlopse_question(
+    request: HttpRequest, vlopse_name: str, data: CreateVlopseQuestionSchema
+) -> tuple[int, dict[str, bool]]:
+    vlopse = get_object_or_404(Vlopse, name=vlopse_name)
+    vlopse_question = VLOPSEQuestion(
+        vlopse=vlopse, **data.model_dump(exclude_unset=True)
+    )
+
+    try:
+        vlopse_question.full_clean()
+    except ValidationError as e:
+        raise HttpError(422, str(e.message_dict)) from e
+    vlopse_question.save()
     return 200, {"success": True}
