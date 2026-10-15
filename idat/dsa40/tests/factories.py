@@ -3,7 +3,7 @@ from __future__ import annotations
 from factory import Faker, fuzzy
 from factory.django import DjangoModelFactory
 
-from idat.dsa40.models import InputType, Vlopse, VLOPSEQuestion
+from idat.dsa40.models import DSAQuestion, InputType, Vlopse, VLOPSEQuestion
 
 
 class VlopseFactory(DjangoModelFactory[Vlopse]):
@@ -27,4 +27,15 @@ class VlopseQuestionFactory(DjangoModelFactory[VLOPSEQuestion]):
 
     class Meta:
         model = VLOPSEQuestion
+        skip_postgeneration_save = True
+
+
+class DsaQuestionFactory(DjangoModelFactory[DSAQuestion]):
+    id = Faker("word")
+    text = Faker("sentence")
+    help_text = Faker("paragraph")
+    input_type = fuzzy.FuzzyChoice(InputType.values)
+
+    class Meta:
+        model = DSAQuestion
         skip_postgeneration_save = True

@@ -11,15 +11,17 @@ from ninja.errors import HttpError
 
 from idat.dsa40.api.schema import (
     ActionOut,
+    CreateDSAQuestionSchema,
     CreateVlopseQuestionSchema,
     CreateVlopseSchema,
+    DSAQuestionOut,
     HealthOut,
     Status,
     UpdateVlopseSchema,
     VlopseOut,
     VlopseQuestionOut,
 )
-from idat.dsa40.models import Vlopse, VLOPSEQuestion
+from idat.dsa40.models import DSAQuestion, Vlopse, VLOPSEQuestion
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -141,4 +143,36 @@ def create_vlopse_question(
     except ValidationError as e:
         raise HttpError(422, str(e.message_dict)) from e
     vlopse_question.save()
+    return 200, {"success": True}
+
+
+dsa_question_router = Router(tags=["dsa"])
+
+
+@dsa_question_router.get("", response=list[DSAQuestionOut], auth=None)
+def list_dsa_questions(request: HttpRequest) -> QuerySet[DSAQuestion]:
+    return DSAQuestion.objects.filter()
+
+
+@dsa_question_router.get(
+    "/{question_id}",
+    response=DSAQuestionOut | None,
+    auth=None,
+)
+def get_dsa_question(request: HttpRequest, question_id: str) -> DSAQuestion:
+    question_qs = DSAQuestion.objects.filter(id=question_id)
+    return get_object_or_404(question_qs)
+
+
+@dsa_question_router.post("", auth=None)
+def create_dsa_question(
+    request: HttpRequest, data: CreateDSAQuestionSchema
+) -> tuple[int, dict[str, bool]]:
+    dsa_question = DSAQuestion(**data.model_dump(exclude_unset=True))
+
+    try:
+        dsa_question.full_clean()
+    except ValidationError as e:
+        raise HttpError(422, str(e.message_dict)) from e
+    dsa_question.save()
     return 200, {"success": True}

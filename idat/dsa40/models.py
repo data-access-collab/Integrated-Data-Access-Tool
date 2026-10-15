@@ -63,3 +63,18 @@ class VLOPSEQuestion(models.Model):
 
     def __str__(self) -> str:
         return f"{self.vlopse.name}Q[{self.id}]('{self.text}')"
+
+
+class DSAQuestion(models.Model):
+    id = CharField(max_length=16, unique=True, primary_key=True, db_index=True)
+    text = TextField()
+    help_text = TextField(blank=True)
+    input_type = CharField(
+        max_length=16,
+        choices=InputType,
+        default=InputType.TEXT,
+    )
+    config = JSONField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"Q[{self.id}]('{self.text}')"
