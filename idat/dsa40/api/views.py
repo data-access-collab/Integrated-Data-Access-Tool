@@ -1,0 +1,178 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from django.db import connection
+from django.db.utils import Error as DjangoDatabaseError
+from django.forms import ValidationError
+from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.errors import HttpError
+
+from idat.dsa40.api.schema import (
+    ActionOut,
+    CreateDSAQuestionSchema,
+    CreateVlopseQuestionSchema,
+    CreateVlopseSchema,
+    DSAQuestionOut,
+    HealthOut,
+    Status,
+    UpdateVlopseSchema,
+    VlopseOut,
+    VlopseQuestionOut,
+)
+from idat.dsa40.models import DSAQuestion, Vlopse, VLOPSEQuestion
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+    from django.http import HttpRequest
+
+health_router = Router(tags=["health"])
+
+
+@health_router.get("", response=HealthOut, auth=None)
+def retrieve_health(request: HttpRequest) -> HealthOut:
+    """Report API liveness and DB connectivity."""
+    db_status = Status.OK
+    dsa_status = Status.ERROR  # TODO: Count number of DSA questions
+    mapping_status = Status.ERROR  # TODO: Call validate on Mapper
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except DjangoDatabaseError:
+        db_status = Status.ERROR
+
+    return HealthOut(
+        api=Status.OK,
+        db=db_status,
+        dsa_status=dsa_status,
+        mapping_status=mapping_status,
+    )
+
+
+vlopse_router = Router(tags=["vlopse"])
+
+
+@vlopse_router.get("", response=list[VlopseOut], auth=None)
+def list_vlopses(request: HttpRequest) -> QuerySet[Vlopse]:
+    """List available VLOPSEs"""
+    return Vlopse.objects.all()
+
+
+@vlopse_router.get("/{name}", response=list[VlopseOut], auth=None)
+def retrieve_vlopse(request: HttpRequest, name: str) -> list[Vlopse]:
+    """Get specific VLOPSE by its name"""
+    vlopse = get_object_or_404(Vlopse.objects.filter(name=name))
+    return [vlopse]
+
+
+@vlopse_router.post("", response={200: ActionOut}, auth=None)
+def add_vlopse(
+    request: HttpRequest, data: CreateVlopseSchema
+) -> tuple[int, dict[str, bool]]:
+    vlopse = Vlopse(name=data.id, **data.info.model_dump(exclude_unset=True))
+
+    try:
+        vlopse.full_clean()
+    except ValidationError as e:
+        raise HttpError(422, str(e.message_dict)) from e
+    vlopse.save()
+    return 200, {"success": True}
+
+
+@vlopse_router.put("/{name}", response={200: ActionOut} | {404: ActionOut}, auth=None)
+def update_vlopse(
+    request: HttpRequest, name: str, data: UpdateVlopseSchema
+) -> tuple[int, dict[str, bool]]:
+    vlopse = Vlopse.objects.filter(name=name).first()
+    if vlopse is None:
+        return 404, {"success": False}
+    vlopse.name = data.new_name
+    vlopse.save()
+    return 200, {"success": True}
+
+
+@vlopse_router.delete(
+    "/{name}",
+    response={200: ActionOut} | {404: ActionOut} | {202: ActionOut},
+    auth=None,
+)
+def delete_vlopse(request: HttpRequest, name: str) -> tuple[int, dict[str, bool]]:
+    vlopse = Vlopse.objects.filter(name=name).first()
+    if vlopse is None:
+        return 404, {"success": False}
+    vlopse.delete()
+    return 200, {"success": True}
+
+
+# QUESTIONS
+
+
+@vlopse_router.get(
+    "/{vlopse_name}/question", response=list[VlopseQuestionOut], auth=None
+)
+def list_vlopse_questions(
+    request: HttpRequest, vlopse_name: str
+) -> QuerySet[VLOPSEQuestion]:
+    return VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name)
+
+
+@vlopse_router.get(
+    "/{vlopse_name}/question/{question_id}",
+    response=VlopseQuestionOut | None,
+    auth=None,
+)
+def get_vlopse_question(
+    request: HttpRequest, vlopse_name: str, question_id: str
+) -> VLOPSEQuestion:
+    vlopse_qs = VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name, id=question_id)
+    return get_object_or_404(vlopse_qs)
+
+
+@vlopse_router.post("/{vlopse_name}/question", auth=None)
+def create_vlopse_question(
+    request: HttpRequest, vlopse_name: str, data: CreateVlopseQuestionSchema
+) -> tuple[int, dict[str, bool]]:
+    vlopse = get_object_or_404(Vlopse, name=vlopse_name)
+    vlopse_question = VLOPSEQuestion(
+        vlopse=vlopse, **data.model_dump(exclude_unset=True)
+    )
+
+    try:
+        vlopse_question.full_clean()
+    except ValidationError as e:
+        raise HttpError(422, str(e.message_dict)) from e
+    vlopse_question.save()
+    return 200, {"success": True}
+
+
+dsa_question_router = Router(tags=["dsa"])
+
+
+@dsa_question_router.get("", response=list[DSAQuestionOut], auth=None)
+def list_dsa_questions(request: HttpRequest) -> QuerySet[DSAQuestion]:
+    return DSAQuestion.objects.filter()
+
+
+@dsa_question_router.get(
+    "/{question_id}",
+    response=DSAQuestionOut | None,
+    auth=None,
+)
+def get_dsa_question(request: HttpRequest, question_id: str) -> DSAQuestion:
+    question_qs = DSAQuestion.objects.filter(id=question_id)
+    return get_object_or_404(question_qs)
+
+
+@dsa_question_router.post("", auth=None)
+def create_dsa_question(
+    request: HttpRequest, data: CreateDSAQuestionSchema
+) -> tuple[int, dict[str, bool]]:
+    dsa_question = DSAQuestion(**data.model_dump(exclude_unset=True))
+
+    try:
+        dsa_question.full_clean()
+    except ValidationError as e:
+        raise HttpError(422, str(e.message_dict)) from e
+    dsa_question.save()
+    return 200, {"success": True}

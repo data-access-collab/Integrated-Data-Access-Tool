@@ -96,7 +96,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "idat.users",
-    # Your stuff: custom apps go here
+    "idat.dsa40",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
