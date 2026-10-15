@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import uuid
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
@@ -28,11 +27,6 @@ def _info(name: str) -> dict:
         "application_link": "https://example.invalid/apply",
         "modality": "form",
     }
-
-
-@pytest.fixture
-def unique_id():
-    return uuid.uuid4()
 
 
 @pytest.mark.django_db

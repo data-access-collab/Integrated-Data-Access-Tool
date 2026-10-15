@@ -2,7 +2,7 @@ from enum import StrEnum
 
 from ninja import ModelSchema, Schema
 
-from idat.dsa40.models import Vlopse
+from idat.dsa40.models import Vlopse, VLOPSEQuestion
 
 
 class Status(StrEnum):
@@ -52,3 +52,23 @@ class CreateVlopseSchema(Schema):
 
 class UpdateVlopseSchema(Schema):
     new_name: str
+
+
+class VlopseQuestionOut(ModelSchema):
+    class Meta:
+        model = VLOPSEQuestion
+        fields = [
+            "id",
+            "text",
+            "vlopse",
+            "required",
+            "input_type",
+            "details",
+            "config",
+        ]
+
+
+class CreateVlopseQuestionSchema(ModelSchema):
+    class Meta:
+        model = VLOPSEQuestion
+        exclude = ["vlopse"]
