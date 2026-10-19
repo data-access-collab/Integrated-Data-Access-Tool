@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 import json
 from typing import TYPE_CHECKING
 
@@ -60,9 +61,8 @@ def test_get_single_vlopse_question(client: Client, vlopse_question: VLOPSEQuest
     }
 
 
-@pytest.mark.django_db
-def test_create_vlopse_question(client: Client, vlopse: Vlopse):
-    body = {
+def boolean_selection():
+    return {
         "id": "V1",
         "text": "Are you affiliated with an academic institution?",
         "required": True,
@@ -70,6 +70,27 @@ def test_create_vlopse_question(client: Client, vlopse: Vlopse):
         "config": {"type": "selection", "options": ["Yes", "No"]},
         "details": "",
     }
+
+
+def selection(question_id: str):
+    return {
+        "id": question_id,
+        "text": """Are you affiliated with an academic institution or a not-for-profit body, organisation or association whose principal aim is to conduct research on a not-for-profit basis pursuant to a public-interest mission?""",
+        "required": "true",
+        "input_type": "selection",
+        "config": {
+            "type": "selection",
+            "options": [
+                "Academic institution",
+                "Not-for-profit body, organization or association (based in the EU 27 Member States only)",
+            ],
+        },
+    }
+
+
+@pytest.mark.django_db
+def test_create_vlopse_question(client: Client, vlopse: Vlopse):
+    body = boolean_selection()
     response = client.post(
         f"{api_prefix}/vlopse/{vlopse.name}/question",
         data=json.dumps(body),
@@ -111,8 +132,24 @@ def test_create_duplicate_vlopse_question_conflicts(
 def test_create_vlopse_question_malformed_body(client: Client, vlopse: Vlopse):
     body = {"id": "x"}
     response = client.post(
-        f"{api_prefix}/vlopse/{vlopse}/question",
+        f"{api_prefix}/vlopse/{vlopse.name}/question",
         data=json.dumps(body),
         content_type="application/json",
     )
     assert response.status_code == 422
+
+
+@pytest.mark.django_db
+def test_adding_vlopse_selection_question(client: Client, vlopse: Vlopse):
+    question_id = "T2"
+    body = selection(question_id)
+    response = client.post(
+        f"{api_prefix}/vlopse/{vlopse.name}/question",
+        data=json.dumps(body),
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    response = client.get(f"{api_prefix}/vlopse/{vlopse.name}/question/{question_id}")
+    assert response.status_code == 200
+    question = response.json()
+    assert question["id"] == question_id

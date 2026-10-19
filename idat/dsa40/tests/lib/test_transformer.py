@@ -1,11 +1,11 @@
-from app.core.models import (
+from idat.dsa40.lib.models import (
     Answer,
     MappedAnswer,
     MappingError,
     PlatformMapping,
     PlatformMappingComplex,
 )
-from app.core.transform import AnswerTransformer
+from idat.dsa40.lib.transform import AnswerTransformer
 
 mapping: dict[str, PlatformMapping] = {
     "T1": PlatformMappingComplex(
@@ -26,12 +26,12 @@ def test_invalid_argument():
         ]
     )
 
-    err: MappingError = res[0]
+    err = res[0]
+    assert isinstance(err, MappingError)
     assert err.errors
     assert err.errors[0].loc == ["first-name", "T1"]
     # TODO: error should be more specific
     assert err.errors[0].message == "transformation failed"
-    # assert res[0].value == "Joseph Weizenbaum"
 
 
 def test_missing_argument():
@@ -47,11 +47,11 @@ def test_missing_argument():
         ]
     )
 
-    err: MappingError = res[0]
+    err = res[0]
+    assert isinstance(err, MappingError)
     assert err.errors
     assert err.errors[0].loc == ["T1", "last-name"]
     assert err.errors[0].message == "missing required argument"
-    # assert res[0].value == "Joseph Weizenbaum"
 
 
 def test_invalid_value():
@@ -75,7 +75,6 @@ def test_invalid_value():
     assert err.errors[0].loc == ["first-name", "last-name", "T1"]
     # TODO: error should be more specific
     assert err.errors[0].message == "transformation failed"
-    # assert res[0].value == "Joseph Weizenbaum"
 
 
 def test_valid_join_spaces():
@@ -133,4 +132,3 @@ def test_invalid_make_iso():
     assert err.errors[0].loc == ["country", "T1"]
     # TODO: error should be more specific
     assert err.errors[0].message == "transformation failed"
-    # assert res[0].value == "Joseph Weizenbaum"

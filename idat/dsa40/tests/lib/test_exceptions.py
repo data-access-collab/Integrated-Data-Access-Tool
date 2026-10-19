@@ -1,23 +1,23 @@
 import pytest
 
-from app.core.mapping import Mapping
-from app.core.models import (
+from idat.dsa40.lib.mapping import Mapping
+from idat.dsa40.lib.models import (
     Answer,
-    UnifiedQuestion,
 )
-from app.core.operator import JoinOperator, MakeISOOperator
-from app.core.transform import (
+from idat.dsa40.lib.operator import JoinOperator, MakeISOOperator
+from idat.dsa40.lib.schemas import Selection
+from idat.dsa40.lib.transform import (
     Transformation,
     TransformationError,
     ValidationErrors,
 )
-from app.schemas import Selection
+from idat.dsa40.models import DSAQuestion
 
 
 @pytest.mark.skip(reason="Not implemented yet")
 def test_invalid_selection():
     answer = Answer(question_id="prev-experience", value="hehe")
-    q = UnifiedQuestion(
+    q = DSAQuestion(
         id="X1",
         type="selection",
         required=True,
