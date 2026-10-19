@@ -1,15 +1,20 @@
+from typing import TYPE_CHECKING
+
 from pycountry import countries
 
-from app.core.mapping import QuestionMapper
-from app.core.models import (
+from idat.dsa40.lib.mapping import QuestionMapper
+from idat.dsa40.lib.models import (
     Answer,
     ErrorDetails,
     MappingError,
     MappingResult,
 )
-from app.core.transform import AnswerTransformer
-from app.models import DSAQuestion, InputType, VLOPSEQuestion
-from app.services.questions import QuestionService
+from idat.dsa40.lib.transform import AnswerTransformer
+from idat.dsa40.models import DSAQuestion, InputType
+from idat.dsa40.services.questions import QuestionService
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 class AnswerToUnknownQuestion(BaseException):
@@ -19,41 +24,33 @@ class AnswerToUnknownQuestion(BaseException):
 class FormService:
     def __init__(self) -> None:
         self.question_service = QuestionService()
-        pass
 
-    def compute_options(self, question: DSAQuestion, vlopses: list[str]):
+    def compute_options(self, question: DSAQuestion) -> list[str] | None:
         # TODO: think this should go to mapper and check dependent questions
         if question.input_type == InputType.ISO_3166_1:
             return [c.name for c in countries]
-        else:
-            return None
+        return None
 
-    def validate_vlopse_question(self, question: VLOPSEQuestion, answer: Answer): ...
     def map_unified_to_vlopse_and_validate(
         self, answers: list[Answer], vlopses: list[str]
-    ):
-        # unified = self.question_service.get_all_unified_for(
-        #     [a.question_id for a in answers]
-        # )
+    ) -> tuple[bool, Mapping[str, list[ErrorDetails]]]:
         ok = True
         errors: dict[str, list[ErrorDetails]] = {}
-        for klops in vlopses:
+        for vlopse in vlopses:
             # TODO: should not load questions or mappings but receive them
-            transformer = AnswerTransformer.from_vlopse_name(klops)
+            transformer = AnswerTransformer.from_vlopse_name(vlopse)
             transformed = transformer.map(answers)
-            # for t in transformed:
-            # if isinstance(t, MappingError):
-            #     message =
             if any(isinstance(t, MappingError) for t in transformed):
                 ok = False
                 for t in transformed:
                     if isinstance(t, MappingError):
                         errors[t.question_id] = t.errors
-            # result.append((klops, transformed))
 
         return ok, errors
 
-    def validate_unified_question(self, answers: list[Answer], vlopses: list[str]):
+    def validate_unified_question(
+        self, answers: list[Answer], vlopses: list[str]
+    ) -> dict[str, str]:
         result: dict[str, str] = {}
         mapper = QuestionMapper.from_vlopse_names(vlopses, self.question_service)
         mapped = mapper.map_vlopse_to_unified()
@@ -62,8 +59,9 @@ class FormService:
             # TODO: this should ask the db seperately.
             qs = [(req, q) for req, q in mapped if q.id == a.question_id]
 
-            if not len(qs):
-                raise AnswerToUnknownQuestion(f"{a.question_id} not defined!")
+            if not qs:
+                msg = f"{a.question_id} not defined!"
+                raise AnswerToUnknownQuestion(msg)
             is_required, q = qs[0]
 
             if is_required and (a.value is None or a.value == ""):
@@ -77,31 +75,29 @@ class FormService:
                     result[q.id] = error
         return result
 
-    def get_mapped_questions_for(self, vlopses: list[str]):
-        all_questions = self.question_service.get_all_unified()
-        # FIXME: Question mapper should just build a mapping and provide traces, can be annotated in a amapper service later. this form engine is way too huge anyhow
+    def get_mapped_questions_for(
+        self, vlopses: list[str]
+    ) -> list[tuple[bool, DSAQuestion]]:
+        # FIXME: Question mapper should just build a mapping and provide traces, can be annotated in a amapper service later. this form engine is way too huge anyhow  # noqa: E501
         mapper = QuestionMapper.from_vlopse_names(vlopses, self.question_service)
-        qs = mapper.map_vlopse_to_unified()
-        print(f"Mapped {qs} for {vlopses}")
-        return qs
+        return mapper.map_vlopse_to_unified()
 
-    def enhance_with_text(self, val: MappingError | MappingResult):
+    def enhance_with_text(
+        self, val: MappingError | MappingResult
+    ) -> MappingError | MappingResult:
         q = self.question_service.get(val.question_id)
-        if q:
-            text = str(q.text)
-        else:
-            text = "N/A"
+        text = str(q.text) if q else "N/A"
         v = val.model_dump()
         v["text"] = text
         return v
 
     def transform_answers_to_vlopse_answers(
         self, vlopses: list[str], answers: list[Answer]
-    ):
+    ) -> list[tuple[str, list[MappingResult] | list[str]]]:
         result = []
-        for klops in vlopses:
+        for vlopse in vlopses:
             # TODO: should not load questions or mappings but receive them
-            transformer = AnswerTransformer.from_vlopse_name(klops)
+            transformer = AnswerTransformer.from_vlopse_name(vlopse)
             transformed = [self.enhance_with_text(t) for t in transformer.map(answers)]
-            result.append((klops, transformed))
+            result.append((vlopse, transformed))
         return result

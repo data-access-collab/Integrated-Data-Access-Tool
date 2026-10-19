@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.core.config import (
+from idat.dsa40.lib.config import (
     PlatformInformation,
     VLOPSEConfiguration,
     get_vlopse_configuration_for,
@@ -19,43 +19,42 @@ class VlopseDoesNotExistException(BaseException):
 
 
 class VlopseConfigService:
-    def add(self, name: str, info: PlatformInformation):
+    def add(self, name: str, info: PlatformInformation) -> None:
         current = self.get(name)
         if current:
-            raise VlopseExistsException()
+            raise VlopseExistsException
         empty = VLOPSEConfiguration(info=info, mappings={}, conditions={})
         write_vlopse_configuration_for(name, empty)
 
-    def get(self, name: str):
+    def get(self, name: str) -> VLOPSEConfiguration | None:
         try:
             return get_vlopse_configuration_for(name)
         except FileNotFoundError:
             return None
 
-    def get_all(self):
+    def get_all(self) -> list[str]:
         return [p.stem for p in _DATA_DIR.glob("*.json")]
 
-    def delete(self, name: str):
+    def delete(self, name: str) -> None:
         path = [p for p in _DATA_DIR.glob("*json") if p.stem == name]
 
-        if not len(path):
-            raise VlopseDoesNotExistException()
-        else:
-            path[0].unlink()
+        if not path:
+            raise VlopseDoesNotExistException
+        path[0].unlink()
 
-    def rename(self, old_name: str, new_name: str):
+    def rename(self, old_name: str, new_name: str) -> None:
         current = self.get(old_name)
         if current is None:
-            raise VlopseDoesNotExistException()
+            raise VlopseDoesNotExistException
         new = self.get(new_name)
         if new:
-            raise VlopseExistsException()
+            raise VlopseExistsException
 
         self.delete(old_name)
         self.add(new_name, current.info)
         self.update(new_name, current)
 
-    def update(self, name: str, value: VLOPSEConfiguration):
+    def update(self, name: str, value: VLOPSEConfiguration) -> None:
         if self.get(name) is None:
-            raise VlopseDoesNotExistException()
+            raise VlopseDoesNotExistException
         write_vlopse_configuration_for(name, value)
