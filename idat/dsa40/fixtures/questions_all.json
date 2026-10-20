@@ -173,7 +173,7 @@
     "category": "affiliation",
     "type": "iso-3166-1",
     "config": {
-      "i_type": "iso-3166-1"
+      "type": "iso-3166-1"
     },
     "granularity": "general"
   },
@@ -219,7 +219,7 @@
     "category": "collaboration",
     "type": "selection",
     "config": {
-      "i_type": "selection",
+      "type": "selection",
       "options": ["Yes", "No"]
     },
     "granularity": "general"
@@ -266,7 +266,7 @@
     "category": "funding-commercial-interests",
     "type": "selection",
     "config": {
-      "i_type": "selection",
+      "type": "selection",
       "options": ["Yes", "No"]
     },
     "granularity": "general"
