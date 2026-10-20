@@ -17,11 +17,6 @@ def vlopse() -> Vlopse:
     return VlopseFactory.create()
 
 
-@pytest.fixture
-def dsa_question() -> DSAQuestion:
-    return DsaQuestionFactory.create()
-
-
 @pytest.mark.django_db
 def test_list_dsa_questions(client: Client):
     question = DsaQuestionFactory.create()
