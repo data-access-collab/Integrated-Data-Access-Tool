@@ -1,3 +1,10 @@
+# Asset build stage (Tailwind)
+FROM docker.io/node:24-bookworm-slim AS asset-build-stage
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY idat ./idat
+RUN npm run build:css
 
 # define an alias for the specific python version used in this file.
 FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS python-build-stage
@@ -63,6 +70,8 @@ RUN chmod +x /start
 
 # Copy the application from the builder
 COPY --from=python-build-stage --chown=django:django ${APP_HOME} ${APP_HOME}
+# Copy the assets
+COPY --from=asset-build-stage --chown=django:django /app/idat/static/dist ${APP_HOME}/idat/static/dist
 # explicitly create the media folder before changing ownership below
 RUN mkdir -p ${APP_HOME}/idat/media
 

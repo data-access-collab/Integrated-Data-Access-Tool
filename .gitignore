@@ -278,3 +278,7 @@ idat/media/
 
 # Pycharm
 .idea
+
+# Exclude compiled files from git
+idat/static/dist/*
+node_modules
