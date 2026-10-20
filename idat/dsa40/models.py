@@ -68,7 +68,7 @@ class VLOPSEQuestion(models.Model):
 
 
 class DSAQuestion(models.Model):
-    id = CharField(max_length=16, unique=True, primary_key=True, db_index=True)
+    id = CharField(max_length=256, unique=True, primary_key=True, db_index=True)
     text = TextField()
     help_text = TextField(blank=True)
     input_type = CharField(
