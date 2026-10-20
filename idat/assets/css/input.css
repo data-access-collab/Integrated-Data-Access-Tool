@@ -3,3 +3,6 @@
 /* Template locations */
 @source "../../templates";
 @source "../../**/templates";
+@source "../js";
+
+[x-cloak] { display: none !important; } /* hides elements until Alpine has initialized to prevent briefly unstyled content */

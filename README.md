@@ -37,37 +37,42 @@ To run the tests, check your test coverage, and generate an HTML coverage report
 
     uv run pytest
 
-### Tailwind CSS
+### Frontend Assets (Tailwind & Alpine)
 
-Styles are built with [Tailwind CSS](https://tailwindcss.com/) via the Tailwind CLI. 
-Node.js runs on the host only (i.e., it is not part of the local Docker setup).
+[Tailwind CSS](https://tailwindcss.com/) is used for styles and 
+[Alpine.js](https://alpinejs.dev/) is used as Javascript/interactivity framework.
+Node.js runs on the host only.
 
 #### Setup (once)
 
-Install the Node.js version pinned in `.nvmrc` (e.g. with [nvm](https://github.com/nvm-sh/nvm)) and install the dependencies:
+Install the Node.js version pinned in `.nvmrc` (e.g. with [nvm](https://github.com/nvm-sh/nvm)) and the dependencies:
 
     nvm install
     npm ci
 
 #### Development
 
-Run the watcher next to the Docker stack. It rebuilds the CSS whenever a template changes:
+Run the watcher next to the Docker stack. It rebuilds the assets 
+whenever a template or script changes:
 
-    npm run watch:css
+    npm run watch
+
+To run only one of them, use `npm run watch:css` or `npm run watch:js`.
 
 #### Files
 
 - `idat/assets/css/input.css`: Tailwind entry point (sources, theme, custom CSS)
-- `idat/static/dist/main.css`: generated output, gitignored; never edit or commit
+- `idat/assets/js/main.js`: JS entry point (Alpine.js setup, plugins, components)
+- `idat/static/dist/`: generated `main.css` and `main.js`, gitignored; never edit or commit
 
-Tailwind only generates classes it finds as complete strings in the source templates.
+Tailwind only generates classes it finds as complete strings in the source templates and scripts.
 
 #### Production
 
-The production Docker image builds the CSS itself in a Node build stage (`npm run build:css`), 
-so no manual build step is needed before deploying. To check a production build locally:
+The production Docker image builds the assets itself (`npm run build`); no manual step is needed before deploying.
+To check a production build locally:
 
-    npm run build:css
+    npm run build
 
 ## Deployment
 

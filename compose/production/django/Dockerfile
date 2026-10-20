@@ -1,10 +1,10 @@
-# Asset build stage (Tailwind)
+# Asset build stage (Tailwind & Alpine)
 FROM docker.io/node:24-bookworm-slim AS asset-build-stage
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY idat ./idat
-RUN npm run build:css
+RUN npm run build
 
 # define an alias for the specific python version used in this file.
 FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS python-build-stage

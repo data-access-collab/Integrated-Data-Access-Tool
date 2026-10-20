@@ -1,11 +1,20 @@
 {
   "dependencies": {
-    "@tailwindcss/cli": "^4.3.3",
+    "@tailwindcss/cli": "^4.3.0",
+    "alpinejs": "^3.17.4",
     "tailwindcss": "^4.3.3"
   },
   "private": true,
   "scripts": {
     "build:css": "tailwindcss -i idat/assets/css/input.css -o idat/static/dist/main.css --minify",
-    "watch:css": "tailwindcss -i idat/assets/css/input.css -o idat/static/dist/main.css --watch"
+    "build:js": "esbuild idat/assets/js/main.js --bundle --minify --outfile=idat/static/dist/main.js",
+    "build": "npm run build:css && npm run build:js",
+    "watch:css": "tailwindcss -i idat/assets/css/input.css -o idat/static/dist/main.css --watch=always",
+    "watch:js": "esbuild idat/assets/js/main.js --bundle --sourcemap --outfile=idat/static/dist/main.js --watch=forever",
+    "watch": "concurrently -n css,js npm:watch:css npm:watch:js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5",
+    "esbuild": "^0.28.2"
   }
 }
