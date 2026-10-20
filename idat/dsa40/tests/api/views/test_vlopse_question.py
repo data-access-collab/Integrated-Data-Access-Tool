@@ -106,7 +106,7 @@ def test_get_nonexistent_vlopse_question(client: Client, vlopse: Vlopse):
     assert response.status_code == 404
 
 
-@pytest.mark.skip(reason="Not implemented yet")
+@pytest.mark.skip(reason="#35 Not implemented yet")
 @pytest.mark.django_db
 def test_create_duplicate_vlopse_question_conflicts(
     client: Client, vlopse_question: VLOPSEQuestion

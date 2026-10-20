@@ -122,7 +122,7 @@ def test_create_vlopse_malformed_body(client: Client):
     assert response.status_code == 422
 
 
-@pytest.mark.skip(reason="Not yet implemented")
+@pytest.mark.skip(reason="#35 Not implemented yet")
 @pytest.mark.django_db
 def test_create_duplicate_vlopse_conflicts(client: Client, vlopse: Vlopse):
     name = vlopse.name
@@ -160,8 +160,8 @@ def test_rename_nonexistent_vlopse(client: Client, unique_id: str):
     assert response.status_code == 404
 
 
+@pytest.mark.skip(reason="#35 Not implemented yet")
 @pytest.mark.django_db
-@pytest.mark.skip(reason="Not implemented yet")
 def test_rename_to_existing_name_conflicts(client: Client, vlopse: Vlopse):
     name = vlopse.name
     other = VlopseFactory.create()

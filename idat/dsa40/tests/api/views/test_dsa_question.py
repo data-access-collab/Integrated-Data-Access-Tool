@@ -78,8 +78,8 @@ def test_get_nonexistent_dsa_question(client: Client):
     assert response.status_code == 404
 
 
+@pytest.mark.skip(reason="#35 Not implemented yet")
 @pytest.mark.django_db
-@pytest.mark.skip(reason="Not implemented yet")
 def test_create_duplicate_dsa_question_conflicts(
     client: Client, dsa_question: DSAQuestion
 ):
