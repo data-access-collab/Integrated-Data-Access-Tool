@@ -1,12 +1,24 @@
-from app.core.mapping import Mapping, hydrate_mapping
-from app.core.operator import (
+from typing import TYPE_CHECKING
+
+from idat.dsa40.lib.mapping import Mapping, hydrate_mapping
+from idat.dsa40.lib.operator import (
     AbstractOperator,
     OperatorExecutionError,
     hydrate_operator,
 )
 
 from .config import get_vlopse_configuration_for
-from .models import Answer, MappedAnswer, MappingError, MappingResult, PlatformMapping
+from .models import (
+    Answer,
+    MappedAnswer,
+    MappingError,
+    MappingResult,
+    PlatformMapping,
+    PlatformMappingComplex,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class OperatorValidationError(Exception):
@@ -15,7 +27,7 @@ class OperatorValidationError(Exception):
 
 
 class ValidationErrors(ExceptionGroup):
-    def derive(self, excs):
+    def derive(self, excs: Sequence[Exception]) -> ValidationErrors:
         return ValidationErrors(self.message, excs)
 
 
@@ -36,21 +48,22 @@ class Transformation:
         self.mapping = mapping
         self.operator = operator
 
-    def validate_args(self, args: list[Answer]):
+    def validate_args(self, args: list[Answer]) -> None:
         missing = [
             dsa_question
             for dsa_question in self.mapping.dsa_ids
             if dsa_question not in [a.question_id for a in args]
         ]
 
-        if len(missing):
+        if missing:
             es = [
                 OperatorValidationError(message="missing required argument", loc=(m,))
                 for m in missing
             ]
-            raise ValidationErrors("missing arguments for {vlopse_question_id}", es)
+            msg = "missing arguments for {vlopse_question_id}"
+            raise ValidationErrors(msg, es)
 
-    def transform(self, args: list[Answer]):
+    def transform(self, args: list[Answer]) -> str:
         try:
             if len(args) == 1:
                 result = self.operator.apply(args[0].value)
@@ -72,16 +85,17 @@ class AnswerTransformer:
     _mapping: dict[str, PlatformMapping]
 
     @classmethod
-    def from_vlopse_name(cls, vlopse: str):
+    def from_vlopse_name(cls, vlopse: str) -> AnswerTransformer:
         mapping = get_vlopse_configuration_for(vlopse).mappings
         return cls(mapping)
 
     def __init__(self, mapping: dict[str, PlatformMapping]) -> None:
         self._mapping = mapping
 
-    def _get_mapping_operator(self, id: str):
-        operator = self._mapping.get(id)
-        return operator
+    def _get_mapping_operator(
+        self, question_id: str
+    ) -> str | PlatformMappingComplex | None:
+        return self._mapping.get(question_id)
 
     def transform(
         self, answers: list[Answer], mapper: Mapping, op: AbstractOperator
@@ -90,13 +104,11 @@ class AnswerTransformer:
 
         transformation.validate_args(answers)
         output = transformation.transform(answers)
-        answer = MappedAnswer(question_id=mapper.vlopse_id, value=output)
-
-        return answer
+        return MappedAnswer(question_id=mapper.vlopse_id, value=output)
 
     def transform_safe(
         self, answers: list[Answer], mapper: Mapping, op: AbstractOperator
-    ):
+    ) -> MappingError | MappingResult:
         transformation = Transformation(mapper, op)
         question_id = mapper.vlopse_id
         try:
@@ -124,12 +136,11 @@ class AnswerTransformer:
                     "input": e["inputs"],
                 }
             ]
-            answer = MappingError(question_id=question_id, errors=errors)
-            return answer
+            return MappingError(question_id=question_id, errors=errors)
 
         return answer
 
-    def map(self, answers: list[Answer]):
+    def map(self, answers: list[Answer]) -> list[MappingResult]:
         answer_map = {a.question_id: a for a in answers}
         result: list[MappingResult] = []
         for vlopse_question, operator in self._mapping.items():
@@ -142,7 +153,8 @@ class AnswerTransformer:
             elif isinstance(operator.src, str):
                 inputs = [answer_map[operator.src]]
             else:
-                raise TypeError(f"Unknown operation {operator}")
+                msg = f"Unknown operation {operator}"
+                raise TypeError(msg)
             output = self.transform_safe(inputs, mapper, op)
             result.append(output)
 

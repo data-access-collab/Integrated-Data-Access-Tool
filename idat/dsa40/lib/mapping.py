@@ -1,10 +1,12 @@
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
-from typing_extensions import override
+from idat.dsa40.lib.config import get_vlopse_configuration_for
 
-from app.core.config import get_vlopse_configuration_for
-from app.core.models import PlatformMapping, UnifiedQuestion
-from app.services.questions import QuestionService
+if TYPE_CHECKING:
+    from idat.dsa40.lib.models import PlatformMapping
+    from idat.dsa40.models import DSAQuestion
+    from idat.dsa40.services.questions import QuestionService
 
 
 class Mapping:
@@ -15,19 +17,20 @@ class Mapping:
         self.vlopse_id = vlopse_id
         self.dsa_ids = dsa_ids
 
-    @override
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"DSA([{', '.join(self.dsa_ids)}]) -> VLOPSE({self.vlopse_id})"
 
 
-def hydrate_mapping(vlopse_question: str, mapping_definition: PlatformMapping):
+def hydrate_mapping(
+    vlopse_question: str, mapping_definition: PlatformMapping
+) -> Mapping:
     if isinstance(mapping_definition, str):
         return Mapping(vlopse_question, [mapping_definition])
-    elif isinstance(mapping_definition.src, list):
+    if isinstance(mapping_definition.src, list):
         return Mapping(vlopse_question, mapping_definition.src)
-    elif isinstance(mapping_definition.src, str):
+    if isinstance(mapping_definition.src, str):
         return Mapping(vlopse_question, [mapping_definition.src])
-    raise ValueError(f"Invalid mapping defition {mapping_definition}")
+    return None
 
 
 class MappingValidationError(Exception):
@@ -39,28 +42,29 @@ class QuestionMapper:
     questions: QuestionService
 
     @classmethod
-    def from_vlopse_names(cls, vlopses: list[str], questions: QuestionService):
+    def from_vlopse_names(
+        cls, vlopses: list[str], questions: QuestionService
+    ) -> QuestionMapper:
         mapping = {
             vlopse: get_vlopse_configuration_for(vlopse).mappings for vlopse in vlopses
         }
         return cls(mapping, questions)
 
-    def _validate(self):
-        question_ids = [q.id for q in self.questions]
-        invalid_mappings: set[Mapping] = set()
+    def _validate(self) -> None:
+        question_ids = [q.id for q in self.questions.get_all_unified()]
+        invalid: set[Mapping] = set()
         # TODO: Check if a mapping refers to a question not defined by the vlopse
         for vlopse, mappings in self._mapping.items():
-            print(f"Validating {vlopse}..")
+            print(f"Validating {vlopse}..")  # noqa: T201
             for mapping in mappings:
                 for u_id in mapping.dsa_ids:
                     if u_id not in question_ids:
-                        invalid_mappings.add(mapping)
-                        print(
-                            f"[WARN] {mapping} for {vlopse} refers to {u_id}, which is undefined!"
-                        )
+                        invalid.add(mapping)
+                        msg = f"[WARN] {mapping} for {vlopse} refers to {u_id}, which is undefined!"  # noqa: E501
+                        print(msg)  # noqa: T201
 
-        if len(invalid_mappings):
-            msg = f"[ERROR] {len(invalid_mappings)} invalid mappings found.: {invalid_mappings}"
+        if invalid:
+            msg = f"[ERROR] {len(invalid)} invalid mappings found.: {invalid}"
             raise MappingValidationError(msg)
 
     def __init__(
@@ -75,30 +79,29 @@ class QuestionMapper:
         }
         self.questions = questions
 
-    def _map(self):
+    def _map(self) -> defaultdict[str, list[str]]:
         result: dict[str, list[str]] = defaultdict(list)
-        for _, mappings in self._mapping.items():
+        for mappings in self._mapping.values():
             for mapping in mappings:
                 for dsa_id in mapping.dsa_ids:
                     result[dsa_id].append(mapping.vlopse_id)
 
         return result
 
-    def map_vlopse_to_unified(self):
+    def map_vlopse_to_unified(self) -> list[tuple[bool, DSAQuestion]]:
         map_traces = self._map()
-        print(f"Mapped to {map_traces}")
         # FIXME: this should ask the db
-        result: list[tuple[bool, UnifiedQuestion]] = []
+        result: list[tuple[bool, DSAQuestion]] = []
         for dsa_id, vlopse_ids in map_traces.items():
             dsa = self.questions.get_unified(dsa_id)
             if dsa is None:
-                print(f"WARNING {dsa_id} MAPPED TO UNKNOWN DSA QUESTION")
+                print(f"WARNING {dsa_id} MAPPED TO UNKNOWN DSA QUESTION")  # noqa: T201
                 continue
             required = False
             for vlopse_id in vlopse_ids:
                 vlopse = self.questions.get(vlopse_id)
                 if vlopse is None:
-                    print(f"WARNING {vlopse_id} MAPPED TO UNKNOWN VLOPSE QUESTION")
+                    print(f"WARNING {vlopse_id} MAPPED TO UNKNOWN VLOPSE QUESTION")  # noqa: T201
                     continue
                 # FIXME: Typing err
                 if vlopse.required:

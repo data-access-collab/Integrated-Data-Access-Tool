@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from pycountry import countries
-from typing_extensions import override
 
-from app.core.models import PlatformMapping
+if TYPE_CHECKING:
+    from idat.dsa40.lib.models import PlatformMapping
 
-Inputs = str | list[str] | None
+Inputs = str | list[str | None] | None
 
 
 class OperatorExecutionError(Exception):
@@ -17,10 +18,7 @@ class OperatorExecutionError(Exception):
     """
 
     def __init__(self, message: str, inputs: Inputs) -> None:
-        if isinstance(inputs, list):
-            list_inputs = inputs
-        else:
-            list_inputs = [inputs]
+        list_inputs = inputs if isinstance(inputs, list) else [inputs]
         super().__init__({"message": message, "inputs": list_inputs})
 
 
@@ -38,8 +36,7 @@ class AbstractOperator(ABC):
     def apply(self, inputs: Inputs) -> str:
         """Public entry point; delegates to ``_apply`` with uniform error handling."""
         try:
-            result = self._apply(inputs)
-            return result
+            return self._apply(inputs)
         except TypeError as e:
             message = e.args[0]
             raise OperatorExecutionError(message, inputs) from None
@@ -56,15 +53,17 @@ class MakeISOOperator(AbstractOperator):
     (``"DEU"``). Currently supports English names only.
     """
 
-    @override
     def _apply(self, inputs: Inputs) -> str:
         if inputs is None:
-            raise TypeError("Cannot create ISO from None argument.")
+            msg = "Cannot create ISO from None argument."
+            raise TypeError(msg)
         if isinstance(inputs, list):
-            raise TypeError("Cannot create ISO from list argument.")
+            msg = "Cannot create ISO from list argument."
+            raise TypeError(msg)
         result = countries.get(name=inputs)
         if not result:
-            raise ValueError(f"Unknown country {inputs}")
+            msg = f"Unknown country {inputs}"
+            raise ValueError(msg)
         return result.alpha_3
 
 
@@ -77,15 +76,16 @@ class JoinOperator(AbstractOperator):
 
     delimiter: str
 
-    def __init__(self, delimiter: str):
+    def __init__(self, delimiter: str) -> None:
         self.delimiter = delimiter
 
-    @override
     def _apply(self, inputs: Inputs) -> str:
         if inputs is None:
-            raise TypeError("Cannot join None type")
+            msg = "Cannot join None type"
+            raise TypeError(msg)
         if isinstance(inputs, str):
-            raise TypeError("Cannot join str type")
+            msg = "Cannot join str type"
+            raise TypeError(msg)
         return self.delimiter.join(inputs)
 
 
@@ -95,12 +95,13 @@ class NoopOperator(AbstractOperator):
     Used for direct field mappings that require no transformation.
     """
 
-    @override
     def _apply(self, inputs: Inputs) -> str:
         if isinstance(inputs, list):
-            raise TypeError("Cannot transform lists")
+            msg = "Cannot transform lists"
+            raise TypeError(msg)
         if inputs is None:
-            raise TypeError("Cannot transform None")
+            msg = "Cannot transform None"
+            raise TypeError(msg)
         return inputs
 
 
@@ -127,4 +128,5 @@ def hydrate_operator(operator: PlatformMapping) -> AbstractOperator:
         case "join-comma":
             return JoinOperator(", ")
         case _:
-            raise ValueError(f"Invalid operator description: {operator}")
+            msg = f"Invalid operator description: {operator}"
+            raise ValueError(msg)
