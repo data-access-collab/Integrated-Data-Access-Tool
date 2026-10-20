@@ -275,3 +275,6 @@ idat/media/
 .env
 .envs/*
 !.envs/.local/
+
+# Pycharm
+.idea
