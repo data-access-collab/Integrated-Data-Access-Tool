@@ -275,3 +275,10 @@ idat/media/
 .env
 .envs/*
 !.envs/.local/
+
+# Pycharm
+.idea
+
+# Exclude compiled files from git
+idat/static/dist/*
+node_modules
