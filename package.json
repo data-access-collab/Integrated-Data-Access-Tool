@@ -1,8 +1,6 @@
 {
   "dependencies": {
-    "@tailwindcss/cli": "^4.3.0",
-    "alpinejs": "^3.17.4",
-    "tailwindcss": "^4.3.3"
+    "alpinejs": "^3.17.4"
   },
   "private": true,
   "scripts": {
@@ -14,7 +12,9 @@
     "watch": "concurrently -n css,js npm:watch:css npm:watch:js"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "concurrently": "^9.2.5",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "tailwindcss": "^4.3.3"
   }
 }
