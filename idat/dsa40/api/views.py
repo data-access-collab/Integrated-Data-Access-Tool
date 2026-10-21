@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Annotated, Literal
 
 from django.db import connection
@@ -28,15 +29,13 @@ from idat.dsa40.lib.models import (
     MappedAnswer,
     MappingError,
 )
-from idat.dsa40.models import DSAQuestion, InputType, Vlopse, VLOPSEQuestion
+from idat.dsa40.models import DSAQuestion, Vlopse, VLOPSEQuestion
 from idat.dsa40.services.condition_service import ConditionService
 from idat.dsa40.services.form_engine import FormService
 from idat.dsa40.services.questions import QuestionService
 from idat.dsa40.services.vlopse import VlopseConfigService
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from django.db.models import QuerySet
     from django.http import HttpRequest
 
@@ -72,11 +71,10 @@ def list_vlopses(request: HttpRequest) -> QuerySet[Vlopse]:
     return Vlopse.objects.all()
 
 
-@vlopse_router.get("/{name}", response=list[VlopseOut], auth=None)
-def retrieve_vlopse(request: HttpRequest, name: str) -> list[Vlopse]:
+@vlopse_router.get("/{name}", response=VlopseOut, auth=None)
+def retrieve_vlopse(request: HttpRequest, name: str) -> Vlopse:
     """Get specific VLOPSE by its name"""
-    vlopse = get_object_or_404(Vlopse.objects.filter(name=name))
-    return [vlopse]
+    return get_object_or_404(Vlopse, name=name)
 
 
 @vlopse_router.post("", response={200: ActionOut}, auth=None)
@@ -93,13 +91,11 @@ def add_vlopse(
     return 200, {"success": True}
 
 
-@vlopse_router.put("/{name}", response={200: ActionOut} | {404: ActionOut}, auth=None)
+@vlopse_router.put("/{name}", response={200: ActionOut}, auth=None)
 def update_vlopse(
     request: HttpRequest, name: str, data: UpdateVlopseSchema
 ) -> tuple[int, dict[str, bool]]:
-    vlopse = Vlopse.objects.filter(name=name).first()
-    if vlopse is None:
-        return 404, {"success": False}
+    vlopse = get_object_or_404(Vlopse, name=name)
     vlopse.name = data.new_name
     vlopse.save()
     return 200, {"success": True}
@@ -107,13 +103,11 @@ def update_vlopse(
 
 @vlopse_router.delete(
     "/{name}",
-    response={200: ActionOut} | {404: ActionOut} | {202: ActionOut},
+    response={200: ActionOut} | {202: ActionOut},
     auth=None,
 )
 def delete_vlopse(request: HttpRequest, name: str) -> tuple[int, dict[str, bool]]:
-    vlopse = Vlopse.objects.filter(name=name).first()
-    if vlopse is None:
-        return 404, {"success": False}
+    vlopse = get_object_or_404(Vlopse, name=name)
     vlopse.delete()
     return 200, {"success": True}
 
@@ -132,17 +126,16 @@ def list_vlopse_questions(
 
 @vlopse_router.get(
     "/{vlopse_name}/question/{question_id}",
-    response=VlopseQuestionOut | None,
+    response=VlopseQuestionOut,
     auth=None,
 )
 def get_vlopse_question(
     request: HttpRequest, vlopse_name: str, question_id: str
 ) -> VLOPSEQuestion:
-    vlopse_qs = VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name, id=question_id)
-    return get_object_or_404(vlopse_qs)
+    return get_object_or_404(VLOPSEQuestion, vlopse__name=vlopse_name, id=question_id)
 
 
-@vlopse_router.post("/{vlopse_name}/question", auth=None)
+@vlopse_router.post("/{vlopse_name}/question", response=ActionOut, auth=None)
 def create_vlopse_question(
     request: HttpRequest, vlopse_name: str, data: CreateVlopseQuestionSchema
 ) -> tuple[int, dict[str, bool]]:
@@ -164,20 +157,15 @@ dsa_question_router = Router(tags=["dsa"])
 
 @dsa_question_router.get("", response=list[DSAQuestionOut], auth=None)
 def list_dsa_questions(request: HttpRequest) -> QuerySet[DSAQuestion]:
-    return DSAQuestion.objects.filter()
+    return DSAQuestion.objects.all()
 
 
-@dsa_question_router.get(
-    "/{question_id}",
-    response=DSAQuestionOut | None,
-    auth=None,
-)
+@dsa_question_router.get("/{question_id}", response=DSAQuestionOut, auth=None)
 def get_dsa_question(request: HttpRequest, question_id: str) -> DSAQuestion:
-    question_qs = DSAQuestion.objects.filter(id=question_id)
-    return get_object_or_404(question_qs)
+    return get_object_or_404(DSAQuestion, id=question_id)
 
 
-@dsa_question_router.post("", auth=None)
+@dsa_question_router.post("", response=ActionOut, auth=None)
 def create_dsa_question(
     request: HttpRequest, data: CreateDSAQuestionSchema
 ) -> tuple[int, dict[str, bool]]:
@@ -201,6 +189,7 @@ condition_service = ConditionService()
 
 @form_router.get(
     "questions",
+    response=list[DSAQuestionOut],
     auth=None,
 )
 def applicable_questions(
@@ -226,14 +215,6 @@ def applicable_questions(
         response.append(out)
 
     return response
-
-
-class PostDSAQuestionRequest(Schema):
-    id: str
-    text: str
-    input_type: InputType
-    help_text: str | None = None
-    config: dict[str, str] | None = None
 
 
 class MappedAnswerWithText(MappedAnswer):
@@ -268,7 +249,7 @@ class ValidationResponse(Schema):
     kind: Literal["validation", "transformation"]
 
 
-@form_router.post("/validate", auth=None)
+@form_router.post("/validate", response=ValidationResponse, auth=None)
 def validate_answers(
     request: HttpRequest,
     data: AnswerRequest,
@@ -286,7 +267,7 @@ def validate_answers(
     return ValidationResponse(errors=result, ok=ok, kind=kind)
 
 
-@form_router.post("/transform", auth=None)
+@form_router.post("/transform", response=TransformResponse, auth=None)
 def transform_answers(
     request: HttpRequest,
     data: AnswerRequest,
@@ -299,7 +280,7 @@ def transform_answers(
     return TransformResponse(by_vlopse=res)
 
 
-@form_router.get("/condition", auth=None)
+@form_router.get("/condition", response=Mapping[str, list[Condition]], auth=None)
 def get_conditions(
     request: HttpRequest,
     vlopse: list[str] = Query(...),  # noqa: B008

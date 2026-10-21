@@ -53,17 +53,13 @@ def test_get_vlopse_by_name(client: Client, unique_id: str):
     vlopse = VlopseFactory.create(name=name)
     response = client.get(f"{api_prefix}/vlopse/{name}")
     assert response.status_code == 200
-    assert response.json() == [
-        {
-            "id": vlopse.name,
-            "info": {
-                "platform_information": vlopse.platform_information,
-                "account_required": vlopse.account_required,
-                "application_link": vlopse.application_link,
-                "modality": vlopse.modality,
-            },
-        },
-    ]
+    assert response.json() == {
+        "name": vlopse.name,
+        "platform_information": vlopse.platform_information,
+        "account_required": vlopse.account_required,
+        "application_link": vlopse.application_link,
+        "modality": vlopse.modality,
+    }
 
 
 @pytest.mark.django_db
