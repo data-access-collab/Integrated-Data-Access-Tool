@@ -19,7 +19,7 @@ class VlopseFactory(DjangoModelFactory[Vlopse]):
 
 
 class VlopseQuestionFactory(DjangoModelFactory[VLOPSEQuestion]):
-    id = Faker("word")
+    key = Faker("word")
     text = Faker("sentence")
     required = Faker("pybool")
     input_type = fuzzy.FuzzyChoice(InputType.values)
@@ -31,7 +31,7 @@ class VlopseQuestionFactory(DjangoModelFactory[VLOPSEQuestion]):
 
 
 class DsaQuestionFactory(DjangoModelFactory[DSAQuestion]):
-    id = Faker("word")
+    key = Faker("word")
     text = Faker("sentence")
     help_text = Faker("paragraph")
     input_type = fuzzy.FuzzyChoice(InputType.values)

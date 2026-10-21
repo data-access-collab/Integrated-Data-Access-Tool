@@ -16,6 +16,7 @@ def load_questions() -> int:
         q = dict(q)  # noqa: PLW2901
         q.pop("category", None)
         q.pop("granularity", None)
+        q["key"] = q.pop("id")
         q["text"] = q.pop("text_en")
         input_type = q.pop("type")
         if "options" in q:

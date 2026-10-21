@@ -64,7 +64,7 @@ class FormTests(TestCase):
         assert response.status_code == 200
         body = response.json()
         assert isinstance(body, list)
-        ids = {q["id"] for q in body}
+        ids = {q["key"] for q in body}
         assert {"first-name", "last-name", "email-inst"}.issubset(ids)
 
     @pytest.mark.django_db

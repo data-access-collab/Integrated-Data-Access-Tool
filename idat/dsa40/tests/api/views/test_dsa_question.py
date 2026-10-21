@@ -27,7 +27,7 @@ def test_list_dsa_questions(client: Client):
     assert response.status_code == 200
     assert response.json() == [
         {
-            "id": question.id,
+            "key": question.key,
             "text": question.text,
             "help_text": question.help_text,
             "input_type": question.input_type,
@@ -41,10 +41,10 @@ def test_list_dsa_questions(client: Client):
 @pytest.mark.django_db
 def test_get_single_dsa_question(client: Client, dsa_question: DSAQuestion):
 
-    response = client.get(f"{api_prefix}/question/{dsa_question.id}")
+    response = client.get(f"{api_prefix}/question/{dsa_question.key}")
     assert response.status_code == 200
     assert response.json() == {
-        "id": dsa_question.id,
+        "key": dsa_question.key,
         "text": dsa_question.text,
         "help_text": dsa_question.help_text,
         "input_type": dsa_question.input_type,
@@ -57,7 +57,7 @@ def test_get_single_dsa_question(client: Client, dsa_question: DSAQuestion):
 @pytest.mark.django_db
 def test_create_dsa_question(client: Client):
     body = {
-        "id": "U1",
+        "key": "U1",
         "text": "Are you affiliated with an academic institution?",
         "input_type": "selection",
         "config": {"type": "selection", "options": ["Yes", "No"]},
@@ -84,7 +84,7 @@ def test_create_duplicate_dsa_question_conflicts(
     client: Client, dsa_question: DSAQuestion
 ):
     body = {
-        "id": dsa_question.id,
+        "key": dsa_question.key,
         "text": dsa_question.text,
         "help_text": dsa_question.help_text,
         "input_type": dsa_question.input_type,

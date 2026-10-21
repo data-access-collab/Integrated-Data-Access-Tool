@@ -57,7 +57,7 @@ class FormService:
 
         for a in answers:
             # TODO: this should ask the db seperately.
-            qs = [(req, q) for req, q in mapped if q.id == a.question_id]
+            qs = [(req, q) for req, q in mapped if q.key == a.question_id]
 
             if not qs:
                 msg = f"{a.question_id} not defined!"

@@ -32,7 +32,7 @@ def test_list_vlopse_questions(client: Client, vlopse: Vlopse):
     assert response.status_code == 200
     assert response.json() == [
         {
-            "id": question.id,
+            "key": question.key,
             "text": question.text,
             "vlopse": question.vlopse.name,
             "required": question.required,
@@ -47,11 +47,11 @@ def test_list_vlopse_questions(client: Client, vlopse: Vlopse):
 def test_get_single_vlopse_question(client: Client, vlopse_question: VLOPSEQuestion):
 
     response = client.get(
-        f"{api_prefix}/vlopse/{vlopse_question.vlopse.name}/question/{vlopse_question.id}"
+        f"{api_prefix}/vlopse/{vlopse_question.vlopse.name}/question/{vlopse_question.key}"
     )
     assert response.status_code == 200
     assert response.json() == {
-        "id": vlopse_question.id,
+        "key": vlopse_question.key,
         "text": vlopse_question.text,
         "vlopse": vlopse_question.vlopse.name,
         "required": vlopse_question.required,
@@ -63,7 +63,7 @@ def test_get_single_vlopse_question(client: Client, vlopse_question: VLOPSEQuest
 
 def boolean_selection():
     return {
-        "id": "V1",
+        "key": "V1",
         "text": "Are you affiliated with an academic institution?",
         "required": True,
         "input_type": "selection",
@@ -72,9 +72,9 @@ def boolean_selection():
     }
 
 
-def selection(question_id: str):
+def selection(key: str):
     return {
-        "id": question_id,
+        "key": key,
         "text": """Are you affiliated with an academic institution or a not-for-profit body, organisation or association whose principal aim is to conduct research on a not-for-profit basis pursuant to a public-interest mission?""",
         "required": "true",
         "input_type": "selection",
@@ -112,7 +112,7 @@ def test_create_duplicate_vlopse_question_conflicts(
     client: Client, vlopse_question: VLOPSEQuestion
 ):
     body = {
-        "id": vlopse_question.id,
+        "key": vlopse_question.key,
         "text": vlopse_question.text,
         "required": vlopse_question.required,
         "input_type": vlopse_question.input_type,
@@ -141,15 +141,15 @@ def test_create_vlopse_question_malformed_body(client: Client, vlopse: Vlopse):
 
 @pytest.mark.django_db
 def test_adding_vlopse_selection_question(client: Client, vlopse: Vlopse):
-    question_id = "T2"
-    body = selection(question_id)
+    question_key = "T2"
+    body = selection(question_key)
     response = client.post(
         f"{api_prefix}/vlopse/{vlopse.name}/question",
         data=json.dumps(body),
         content_type="application/json",
     )
     assert response.status_code == 200
-    response = client.get(f"{api_prefix}/vlopse/{vlopse.name}/question/{question_id}")
+    response = client.get(f"{api_prefix}/vlopse/{vlopse.name}/question/{question_key}")
     assert response.status_code == 200
     question = response.json()
-    assert question["id"] == question_id
+    assert question["key"] == question_key

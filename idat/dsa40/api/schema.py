@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from ninja import ModelSchema, Schema
+from ninja import Field, ModelSchema, Schema
 
 from idat.dsa40.models import DSAQuestion, Vlopse, VLOPSEQuestion
 
@@ -21,33 +21,16 @@ class ActionOut(Schema):
     success: bool
 
 
-class VlopseInfoSchema(ModelSchema):
+class VlopseOut(ModelSchema):
     class Meta:
         model = Vlopse
-        fields = [
-            "platform_information",
-            "account_required",
-            "application_link",
-            "modality",
-        ]
+        exclude = ["id"]
 
 
-class VlopseOut(Schema):
-    id: str
-    info: VlopseInfoSchema
-
-    @staticmethod
-    def resolve_id(obj: Vlopse) -> str:
-        return obj.name
-
-    @staticmethod
-    def resolve_info(obj: Vlopse) -> Vlopse:
-        return obj
-
-
-class CreateVlopseSchema(Schema):
-    id: str
-    info: VlopseInfoSchema
+class CreateVlopseSchema(ModelSchema):
+    class Meta:
+        model = Vlopse
+        exclude = ["id"]
 
 
 class UpdateVlopseSchema(Schema):
@@ -55,17 +38,11 @@ class UpdateVlopseSchema(Schema):
 
 
 class VlopseQuestionOut(ModelSchema):
+    vlopse: str = Field(..., alias="vlopse.name")
+
     class Meta:
         model = VLOPSEQuestion
-        fields = [
-            "id",
-            "text",
-            "vlopse",
-            "required",
-            "input_type",
-            "details",
-            "config",
-        ]
+        exclude = ["id"]
 
 
 class CreateVlopseQuestionSchema(ModelSchema):
@@ -80,22 +57,10 @@ class DSAQuestionOut(ModelSchema):
 
     class Meta:
         model = DSAQuestion
-        fields = [
-            "id",
-            "text",
-            "help_text",
-            "input_type",
-            "config",
-        ]
+        exclude = ["id"]
 
 
 class CreateDSAQuestionSchema(ModelSchema):
     class Meta:
         model = DSAQuestion
-        fields = [
-            "id",
-            "text",
-            "help_text",
-            "input_type",
-            "config",
-        ]
+        exclude = ["id"]

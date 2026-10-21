@@ -81,7 +81,7 @@ def retrieve_vlopse(request: HttpRequest, name: str) -> Vlopse:
 def add_vlopse(
     request: HttpRequest, data: CreateVlopseSchema
 ) -> tuple[int, dict[str, bool]]:
-    vlopse = Vlopse(name=data.id, **data.info.model_dump(exclude_unset=True))
+    vlopse = Vlopse(**data.model_dump(exclude_unset=True))
 
     try:
         vlopse.full_clean()
@@ -96,7 +96,7 @@ def update_vlopse(
     request: HttpRequest, name: str, data: UpdateVlopseSchema
 ) -> tuple[int, dict[str, bool]]:
     vlopse = get_object_or_404(Vlopse, name=name)
-    vlopse.name = data.new_name
+    vlopse.key = data.new_name
     vlopse.save()
     return 200, {"success": True}
 
@@ -121,18 +121,22 @@ def delete_vlopse(request: HttpRequest, name: str) -> tuple[int, dict[str, bool]
 def list_vlopse_questions(
     request: HttpRequest, vlopse_name: str
 ) -> QuerySet[VLOPSEQuestion]:
-    return VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name)
+    return VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name).select_related(
+        "vlopse"
+    )
 
 
 @vlopse_router.get(
-    "/{vlopse_name}/question/{question_id}",
+    "/{vlopse_name}/question/{question_key}",
     response=VlopseQuestionOut,
     auth=None,
 )
 def get_vlopse_question(
-    request: HttpRequest, vlopse_name: str, question_id: str
+    request: HttpRequest,
+    vlopse_name: str,
+    question_key: str,
 ) -> VLOPSEQuestion:
-    return get_object_or_404(VLOPSEQuestion, vlopse__name=vlopse_name, id=question_id)
+    return get_object_or_404(VLOPSEQuestion, vlopse__name=vlopse_name, key=question_key)
 
 
 @vlopse_router.post("/{vlopse_name}/question", response=ActionOut, auth=None)
@@ -160,9 +164,9 @@ def list_dsa_questions(request: HttpRequest) -> QuerySet[DSAQuestion]:
     return DSAQuestion.objects.all()
 
 
-@dsa_question_router.get("/{question_id}", response=DSAQuestionOut, auth=None)
-def get_dsa_question(request: HttpRequest, question_id: str) -> DSAQuestion:
-    return get_object_or_404(DSAQuestion, id=question_id)
+@dsa_question_router.get("/{key}", response=DSAQuestionOut, auth=None)
+def get_dsa_question(request: HttpRequest, key: str) -> DSAQuestion:
+    return get_object_or_404(DSAQuestion, key=key)
 
 
 @dsa_question_router.post("", response=ActionOut, auth=None)

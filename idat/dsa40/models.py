@@ -20,7 +20,6 @@ class Vlopse(models.Model):
         blank=False,
         max_length=255,
         unique=True,
-        primary_key=True,
         db_index=True,
     )
     platform_information = TextField(blank=True)
@@ -51,7 +50,7 @@ class VLOPSEQuestion(models.Model):
     Very Large Online Platforms and Search Engines (VLOPSE)
     """
 
-    id = CharField(max_length=16, unique=True, primary_key=True, db_index=True)
+    key = CharField(max_length=16, unique=True, db_index=True)
     text = TextField()
     vlopse = models.ForeignKey(Vlopse, on_delete=models.CASCADE)
     required = BooleanField(default=True)
@@ -68,7 +67,7 @@ class VLOPSEQuestion(models.Model):
 
 
 class DSAQuestion(models.Model):
-    id = CharField(max_length=256, unique=True, primary_key=True, db_index=True)
+    key = CharField(max_length=256, unique=True, db_index=True)
     text = TextField()
     help_text = TextField(blank=True)
     input_type = CharField(

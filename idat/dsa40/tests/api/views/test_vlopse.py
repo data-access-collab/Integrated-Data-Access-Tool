@@ -36,13 +36,11 @@ def test_list_vlopse(client: Client, vlopse: Vlopse):
     assert response.status_code == HTTPStatus.OK
     assert response.json() == [
         {
-            "id": vlopse.name,
-            "info": {
-                "platform_information": vlopse.platform_information,
-                "account_required": vlopse.account_required,
-                "application_link": vlopse.application_link,
-                "modality": vlopse.modality,
-            },
+            "name": vlopse.name,
+            "platform_information": vlopse.platform_information,
+            "account_required": vlopse.account_required,
+            "application_link": vlopse.application_link,
+            "modality": vlopse.modality,
         },
     ]
 
@@ -65,7 +63,7 @@ def test_get_vlopse_by_name(client: Client, unique_id: str):
 @pytest.mark.django_db
 def test_create_vlopse(client: Client, unique_id: str):
     name = f"vlopse-{unique_id}"
-    data = json.dumps({"id": name, "info": _info(name)})
+    data = json.dumps(_info(name))
     response = client.post(
         f"{api_prefix}/vlopse", data=data, content_type="application/json"
     )
@@ -82,13 +80,13 @@ def test_delete_vlopse(client: Client, unique_id: str):
     assert response.status_code == 200
 
     response = client.get(f"{api_prefix}/vlopse")
-    assert not any(v["id"] == name for v in response.json())
+    assert not any(v["name"] == name for v in response.json())
 
 
 @pytest.mark.django_db
 def test_create_and_delete_vlopse(client: Client, unique_id: str):
     name = f"vlopse-{unique_id}"
-    data = json.dumps({"id": name, "info": _info(name)})
+    data = json.dumps(_info(name))
     response = client.post(
         f"{api_prefix}/vlopse",
         data=data,
@@ -98,13 +96,13 @@ def test_create_and_delete_vlopse(client: Client, unique_id: str):
     assert response.json() == {"success": True}
 
     response = client.get(f"{api_prefix}/vlopse")
-    assert any(v["id"] == name for v in response.json())
+    assert any(v["name"] == name for v in response.json())
 
     response = client.delete(f"{api_prefix}/vlopse/{name}")
     assert response.status_code == 200
 
     response = client.get(f"{api_prefix}/vlopse")
-    assert not any(v["id"] == name for v in response.json())
+    assert not any(v["name"] == name for v in response.json())
 
 
 @pytest.mark.django_db

@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     def _reshape(self, q: dict[str, Any]) -> dict[str, Any]:
         req_data = {
-            "id": q["id"],
+            "key": q["id"],
             "text": q["Question"],
             "required": q["Required"].title(),
             "details": q["Details"] or "",
@@ -69,7 +69,7 @@ class Command(BaseCommand):
                 raise CommandError from e
 
             vlopse, _new = Vlopse.objects.get_or_create(name=vlopse_name)
-            self.stdout.write(f"Adding {len(data)} questions to {vlopse.name}")
+            self.stdout.write(f"Adding {len(data)} questions to {vlopse.key}")
             for q in data:
                 q_id = q.get("id", "N/A")
                 try:
