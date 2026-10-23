@@ -29,6 +29,7 @@ dependencies = [
   "hiredis==3.4.2",
   "pillow==12.3.0",
   "psycopg[c]==3.3.6",
+  "pycountry>=26.2.16",
   "python-slugify==9.1.2",
   "redis==8.1.0",
   "whitenoise==6.12.0",
