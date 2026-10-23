@@ -3,52 +3,52 @@
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>
-    {% block title %}
-      Integrated Data Access Tool
-    {% endblock title %}
-  </title>
+    <title>
+      {% block title %}
+        Integrated Data Access Tool
+      {% endblock title %}
+    </title>
 
-  {% include "partials/_favicons.html" %}
-  {% block meta %}
-    {% include "partials/_meta.html" %}
-  {% endblock meta %}
+    {% include "partials/_favicons.html" %}
+    {% block meta %}
+      {% include "partials/_meta.html" %}
+    {% endblock meta %}
 
-  {% block css %}
-    <link href="{% static 'dist/main.css' %}" rel="stylesheet" />
-  {% endblock css %}
+    {% block css %}
+      <link href="{% static 'dist/main.css' %}" rel="stylesheet" />
+    {% endblock css %}
 
-  {# JS is placed at the top of the document so pages load faster with defer #}
-  {% block javascript %}
-    <script defer src="{% static 'dist/main.js' %}"></script>
-  {% endblock javascript %}
-</head>
+    {# JS is placed at the top of the document so pages load faster with defer #}
+    {% block javascript %}
+      <script defer src="{% static 'dist/main.js' %}"></script>
+    {% endblock javascript %}
+  </head>
 
-<body class="flex min-h-screen flex-col">
-{% block body %}
-  {% include "partials/_header.html" %}
+  <body class="flex min-h-screen flex-col">
+    {% block body %}
+      {% include "partials/_header.html" %}
 
-  <main id="main" class="flex-1 py-8">
-    <div class="container">
-      {% include "partials/_messages.html" %}
+      <main id="main" class="flex-1 py-8">
+        <div class="container">
+          {% include "partials/_messages.html" %}
 
-      {% block main %}
-        {% block content %}
-          <p>This is a placeholder. Override the content block.</p>
-        {% endblock content %}
-      {% endblock main %}
-    </div>
-  </main>
+          {% block main %}
+            {% block content %}
+              <p>This is a placeholder. Override the content block.</p>
+            {% endblock content %}
+          {% endblock main %}
+        </div>
+      </main>
 
-  {% include "partials/_footer.html" %}
-{% endblock body %}
+      {% include "partials/_footer.html" %}
+    {% endblock body %}
 
-{% block modal %}{% endblock modal %}
+    {% block modal %}{% endblock modal %}
 
-{% block inline_javascript %}{% endblock inline_javascript %}
-</body>
+    {% block inline_javascript %}{% endblock inline_javascript %}
+  </body>
 </html>

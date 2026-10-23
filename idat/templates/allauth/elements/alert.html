@@ -1,7 +1,9 @@
 {% load i18n %}
 {% load allauth %}
 
-<div class="alert alert-error">
-  {% slot message %}
-  {% endslot %}
+<div
+  class="relative mb-4 rounded-md border border-danger-muted bg-danger-subtle p-4 text-danger-strong"
+  role="alert"
+>
+  {% slot message %}{% endslot %}
 </div>
