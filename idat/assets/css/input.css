@@ -6,3 +6,8 @@
 @source "../js";
 
 [x-cloak] { display: none !important; } /* hides elements until Alpine has initialized to prevent briefly unstyled content */
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
