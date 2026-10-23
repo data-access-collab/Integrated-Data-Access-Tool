@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n django_htmx %}
 
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
@@ -26,9 +26,14 @@
     {% block javascript %}
       <script defer src="{% static 'dist/main.js' %}"></script>
     {% endblock javascript %}
+
+    {% htmx_script %}
   </head>
 
-  <body class="flex min-h-screen flex-col">
+  <body
+    class="flex min-h-screen flex-col"
+    hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'
+  >
     {% block body %}
       {% include "partials/_header.html" %}
 
