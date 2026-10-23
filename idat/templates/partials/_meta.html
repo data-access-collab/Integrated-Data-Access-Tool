@@ -1,14 +1,21 @@
 {% load static %}
 
-<meta name="description" content="This website helps researchers to create data access requests under the Digital Services Act (DSA) Article 40." />
+<meta
+  name="description"
+  content="This website helps researchers to create data access requests under the Digital Services Act (DSA) Article 40."
+/>
 <meta name="author" content="Data Access Collaboratory" />
 <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
 
 {# Open graph + Twitter/X card #}
 <meta property="og:title" content="Integrated Data Access Tool" />
-<meta property="og:description" content="This website helps researchers to create data access requests under the Digital Services Act (DSA) Article 40." />
+<meta
+  property="og:description"
+  content="This website helps researchers to create data access requests under the Digital Services Act (DSA) Article 40."
+/>
 <meta property="og:site_name" content="Integrated Data Access Tool" />
-<meta property="og:image" content="{ request.scheme }}://{{ request.get_host }}{% static 'img/preview.jpg' %}" />  {# TODO: Update when preview image exists #}
+<meta property="og:image" content="{ request.scheme }}://{{ request.get_host }}{% static 'img/preview.jpg' %}" />
+{# TODO: Update when preview image exists #}
 <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
 <meta property="og:type" content="website" />
 

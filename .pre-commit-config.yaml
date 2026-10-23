@@ -43,10 +43,14 @@ repos:
     hooks:
       - id: pyproject-fmt
 
+  - repo: https://github.com/UnknownPlatypus/djangofmt-pre-commit
+    rev: v1.1.0
+    hooks:
+      - id: djangofmt
+
   - repo: https://github.com/djlint/djLint
     rev: v1.46.4
     hooks:
-      - id: djlint-reformat-django
       - id: djlint-django
 
   # Run audit

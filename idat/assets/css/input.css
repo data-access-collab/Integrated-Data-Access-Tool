@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/forms";
 
 /* Template locations */
 @source "../../templates";
@@ -10,4 +11,59 @@
 @utility container {
   margin-inline: auto;
   padding-inline: 1rem;
+}
+
+@theme {
+  --color-primary: oklch(0.473 0.137 46.201);
+  --color-primary-hover: oklch(0.403 0.112 46.6);
+
+  --color-secondary: oklch(0.274 0.006 286.033);
+  --color-secondary-hover: oklch(0.227 0.004 286.092);
+
+  --color-success: green;
+  --color-success-hover: darkgreen;
+
+  --color-warning: orange;
+  --color-warning-hover: darkorange;
+
+  --color-danger: red;
+  --color-danger-hover: darkred;
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-md px-3 py-1.5
+           font-medium transition-colors border
+           focus-visible:outline-2 focus-visible:outline-offset-2
+           disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-hover focus-visible:outline-primary;
+  }
+  .btn-secondary {
+    @apply bg-secondary text-gray-100 ring-1 ring-gray-300 ring-inset hover:bg-gray-50 focus-visible:outline-primary;
+  }
+  .btn-success {
+    @apply bg-success text-white hover:bg-success-hover focus-visible:outline-success;
+  }
+  .btn-warning {
+    @apply bg-warning text-black hover:bg-warning-hover focus-visible:outline-warning;
+  }
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-danger-hover focus-visible:outline-danger;
+  }
+
+  /* Tables */
+  .table {
+    @apply mb-4 w-full text-left;
+  }
+  .table th,
+  .table td {
+    @apply border-b border-gray-200 p-2 align-top;
+  }
+  .table th {
+    @apply font-semibold;
+  }
 }
