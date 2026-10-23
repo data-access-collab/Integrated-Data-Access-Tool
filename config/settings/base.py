@@ -90,6 +90,7 @@ THIRD_PARTY_APPS = [
     "allauth.mfa",
     "allauth.socialaccount",
     "corsheaders",
+    "django_htmx",
     "django_cotton",
 ]
 
