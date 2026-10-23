@@ -1,0 +1,25 @@
+{% load i18n %}
+{% if messages %}
+  <div class="flex flex-col gap-2 my-4">
+    {% for message in messages %}
+      <div
+        role="alert"
+        class="flex items-start justify-between gap-4 rounded border px-4 py-3
+                  {% if message.level_tag == 'success' %}border-green-300 bg-green-50 text-green-900
+                  {% elif message.level_tag == 'warning' %}border-yellow-300 bg-yellow-50 text-yellow-900
+                  {% elif message.level_tag == 'error' %}border-red-300 bg-red-50 text-red-900
+                  {% else %}border-blue-300 bg-blue-50 text-blue-900{% endif %}"
+      >
+        <span>{{ message }}</span>
+        <button
+          type="button"
+          data-dismiss-alert
+          class="shrink-0 leading-none opacity-60 hover:opacity-100"
+          aria-label="Close"
+        >
+          &times;
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
