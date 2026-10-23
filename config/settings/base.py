@@ -96,6 +96,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "idat.users",
+    "idat.dsa40_applications",
     "idat.core",
     "idat.vlopse",
     "idat.dsa40_form_handler",
@@ -157,6 +158,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 # STATIC
