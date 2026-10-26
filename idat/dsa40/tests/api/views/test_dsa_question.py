@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from idat.dsa40.tests.api.test_views import api_prefix
-from idat.dsa40.tests.factories import DsaQuestionFactory, VlopseFactory
+from idat.dsa40.tests.factories import DsaQuestionFactory
+from idat.vlopse.tests.factories import VlopseFactory
 
 if TYPE_CHECKING:
     from django.test import Client
