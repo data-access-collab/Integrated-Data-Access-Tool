@@ -1,13 +1,13 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from idat.dsa40.lib.config import get_vlopse_configuration_for
-from idat.dsa40.services.questions import QuestionService
+from idat.dsa40_form_handler.lib.config import get_vlopse_configuration_for
+from idat.dsa40_form_handler.services.questions import QuestionService
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from idat.dsa40.lib.models import Condition
+    from idat.dsa40_form_handler.lib.models import Condition
 
 
 class ConditionService:

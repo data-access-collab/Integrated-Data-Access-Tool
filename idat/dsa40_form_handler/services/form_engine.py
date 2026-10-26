@@ -2,16 +2,16 @@ from typing import TYPE_CHECKING
 
 from pycountry import countries
 
-from idat.dsa40.lib.mapping import QuestionMapper
-from idat.dsa40.lib.models import (
+from idat.dsa40_form_handler.lib.mapping import QuestionMapper
+from idat.dsa40_form_handler.lib.models import (
     Answer,
     ErrorDetails,
     MappingError,
     MappingResult,
 )
-from idat.dsa40.lib.transform import AnswerTransformer
-from idat.dsa40.models import DSAQuestion, InputType
-from idat.dsa40.services.questions import QuestionService
+from idat.dsa40_form_handler.lib.transform import AnswerTransformer
+from idat.dsa40_form_handler.models import DSAQuestion, InputType
+from idat.dsa40_form_handler.services.questions import QuestionService
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
