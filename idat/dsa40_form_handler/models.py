@@ -33,7 +33,7 @@ class VLOPSEQuestion(models.Model):
     config = JSONField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return f"{self.vlopse.name}Q[{self.id}]('{self.text}')"
+        return f"{self.vlopse.name}Q[{self.key}]('{self.text}')"
 
 
 class DSAQuestion(models.Model):
@@ -48,7 +48,7 @@ class DSAQuestion(models.Model):
     config = JSONField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return f"Q[{self.id}]('{self.text}')"
+        return f"Q[{self.key}]('{self.text}')"
 
     @property
     def parsed_config(self) -> ConstraintConfig | None:
