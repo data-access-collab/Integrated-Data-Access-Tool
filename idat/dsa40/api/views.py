@@ -29,11 +29,12 @@ from idat.dsa40.lib.models import (
     MappedAnswer,
     MappingError,
 )
-from idat.dsa40.models import DSAQuestion, Vlopse, VLOPSEQuestion
+from idat.dsa40.models import DSAQuestion, VLOPSEQuestion
 from idat.dsa40.services.condition_service import ConditionService
 from idat.dsa40.services.form_engine import FormService
 from idat.dsa40.services.questions import QuestionService
-from idat.dsa40.services.vlopse import VlopseConfigService
+from idat.vlopse.models import Vlopse
+from idat.vlopse.services.vlopse import VlopseConfigService
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet

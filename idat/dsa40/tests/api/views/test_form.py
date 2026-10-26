@@ -11,7 +11,8 @@ from idat.dsa40.lib.models import Answer
 from idat.dsa40.loaders import load_questions
 from idat.dsa40.models import Vlopse, VLOPSEQuestion
 from idat.dsa40.tests.api.test_views import api_prefix
-from idat.dsa40.tests.factories import VlopseFactory, VlopseQuestionFactory
+from idat.dsa40.tests.factories import VlopseQuestionFactory
+from idat.vlopse.tests.factories import VlopseFactory
 
 if TYPE_CHECKING:
     from django.test import Client

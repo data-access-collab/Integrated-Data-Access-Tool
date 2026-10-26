@@ -6,14 +6,15 @@ import pytest
 
 from idat.dsa40.tests.factories import (
     DsaQuestionFactory,
-    VlopseFactory,
     VlopseQuestionFactory,
 )
 from idat.users.tests.factories import UserFactory
+from idat.vlopse.tests.factories import VlopseFactory
 
 if TYPE_CHECKING:
-    from idat.dsa40.models import DSAQuestion, Vlopse, VLOPSEQuestion
+    from idat.dsa40.models import DSAQuestion, VLOPSEQuestion
     from idat.users.models import User
+    from idat.vlopse.models import Vlopse
 
 
 @pytest.fixture(autouse=True)
@@ -37,5 +38,6 @@ def dsa_question() -> DSAQuestion:
 
 
 @pytest.fixture
-def vlopse_question(vlopse: Vlopse) -> VLOPSEQuestion:
+def vlopse_question() -> VLOPSEQuestion:
+    vlopse = VlopseFactory.create()
     return VlopseQuestionFactory.create(vlopse=vlopse)
