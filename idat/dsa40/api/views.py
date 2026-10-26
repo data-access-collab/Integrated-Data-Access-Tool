@@ -14,12 +14,9 @@ from idat.dsa40.api.schema import (
     ActionOut,
     CreateDSAQuestionSchema,
     CreateVlopseQuestionSchema,
-    CreateVlopseSchema,
     DSAQuestionOut,
     HealthOut,
     Status,
-    UpdateVlopseSchema,
-    VlopseOut,
     VlopseQuestionOut,
 )
 from idat.dsa40.lib.models import (
@@ -64,54 +61,6 @@ def retrieve_health(request: HttpRequest) -> HealthOut:
 
 
 vlopse_router = Router(tags=["vlopse"])
-
-
-@vlopse_router.get("", response=list[VlopseOut], auth=None)
-def list_vlopses(request: HttpRequest) -> QuerySet[Vlopse]:
-    """List available VLOPSEs"""
-    return Vlopse.objects.all()
-
-
-@vlopse_router.get("/{name}", response=VlopseOut, auth=None)
-def retrieve_vlopse(request: HttpRequest, name: str) -> Vlopse:
-    """Get specific VLOPSE by its name"""
-    return get_object_or_404(Vlopse, name=name)
-
-
-@vlopse_router.post("", response={200: ActionOut}, auth=None)
-def add_vlopse(
-    request: HttpRequest, data: CreateVlopseSchema
-) -> tuple[int, dict[str, bool]]:
-    vlopse = Vlopse(**data.model_dump(exclude_unset=True))
-
-    try:
-        vlopse.full_clean()
-    except ValidationError as e:
-        raise HttpError(422, str(e.message_dict)) from e
-    vlopse.save()
-    return 200, {"success": True}
-
-
-@vlopse_router.put("/{name}", response={200: ActionOut}, auth=None)
-def update_vlopse(
-    request: HttpRequest, name: str, data: UpdateVlopseSchema
-) -> tuple[int, dict[str, bool]]:
-    vlopse = get_object_or_404(Vlopse, name=name)
-    vlopse.key = data.new_name
-    vlopse.save()
-    return 200, {"success": True}
-
-
-@vlopse_router.delete(
-    "/{name}",
-    response={200: ActionOut} | {202: ActionOut},
-    auth=None,
-)
-def delete_vlopse(request: HttpRequest, name: str) -> tuple[int, dict[str, bool]]:
-    vlopse = get_object_or_404(Vlopse, name=name)
-    vlopse.delete()
-    return 200, {"success": True}
-
 
 # QUESTIONS
 

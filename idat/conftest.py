@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from typing import TYPE_CHECKING
 
 import pytest
@@ -15,6 +16,11 @@ if TYPE_CHECKING:
     from idat.dsa40.models import DSAQuestion, VLOPSEQuestion
     from idat.users.models import User
     from idat.vlopse.models import Vlopse
+
+
+@pytest.fixture
+def unique_id() -> str:
+    return str(uuid.uuid4())
 
 
 @pytest.fixture(autouse=True)
