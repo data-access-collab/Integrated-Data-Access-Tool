@@ -18,7 +18,6 @@ dependencies = [
   "django==6.0.8",
   "django-allauth[mfa]==65.19.7",
   "django-anymail==15.2",
-  "django-cors-headers==4.9.0",
   "django-environ==0.14.0",
   "django-ninja==1.7.1",
   "django-redis==7.0.0",
