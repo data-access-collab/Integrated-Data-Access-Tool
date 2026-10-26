@@ -7,7 +7,7 @@ from django.db import connection
 from django.db.utils import Error as DjangoDatabaseError
 from django.forms import ValidationError
 from django.shortcuts import get_object_or_404
-from ninja import Field, Query, Router, Schema
+from ninja import Field, Path, Query, Router, Schema
 from ninja.errors import HttpError
 
 from idat.dsa40.api.schema import (
@@ -60,38 +60,34 @@ def retrieve_health(request: HttpRequest) -> HealthOut:
     )
 
 
-vlopse_router = Router(tags=["vlopse"])
-
-# QUESTIONS
+vlopse_question_router = Router(tags=["vlopse", "question"])
 
 
-@vlopse_router.get(
-    "/{vlopse_name}/question", response=list[VlopseQuestionOut], auth=None
-)
+@vlopse_question_router.get("", response=list[VlopseQuestionOut], auth=None)
 def list_vlopse_questions(
-    request: HttpRequest, vlopse_name: str
+    request: HttpRequest, vlopse_name: Path[str]
 ) -> QuerySet[VLOPSEQuestion]:
     return VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name).select_related(
         "vlopse"
     )
 
 
-@vlopse_router.get(
-    "/{vlopse_name}/question/{question_key}",
+@vlopse_question_router.get(
+    "/{question_key}",
     response=VlopseQuestionOut,
     auth=None,
 )
 def get_vlopse_question(
     request: HttpRequest,
-    vlopse_name: str,
+    vlopse_name: Path[str],
     question_key: str,
 ) -> VLOPSEQuestion:
     return get_object_or_404(VLOPSEQuestion, vlopse__name=vlopse_name, key=question_key)
 
 
-@vlopse_router.post("/{vlopse_name}/question", response=ActionOut, auth=None)
+@vlopse_question_router.post("", response=ActionOut, auth=None)
 def create_vlopse_question(
-    request: HttpRequest, vlopse_name: str, data: CreateVlopseQuestionSchema
+    request: HttpRequest, vlopse_name: Path[str], data: CreateVlopseQuestionSchema
 ) -> tuple[int, dict[str, bool]]:
     vlopse = get_object_or_404(Vlopse, name=vlopse_name)
     vlopse_question = VLOPSEQuestion(
