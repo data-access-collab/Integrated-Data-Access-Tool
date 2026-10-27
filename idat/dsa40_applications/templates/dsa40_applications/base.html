@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1 class="font-bold text-xl">Create new DSA40 application</h1>
+
+  <div id="application-wizard">
+    <div
+      id="application-wizard-body"
+      hx-history="false"
+      hx-get="{{ load_url }}"
+      hx-trigger="load"
+      hx-target="this"
+    >
+    </div>
+  </div>
+{% endblock content %}
+
+{% block inline_javascript %}
+  <script>
+    const KEY = "dsa40-wizard-state";
+
+    document.body.addEventListener("htmx:configRequest", (e) => {
+      const token = sessionStorage.getItem(KEY);
+      if (token) e.detail.headers["X-Wizard-State"] = token;
+    });
+
+    document.body.addEventListener("htmx:afterRequest", (e) => {
+      const token = e.detail.xhr.getResponseHeader("X-Wizard-State");
+      if (token) sessionStorage.setItem(KEY, token);
+    });
+
+    document.body.addEventListener("wizard-done", () => sessionStorage.removeItem(KEY));
+  </script>
+{% endblock inline_javascript %}
