@@ -1,0 +1,73 @@
+[
+  {
+    "name": "Apple",
+    "account_required": "False",
+    "application_link": "dsacompliance@apple.com",
+    "modality": "email"
+  },
+  {
+    "name": "Bing",
+    "platform_information": "https://support.microsoft.com/en-us/topic/bing-qualified-researcher-program-b1c5a4b6-3ad6-4c8c-963d-a395c7766c85",
+    "account_required": "False",
+    "application_link": "https://forms.office.com/Pages/ResponsePage.aspx?id=v4j5cvGGr0GRqy180BHbR_LeIU5Rc-pEi8af8aM27jhUNUwzMUhaSVVNOVBXVjdVSkhaQVhDR1NHMS4u",
+    "modality": "form"
+  },
+  {
+    "name": "Google",
+    "account_required": "False",
+    "application_link": "https://requestrecords.google.com/researcher/form",
+    "modality": "form"
+  },
+  {
+    "name": "LinkedIn",
+    "platform_information": "https://www.linkedin.com/help/linkedin/answer/a1645616",
+    "account_required": "False",
+    "application_link": "https://www.linkedin.com/help/linkedin/ask/DSA",
+    "modality": "form"
+  },
+  {
+    "name": "Meta",
+    "platform_information": "https://developers.facebook.com/docs/content-library-api/get-access",
+    "account_required": "True",
+    "application_link": "https://icpsr.atlassian.net/servicedesk/customer/portal/53/group/80/create/251",
+    "modality": "form"
+  },
+  {
+    "name": "MySpace",
+    "account_required": "False",
+    "application_link": "http://whateverthatguytomwasitcalledright.com",
+    "modality": "form"
+  },
+  {
+    "name": "Pinterest",
+    "account_required": "False",
+    "application_link": "https://help.pinterest.com/en/landing/researchers-intake-form",
+    "modality": "form"
+  },
+  {
+    "name": "Snap",
+    "platform_information": "https://values.snap.com/privacy/transparency/researcher-access",
+    "account_required": "False",
+    "application_link": "DSA-Researcher-Access@snapchat.com",
+    "modality": "email"
+  },
+  {
+    "name": "TikTok",
+    "platform_information": "https://developers.tiktok.com/products/research-api/",
+    "account_required": "True",
+    "application_link": "https://developers.tiktok.com/application/research-api",
+    "modality": "form"
+  },
+  {
+    "name": "X",
+    "account_required": "False",
+    "application_link": "https://docs.google.com/forms/d/e/1FAIpQLSdo0O-D6Kxa3cV4g1JLz2T_0Sk3hdEnTdv8dJmibagCnzJ7kg/viewform",
+    "modality": "form"
+  },
+  {
+    "name": "YouTube",
+    "account_required": "False",
+    "application_link": "https://support.google.com/youtube/contact/yt_researcher_certification",
+    "modality": "form"
+  }
+]
