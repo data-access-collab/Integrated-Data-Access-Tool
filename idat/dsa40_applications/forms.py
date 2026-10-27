@@ -1,5 +1,3 @@
-from typing import Any
-
 import pycountry
 from django import forms
 
@@ -15,14 +13,10 @@ class VlopseSelectionForm(forms.Form):
     )
 
 
-def get_question_choices(question: DSAQuestion) -> list[tuple[Any, Any]]:
+def get_question_choices(question: DSAQuestion) -> list[tuple[str, str]]:
     if not isinstance(question.config, dict):
         return []
-    options = question.config.get("options", [])
-    if options and all(len(option) in [0, 2] for option in options):
-        return options
-
-    return [(option, option) for option in options]
+    return [(option, option) for option in question.config.get("options", [])]
 
 
 def get_question_field(question: DSAQuestion) -> forms.Field:  # noqa: PLR0911
