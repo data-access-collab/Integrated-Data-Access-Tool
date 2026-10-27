@@ -1,10 +1,4 @@
 {
-  "info": {
-    "name": "MySpace",
-    "account_required": "False",
-    "application_link": "http://whateverthatguytomwasitcalledright.com",
-    "modality": "form"
-  },
   "mappings": {
     "Z1": {
       "src": ["first-name", "last-name"],
