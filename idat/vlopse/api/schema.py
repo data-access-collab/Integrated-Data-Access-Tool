@@ -1,6 +1,6 @@
 from ninja import ModelSchema, Schema
 
-from idat.dsa40.models import Vlopse
+from idat.vlopse.models import Vlopse
 
 
 class VlopseOut(ModelSchema):
