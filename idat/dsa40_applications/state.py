@@ -45,7 +45,7 @@ def load_state(request: HttpRequest) -> WizardState:
         )
     except signing.SignatureExpired:
         return empty_state()
-    except signing.BadSignature as err:  # tampered or expired
+    except signing.BadSignature as err:  # tampered
         msg = "Invalid wizard state"
         raise SuspiciousOperation(msg) from err
 
