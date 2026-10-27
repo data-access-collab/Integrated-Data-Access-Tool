@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from pycountry import countries
 
 if TYPE_CHECKING:
-    from idat.dsa40.lib.models import PlatformMapping
+    from .models import PlatformMapping
 
 Inputs = str | list[str | None] | None
 

@@ -1,13 +1,7 @@
 from typing import TYPE_CHECKING
 
-from idat.dsa40.lib.mapping import Mapping, hydrate_mapping
-from idat.dsa40.lib.operator import (
-    AbstractOperator,
-    OperatorExecutionError,
-    hydrate_operator,
-)
-
 from .config import get_vlopse_configuration_for
+from .mapping import Mapping, hydrate_mapping
 from .models import (
     Answer,
     MappedAnswer,
@@ -15,6 +9,11 @@ from .models import (
     MappingResult,
     PlatformMapping,
     PlatformMappingComplex,
+)
+from .operator import (
+    AbstractOperator,
+    OperatorExecutionError,
+    hydrate_operator,
 )
 
 if TYPE_CHECKING:
