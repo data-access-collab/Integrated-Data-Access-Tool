@@ -1,7 +1,7 @@
 from json import load
 from pathlib import Path
 
-from idat.dsa40.models import DSAQuestion
+from idat.dsa40_form_handler.models import DSAQuestion
 
 _FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
