@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from idat.dsa40.tests.factories import (
+from idat.dsa40_form_handler.tests.factories import (
     DsaQuestionFactory,
     VlopseQuestionFactory,
 )
@@ -13,9 +13,11 @@ from idat.users.tests.factories import UserFactory
 from idat.vlopse.tests.factories import VlopseFactory
 
 if TYPE_CHECKING:
-    from idat.dsa40.models import DSAQuestion, VLOPSEQuestion
+    from idat.dsa40_form_handler.models import DSAQuestion, VLOPSEQuestion
     from idat.users.models import User
     from idat.vlopse.models import Vlopse
+
+api_prefix = "/api/v1"
 
 
 @pytest.fixture
