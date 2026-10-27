@@ -1,17 +1,17 @@
 import pytest
 
-from idat.dsa40.lib.mapping import Mapping
-from idat.dsa40.lib.models import (
+from idat.dsa40_form_handler.lib.mapping import Mapping
+from idat.dsa40_form_handler.lib.models import (
     Answer,
 )
-from idat.dsa40.lib.operator import JoinOperator, MakeISOOperator
-from idat.dsa40.lib.schemas import Selection
-from idat.dsa40.lib.transform import (
+from idat.dsa40_form_handler.lib.operator import JoinOperator, MakeISOOperator
+from idat.dsa40_form_handler.lib.schemas import Selection
+from idat.dsa40_form_handler.lib.transform import (
     Transformation,
     TransformationError,
     ValidationErrors,
 )
-from idat.dsa40.models import DSAQuestion
+from idat.dsa40_form_handler.models import DSAQuestion
 
 
 @pytest.mark.skip(reason="Not implemented yet")
