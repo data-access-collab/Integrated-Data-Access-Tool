@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from idat.dsa40.tests.api.test_views import api_prefix
+from idat.conftest import api_prefix
 
 if TYPE_CHECKING:
     from django.test import Client
