@@ -1,0 +1,12 @@
+<div
+  id="application-wizard-indicator"
+  class="border rounded-sm p-2 text-xs flex justify-between mt-3 mb-4"
+>
+  {% for n, label in steps %}
+    <div class="{% if n == step %}font-bold{% endif %}">{{ label }}</div>
+  {% endfor %}
+</div>
+
+<div>
+  {% include step_template %}
+</div>
