@@ -1,10 +1,9 @@
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from idat.dsa40.lib.models import Condition, PlatformMapping  # noqa: TC001
+from .models import Condition, PlatformMapping  # noqa: TC001
 
 _VLOPSE_CONFIG_DIR = Path(__file__).parent.parent / "fixtures" / "vlopses"
 

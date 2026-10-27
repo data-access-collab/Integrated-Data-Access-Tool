@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from idat.dsa40.lib.config import (
+from idat.dsa40_form_handler.lib.config import (
     PlatformInformation,
     VLOPSEConfiguration,
     get_vlopse_configuration_for,

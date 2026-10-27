@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import BooleanField, CharField, JSONField, TextField
 
-from idat.dsa40.lib.schemas import ConstraintConfig, config_adapter
+from idat.dsa40_form_handler.lib.schemas import ConstraintConfig, config_adapter
 from idat.vlopse.models import Vlopse
 
 
