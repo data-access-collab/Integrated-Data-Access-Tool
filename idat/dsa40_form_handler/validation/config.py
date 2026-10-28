@@ -1,28 +1,13 @@
-from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel
 
-from .models import Condition, PlatformMapping  # noqa: TC001
+from idat.dsa40_form_handler.schema import Condition, PlatformMapping  # noqa: TC001
 
 _VLOPSE_CONFIG_DIR = Path(__file__).parent.parent / "fixtures" / "vlopses"
 
 
-class ApplicationModality(StrEnum):
-    form = "form"
-    email = "email"
-
-
-class PlatformInformation(BaseModel):
-    name: str
-    platform_information: str | None = None
-    account_required: bool
-    application_link: str
-    modality: ApplicationModality
-
-
 class VLOPSEConfiguration(BaseModel):
-    info: PlatformInformation
     mappings: dict[str, PlatformMapping]
     conditions: dict[str, list[Condition]]
 

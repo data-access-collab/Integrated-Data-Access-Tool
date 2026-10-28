@@ -8,21 +8,21 @@ from django.shortcuts import get_object_or_404
 from ninja import Field, Path, Query, Router, Schema
 from ninja.errors import HttpError
 
-from idat.core.api.schema import ActionOut
+from idat.dsa40.api.schema import ActionOut
 from idat.dsa40_form_handler.api.schema import (
     CreateDSAQuestionSchema,
     CreateVlopseQuestionSchema,
     DSAQuestionOut,
     VlopseQuestionOut,
 )
-from idat.dsa40_form_handler.lib.models import (
+from idat.dsa40_form_handler.models import DSAQuestion, VLOPSEQuestion
+from idat.dsa40_form_handler.schema import (
     Answer,
     Condition,
     ErrorDetails,
     MappedAnswer,
     MappingError,
 )
-from idat.dsa40_form_handler.models import DSAQuestion, VLOPSEQuestion
 from idat.dsa40_form_handler.services.condition_service import ConditionService
 from idat.dsa40_form_handler.services.form_engine import FormService
 from idat.vlopse.models import Vlopse

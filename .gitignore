@@ -16,8 +16,6 @@ downloads/
 eggs/
 .eggs/
 lib/
-!idat/dsa40/lib
-!idat/dsa_form_handler/lib
 lib64/
 parts/
 sdist/

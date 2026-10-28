@@ -1,8 +1,6 @@
 from typing import TYPE_CHECKING
 
-from .config import get_vlopse_configuration_for
-from .mapping import Mapping, hydrate_mapping
-from .models import (
+from idat.dsa40_form_handler.schema import (
     Answer,
     MappedAnswer,
     MappingError,
@@ -10,6 +8,9 @@ from .models import (
     PlatformMapping,
     PlatformMappingComplex,
 )
+
+from .config import get_vlopse_configuration_for
+from .mapping import Mapping, hydrate_mapping
 from .operator import (
     AbstractOperator,
     OperatorExecutionError,
