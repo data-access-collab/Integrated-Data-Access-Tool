@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from .models import Condition, PlatformMapping  # noqa: TC001
+from idat.dsa40_form_handler.schema import Condition, PlatformMapping  # noqa: TC001
 
 _VLOPSE_CONFIG_DIR = Path(__file__).parent.parent / "fixtures" / "vlopses"
 

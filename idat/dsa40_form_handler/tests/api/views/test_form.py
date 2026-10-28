@@ -9,8 +9,8 @@ from django.test import TestCase
 from idat.conftest import api_prefix
 from idat.dsa40.loaders import load_questions
 from idat.dsa40_form_handler.api.views import AnswerRequest
-from idat.dsa40_form_handler.lib.models import Answer
 from idat.dsa40_form_handler.models import VLOPSEQuestion
+from idat.dsa40_form_handler.schema import Answer
 from idat.dsa40_form_handler.tests.factories import VlopseQuestionFactory
 from idat.vlopse.models import Vlopse
 from idat.vlopse.tests.factories import VlopseFactory

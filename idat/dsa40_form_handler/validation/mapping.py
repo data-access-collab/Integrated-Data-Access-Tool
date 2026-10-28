@@ -5,9 +5,8 @@ from .config import get_vlopse_configuration_for
 
 if TYPE_CHECKING:
     from idat.dsa40_form_handler.models import DSAQuestion
+    from idat.dsa40_form_handler.schema import PlatformMapping
     from idat.dsa40_form_handler.services.questions import QuestionService
-
-    from .models import PlatformMapping
 
 
 class Mapping:

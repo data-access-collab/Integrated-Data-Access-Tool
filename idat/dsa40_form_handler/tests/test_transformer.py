@@ -1,11 +1,11 @@
-from idat.dsa40_form_handler.lib.models import (
+from idat.dsa40_form_handler.schema import (
     Answer,
     MappedAnswer,
     MappingError,
     PlatformMapping,
     PlatformMappingComplex,
 )
-from idat.dsa40_form_handler.lib.transform import AnswerTransformer
+from idat.dsa40_form_handler.validation.transform import AnswerTransformer
 
 mapping: dict[str, PlatformMapping] = {
     "T1": PlatformMappingComplex(
