@@ -12,11 +12,6 @@ class PlatformMappingComplex(BaseModel):
 PlatformMapping = str | PlatformMappingComplex
 
 
-class VlopseAnswer(BaseModel):
-    id: str
-    value: str
-
-
 class Answer(BaseModel):
     question_id: str
     value: str | None

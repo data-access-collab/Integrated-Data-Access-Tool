@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import BooleanField, CharField, JSONField, TextField
 
-from idat.dsa40.lib.schemas import ConstraintConfig, config_adapter
+from idat.dsa40_form_handler.form_field_types import ConstraintConfig, config_adapter
 from idat.vlopse.models import Vlopse
 
 
@@ -33,7 +33,7 @@ class VLOPSEQuestion(models.Model):
     config = JSONField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return f"{self.vlopse.name}Q[{self.id}]('{self.text}')"
+        return f"{self.vlopse.name}Q[{self.key}]('{self.text}')"
 
 
 class DSAQuestion(models.Model):
@@ -48,7 +48,7 @@ class DSAQuestion(models.Model):
     config = JSONField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return f"Q[{self.id}]('{self.text}')"
+        return f"Q[{self.key}]('{self.text}')"
 
     @property
     def parsed_config(self) -> ConstraintConfig | None:

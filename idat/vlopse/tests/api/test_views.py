@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from idat.dsa40.tests.api.test_views import api_prefix
+from idat.conftest import api_prefix
 from idat.vlopse.tests.factories import VlopseFactory
 
 if TYPE_CHECKING:
     from django.test import Client
 
-    from idat.dsa40.models import Vlopse
+    from idat.vlopse.models import Vlopse
 
 
 @pytest.fixture

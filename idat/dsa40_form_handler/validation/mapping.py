@@ -1,12 +1,12 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from idat.dsa40.lib.config import get_vlopse_configuration_for
+from .config import get_vlopse_configuration_for
 
 if TYPE_CHECKING:
-    from idat.dsa40.lib.models import PlatformMapping
-    from idat.dsa40.models import DSAQuestion
-    from idat.dsa40.services.questions import QuestionService
+    from idat.dsa40_form_handler.models import DSAQuestion
+    from idat.dsa40_form_handler.schema import PlatformMapping
+    from idat.dsa40_form_handler.services.questions import QuestionService
 
 
 class Mapping:

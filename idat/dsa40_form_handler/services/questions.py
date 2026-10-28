@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from idat.dsa40.models import DSAQuestion, VLOPSEQuestion
+from idat.dsa40_form_handler.models import DSAQuestion, VLOPSEQuestion
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
