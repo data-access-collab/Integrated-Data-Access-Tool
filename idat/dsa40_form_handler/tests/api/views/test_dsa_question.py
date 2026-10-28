@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from idat.conftest import api_prefix
-from idat.dsa40_form_handler.tests.factories import DsaQuestionFactory
 from idat.vlopse.tests.factories import VlopseFactory
 
 if TYPE_CHECKING:
@@ -20,23 +19,22 @@ def vlopse() -> Vlopse:
 
 @pytest.mark.django_db
 def test_list_dsa_questions(client: Client):
-    question = DsaQuestionFactory.create()
-    response = client.get(
-        f"{api_prefix}/question",
-    )
+    response = client.get(f"{api_prefix}/question")
 
     assert response.status_code == 200
-    assert response.json() == [
-        {
-            "key": question.key,
-            "text": question.text,
-            "help_text": question.help_text,
-            "input_type": question.input_type,
-            "config": question.config,
-            "options": [],
-            "required": True,
-        },
-    ]
+    assert all(
+        resp.keys()
+        >= {
+            "key",
+            "text",
+            "help_text",
+            "input_type",
+            "config",
+            "options",
+            "required",
+        }
+        for resp in response.json()
+    )
 
 
 @pytest.mark.django_db

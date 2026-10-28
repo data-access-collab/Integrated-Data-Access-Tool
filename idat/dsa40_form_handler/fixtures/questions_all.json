@@ -172,9 +172,6 @@
     "text_en": "Country",
     "category": "affiliation",
     "type": "iso-3166-1",
-    "config": {
-      "type": "iso-3166-1"
-    },
     "granularity": "general"
   },
   {
@@ -218,10 +215,7 @@
     "text_en": "Are You the Principal Researcher in the Collaboration?",
     "category": "collaboration",
     "type": "selection",
-    "config": {
-      "type": "selection",
-      "options": ["Yes", "No"]
-    },
+    "options": ["Yes", "No"],
     "granularity": "general"
   },
   {
@@ -265,10 +259,7 @@
     "text_en": "Independence from Commercial Interests",
     "category": "funding-commercial-interests",
     "type": "selection",
-    "config": {
-      "type": "selection",
-      "options": ["Yes", "No"]
-    },
+    "options": ["Yes", "No"],
     "granularity": "general"
   },
   {
