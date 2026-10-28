@@ -7,19 +7,16 @@ from django.db import connection
 from django.db.utils import Error as DjangoDatabaseError
 from django.forms import ValidationError
 from django.shortcuts import get_object_or_404
-from ninja import Field, Query, Router, Schema
+from ninja import Field, Path, Query, Router, Schema
 from ninja.errors import HttpError
 
 from idat.dsa40.api.schema import (
     ActionOut,
     CreateDSAQuestionSchema,
     CreateVlopseQuestionSchema,
-    CreateVlopseSchema,
     DSAQuestionOut,
     HealthOut,
     Status,
-    UpdateVlopseSchema,
-    VlopseOut,
     VlopseQuestionOut,
 )
 from idat.dsa40.lib.models import (
@@ -29,11 +26,12 @@ from idat.dsa40.lib.models import (
     MappedAnswer,
     MappingError,
 )
-from idat.dsa40.models import DSAQuestion, Vlopse, VLOPSEQuestion
+from idat.dsa40.models import DSAQuestion, VLOPSEQuestion
 from idat.dsa40.services.condition_service import ConditionService
 from idat.dsa40.services.form_engine import FormService
 from idat.dsa40.services.questions import QuestionService
-from idat.dsa40.services.vlopse import VlopseConfigService
+from idat.vlopse.models import Vlopse
+from idat.vlopse.services.vlopse import VlopseConfigService
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -62,86 +60,34 @@ def retrieve_health(request: HttpRequest) -> HealthOut:
     )
 
 
-vlopse_router = Router(tags=["vlopse"])
+vlopse_question_router = Router(tags=["vlopse", "question"])
 
 
-@vlopse_router.get("", response=list[VlopseOut], auth=None)
-def list_vlopses(request: HttpRequest) -> QuerySet[Vlopse]:
-    """List available VLOPSEs"""
-    return Vlopse.objects.all()
-
-
-@vlopse_router.get("/{name}", response=VlopseOut, auth=None)
-def retrieve_vlopse(request: HttpRequest, name: str) -> Vlopse:
-    """Get specific VLOPSE by its name"""
-    return get_object_or_404(Vlopse, name=name)
-
-
-@vlopse_router.post("", response={200: ActionOut}, auth=None)
-def add_vlopse(
-    request: HttpRequest, data: CreateVlopseSchema
-) -> tuple[int, dict[str, bool]]:
-    vlopse = Vlopse(**data.model_dump(exclude_unset=True))
-
-    try:
-        vlopse.full_clean()
-    except ValidationError as e:
-        raise HttpError(422, str(e.message_dict)) from e
-    vlopse.save()
-    return 200, {"success": True}
-
-
-@vlopse_router.put("/{name}", response={200: ActionOut}, auth=None)
-def update_vlopse(
-    request: HttpRequest, name: str, data: UpdateVlopseSchema
-) -> tuple[int, dict[str, bool]]:
-    vlopse = get_object_or_404(Vlopse, name=name)
-    vlopse.key = data.new_name
-    vlopse.save()
-    return 200, {"success": True}
-
-
-@vlopse_router.delete(
-    "/{name}",
-    response={200: ActionOut} | {202: ActionOut},
-    auth=None,
-)
-def delete_vlopse(request: HttpRequest, name: str) -> tuple[int, dict[str, bool]]:
-    vlopse = get_object_or_404(Vlopse, name=name)
-    vlopse.delete()
-    return 200, {"success": True}
-
-
-# QUESTIONS
-
-
-@vlopse_router.get(
-    "/{vlopse_name}/question", response=list[VlopseQuestionOut], auth=None
-)
+@vlopse_question_router.get("", response=list[VlopseQuestionOut], auth=None)
 def list_vlopse_questions(
-    request: HttpRequest, vlopse_name: str
+    request: HttpRequest, vlopse_name: Path[str]
 ) -> QuerySet[VLOPSEQuestion]:
     return VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name).select_related(
         "vlopse"
     )
 
 
-@vlopse_router.get(
-    "/{vlopse_name}/question/{question_key}",
+@vlopse_question_router.get(
+    "/{question_key}",
     response=VlopseQuestionOut,
     auth=None,
 )
 def get_vlopse_question(
     request: HttpRequest,
-    vlopse_name: str,
+    vlopse_name: Path[str],
     question_key: str,
 ) -> VLOPSEQuestion:
     return get_object_or_404(VLOPSEQuestion, vlopse__name=vlopse_name, key=question_key)
 
 
-@vlopse_router.post("/{vlopse_name}/question", response=ActionOut, auth=None)
+@vlopse_question_router.post("", response=ActionOut, auth=None)
 def create_vlopse_question(
-    request: HttpRequest, vlopse_name: str, data: CreateVlopseQuestionSchema
+    request: HttpRequest, vlopse_name: Path[str], data: CreateVlopseQuestionSchema
 ) -> tuple[int, dict[str, bool]]:
     vlopse = get_object_or_404(Vlopse, name=vlopse_name)
     vlopse_question = VLOPSEQuestion(
