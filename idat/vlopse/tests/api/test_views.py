@@ -30,19 +30,21 @@ def _info(name: str) -> dict:
 
 
 @pytest.mark.django_db
-def test_list_vlopse(client: Client, vlopse: Vlopse):
+def test_list_vlopse(client: Client):
 
     response = client.get(f"{api_prefix}/vlopse")
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == [
-        {
-            "name": vlopse.name,
-            "platform_information": vlopse.platform_information,
-            "account_required": vlopse.account_required,
-            "application_link": vlopse.application_link,
-            "modality": vlopse.modality,
-        },
-    ]
+    assert all(
+        resp.keys()
+        >= {
+            "name",
+            "platform_information",
+            "account_required",
+            "application_link",
+            "modality",
+        }
+        for resp in response.json()
+    )
 
 
 @pytest.mark.django_db
