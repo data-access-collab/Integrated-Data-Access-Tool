@@ -7,18 +7,17 @@ import pytest
 from django.test import TestCase
 
 from idat.conftest import api_prefix
-from idat.dsa40.loaders import load_questions
 from idat.dsa40_form_handler.api.views import AnswerRequest
 from idat.dsa40_form_handler.models import VLOPSEQuestion
 from idat.dsa40_form_handler.schema import Answer
 from idat.dsa40_form_handler.tests.factories import VlopseQuestionFactory
-from idat.vlopse.models import Vlopse
 from idat.vlopse.tests.factories import VlopseFactory
 
 if TYPE_CHECKING:
     from django.test import Client
 
     from idat.dsa40_form_handler.models import VLOPSEQuestion
+    from idat.vlopse.models import Vlopse
 
 VALID_ANSWERS = [
     {"question_id": "first-name", "value": "Joseph"},
@@ -42,26 +41,13 @@ def vlopse_question(vlopse: Vlopse) -> VLOPSEQuestion:
     return VlopseQuestionFactory.create(vlopse=vlopse)
 
 
-@pytest.fixture
-def mastodon() -> Vlopse:
-    mastodon = Vlopse(name="mastodon")
-    mastodon.save()
-    return mastodon
-
-
 class FormTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-
-        loadedqs = load_questions()
-        assert loadedqs > 4
-        mastodon = Vlopse(name="mastodon")
-        mastodon.save()
+    fixtures = ["mastodon"]
 
     @pytest.mark.django_db
     def test_applicable_questions_for_known_vlopse(self):
         response = self.client.get(
-            f"{api_prefix}/questions", query_params={"vlopse": [mastodon.name]}
+            f"{api_prefix}/questions", query_params={"vlopse": ["Mastodon"]}
         )
         assert response.status_code == 200
         body = response.json()

@@ -1,0 +1,18 @@
+- model: vlopse.Vlopse
+  fields:
+    name: Mastodon
+    platform_information: https://joinmastodon.org/
+    account_required: False
+    application_link: https://joinmastodon.org/hosting
+    modality: form
+- model: dsa40_form_handler.DSAQuestion
+  fields:
+    key: X1
+    text: "Full Name"
+    input_type: "free-form"
+- model: dsa40_form_handler.DSAQuestion
+  fields:
+    key: X2
+    text: eMail in your institution
+    input_type: free-form
+    help_text: "The Applicant's email address must show their institutional affiliation. Example: emailaddress@umich.edu, emailaddress2@pewresearch.org"
