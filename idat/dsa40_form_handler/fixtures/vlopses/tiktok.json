@@ -1,0 +1,107 @@
+{
+  "mappings": {
+    "T1": {
+      "src": ["first-name", "last-name"],
+      "operation": "join-space"
+    },
+    "T2": "commercial-purpose",
+    "T8": "org-role",
+    "T15": "commercial-purpose",
+    "T17": "email-inst",
+    "T18": "profile-inst",
+    "T19": "org-name",
+    "T20": {
+      "src": [
+        "org-addr-street",
+        "org-addr-city",
+        "org-addr-postcode",
+        "org-addr-state",
+        "org-addr-country"
+      ],
+      "operation": "join-comma"
+    },
+    "T21": "org-website",
+    "T22": "org-website",
+    "T23": "org-id",
+    "T24": "cv",
+    "T25": "org-department",
+    "T26": "collab-binary",
+    "T28": "cv",
+    "T29": "research-keywords",
+    "T31": {
+      "src": ["research-summary", "research-sysrisk"],
+      "operation": "join-comma"
+    },
+    "T32": "research-method",
+    "T33": "data-acc-start",
+    "T34": "data-acc-end",
+    "T35": "data-expl",
+    "T36": "collab-share-binary",
+    "T37": "collab-share",
+    "T39": "tom-general",
+    "T40": "research-question",
+    "T41": "research-publications",
+    "T42": "research-summary-litreview",
+    "T43": "research-citations",
+    "T44": "legal-consent",
+    "T45": "legal-consent",
+    "T46": "legal-consent",
+    "T47": "legal-consent"
+  },
+  "conditions": {
+    "org-addr-country": [
+      {
+        "question_id": "T2",
+        "operator": "eq",
+        "value": "Academic Institute"
+      }
+    ],
+    "data-requested-U18": [
+      {
+        "question_id": "T2",
+        "operator": "eq",
+        "value": "Not-for-profit body"
+      }
+    ],
+    "org-role": [
+      {
+        "question_id": "T8",
+        "operator": "eq",
+        "value": "Other"
+      }
+    ],
+    "research-ethics": [
+      {
+        "question_id": "T2",
+        "operator": "eq",
+        "value": "Academic Institute"
+      },
+      {
+        "question_id": "T3",
+        "operator": "eq",
+        "value": "US"
+      }
+    ],
+    "org-id": [
+      {
+        "question_id": "T2",
+        "operator": "eq",
+        "value": "Not-for-profit body"
+      }
+    ],
+    "funding-sources": [
+      {
+        "question_id": "T15",
+        "operator": "eq",
+        "value": "Yes"
+      }
+    ],
+    "research-keywords": [
+      {
+        "question_id": "T29",
+        "operator": "eq",
+        "value": "Other"
+      }
+    ]
+  }
+}
