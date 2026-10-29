@@ -1,7 +1,6 @@
 import json
 from json import load
 from pathlib import Path
-from typing import Any
 
 from django.core.management import CommandError, CommandParser
 from django.db import IntegrityError, migrations
@@ -10,18 +9,17 @@ _FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 _VLOPSE_QUESTIONS_DIR = _FIXTURES_DIR / "questions"
 
 
-def load_initial_vlopse_questions() -> list[tuple[name, list[dict[str, Any]]]]:
+def load_initial_vlopse_questions():
     for vlopse_file in _VLOPSE_QUESTIONS_DIR.glob("*.json"):
         name = vlopse_file.stem
 
         with vlopse_file.open() as f:
-            qs: list[dict[str, Any]] = load(f)
+            qs= load(f)
         yield name, qs
 
 
-def parse_input_type(entry: dict[str, Any]):
+def parse_input_type(entry):
     opts = entry.pop("Options", None)
-    print(f"{opts=}")
     i_type = entry.pop("Type")
     result = {}
     match i_type:
