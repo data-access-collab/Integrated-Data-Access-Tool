@@ -42,12 +42,14 @@ def vlopse_question(vlopse: Vlopse) -> VLOPSEQuestion:
 
 
 class FormTests(TestCase):
-    fixtures = ["mastodon"]
+    @classmethod
+    def setUpTestData(cls):
+        VlopseFactory.create(name="mastodon")
 
     @pytest.mark.django_db
     def test_applicable_questions_for_known_vlopse(self):
         response = self.client.get(
-            f"{api_prefix}/questions", query_params={"vlopse": ["Mastodon"]}
+            f"{api_prefix}/questions", query_params={"vlopse": "mastodon"}
         )
         assert response.status_code == 200
         body = response.json()
