@@ -830,6 +830,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "argon2-cffi" },
+    { name = "cryptography" },
     { name = "django" },
     { name = "django-allauth", extra = ["mfa"] },
     { name = "django-anymail" },
@@ -876,6 +877,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "argon2-cffi", specifier = "==25.1.0" },
+    { name = "cryptography", specifier = "==50.0.2" },
     { name = "django", specifier = "==6.0.8" },
     { name = "django-allauth", extras = ["mfa"], specifier = "==65.19.7" },
     { name = "django-anymail", specifier = "==15.2" },

@@ -15,6 +15,7 @@ classifiers = [
 ]
 dependencies = [
   "argon2-cffi==25.1.0",
+  "cryptography==50.0.2",
   "django==6.0.8",
   "django-allauth[mfa]==65.19.7",
   "django-anymail==15.2",

@@ -10,3 +10,12 @@
 <div>
   {% include step_template %}
 </div>
+
+<button
+  type="button"
+  x-data
+  x-on:click="$dispatch('wizard-discard', { href: '{% url 'dsa40_applications:create' %}' })"
+  class="mt-6 text-sm underline"
+>
+  Discard draft
+</button>
