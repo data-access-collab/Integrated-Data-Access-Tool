@@ -1,15 +1,15 @@
-from idat.vlopse.loaders import list_all_vlopse_files, _load_json
 import json
 from pathlib import Path
 
 from django.db import migrations
 
+_VLOPSE_SEED_FILE = Path(__file__).parent / "data" / "0002_initial_data.json"
 
 
 def _load_entries():
-    for vlopse_name in list_all_vlopse_files():
-        with open(vlopse_name) as f:
-            yield json.load(f)
+    with open(_VLOPSE_SEED_FILE) as f:
+        data = json.load(f)
+        yield from data
 
 
 def load_vlopse(apps, schema_editor):
