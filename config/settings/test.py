@@ -3,8 +3,7 @@ With these settings, tests run faster.
 """
 
 from .base import *  # noqa: F403
-from .base import TEMPLATES
-from .base import env
+from .base import TEMPLATES, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -12,6 +11,11 @@ from .base import env
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
     default="aKNSpAnp1R43MnDdcFPLl1oS39Ccn73K0X5DEzDNUYtA9C50eVocZcMJdePv7A7u",
+)
+# Secret for encrypting the DSA40 application wizard state
+WIZARD_SECRET = env(
+    "DJANGO_WIZARD_SECRET",
+    default="jSXvd2OzojHQ0O6W2LSiUpK-34h7eMUZXJXXiGZFMUluHdcCvsU4pIH67Y1NY_it",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#test-runner
 TEST_RUNNER = "django.test.runner.DiscoverRunner"

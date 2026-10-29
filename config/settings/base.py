@@ -90,11 +90,13 @@ THIRD_PARTY_APPS = [
     "allauth.mfa",
     "allauth.socialaccount",
     "corsheaders",
+    "django_htmx",
 ]
 
 LOCAL_APPS = [
     "idat.users",
     "idat.dsa40",
+    "idat.dsa40_applications",
     "idat.vlopse",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -154,6 +156,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 # STATIC
