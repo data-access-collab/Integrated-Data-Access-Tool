@@ -1,11 +1,4 @@
 {
-  "info": {
-    "name": "TikTok",
-    "platform_information": "https://developers.tiktok.com/products/research-api/",
-    "account_required": "True",
-    "application_link": "https://developers.tiktok.com/application/research-api",
-    "modality": "form"
-  },
   "mappings": {
     "T1": {
       "src": ["first-name", "last-name"],
