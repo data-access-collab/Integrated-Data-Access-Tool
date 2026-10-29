@@ -1,0 +1,55 @@
+{# This widget is tied to the clientFile Alpine component in wizard.js #}
+<div
+  x-data="clientFile"
+  data-question="{{ widget.name }}"
+  data-max-size="{{ widget.max_size }}"
+  data-types="{{ widget.types }}"
+>
+  <input
+    type="hidden"
+    name="{{ widget.name }}"
+    value="{{ widget.value }}"
+    x-ref="metadataInput"
+  />
+  <input
+    type="file"
+    accept="{{ widget.accept }}"
+    x-ref="input"
+    x-on:change="select($event)"
+    x-bind:disabled="busy"
+    {% include "django/forms/widgets/attrs.html" %}
+  />
+  <p
+    x-show="metadata"
+    x-cloak
+    class="text-sm"
+  >
+    <span x-text="label"></span>
+    <span
+      x-show="missing"
+      class="text-danger"
+    >– not stored in this browser, please select it again</span>
+    <button
+      type="button"
+      class="underline"
+      x-on:click="remove()"
+    >
+      Remove
+    </button>
+  </p>
+  {# not x-show: it shows deferred, so a fast busy=true/false leaves it visible #}
+  <p
+    hidden
+    x-bind:hidden="!busy"
+    class="text-sm"
+  >
+    Encrypting…
+  </p>
+  <p
+    x-show="error"
+    x-cloak
+    x-text="error"
+    class="text-sm text-danger"
+  >
+  </p>
+</div>

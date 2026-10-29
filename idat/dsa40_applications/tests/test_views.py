@@ -1,26 +1,29 @@
 from __future__ import annotations
 
+import json
 from http import HTTPStatus
 from unittest import mock
 
-from django.core import signing
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from idat.dsa40.lib.config import VLOPSEConfiguration
 from idat.dsa40.models import InputType
-from idat.dsa40.tests.factories import (
-    DsaQuestionFactory,
-    VlopseFactory,
-    VlopseQuestionFactory,
-)
+from idat.dsa40.tests.factories import DsaQuestionFactory, VlopseQuestionFactory
+from idat.dsa40_applications.forms import VlopseSelectionForm
 from idat.dsa40_applications.state import (
-    SALT,
+    FILE_KEY_HEADER,
+    MAX_AGE,
+    MAX_AGE_HEADER,
     STATE_HEADER,
-    WizardJSONSerializer,
+    WIZARD_ID_HEADER,
     WizardState,
-    dump_state,
+    dump_wizard_state,
+    encode_file_encryption_key,
+    load_wizard_state,
 )
+from idat.dsa40_applications.views import VlopseSelectionStep
+from idat.vlopse.tests.factories import VlopseFactory
 
 
 def platform_config(name: str, mappings: dict[str, str]) -> VLOPSEConfiguration:
@@ -52,23 +55,27 @@ PLATFORM_CONFIGS = {
 }
 
 
-def step_url(step: int) -> str:
+def get_step_url(step: int) -> str:
     return reverse("dsa40_applications:wizard_step", args=[step])
 
 
-def htmx_headers(state: WizardState | None = None) -> dict[str, str]:
+def get_htmx_headers(state: WizardState | None = None) -> dict[str, str]:
     headers = {"HX-Request": "true"}
     if state is not None:
-        headers[STATE_HEADER] = dump_state(state)
+        headers[STATE_HEADER] = dump_wizard_state(state)
     return headers
 
 
+def create_state(vlopses: list[int], answers: dict | None = None) -> WizardState:
+    return WizardState(wizard_id="draft-1", vlopses=vlopses, answers=answers or {})
+
+
 def response_state(response) -> WizardState:
-    return signing.loads(
-        response[STATE_HEADER], salt=SALT, serializer=WizardJSONSerializer
-    )
+    request = RequestFactory().get("/", headers={STATE_HEADER: response[STATE_HEADER]})
+    return load_wizard_state(request)
 
 
+# mocked to use the stable test configs defined above
 @mock.patch(
     "idat.dsa40.lib.mapping.get_vlopse_configuration_for",
     new=PLATFORM_CONFIGS.__getitem__,
@@ -100,62 +107,69 @@ class WizardViewTests(TestCase):
         response = self.client.get(reverse("dsa40_applications:create"))
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertContains(response, f'hx-get="{step_url(1)}"')
+        self.assertContains(response, f'hx-get="{get_step_url(1)}"')
 
     def test_non_htmx_step_request_returns_shell_that_refetches_step_via_htmx(self):
-        response = self.client.get(step_url(2))
+        response = self.client.get(get_step_url(2))
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertContains(response, f'hx-get="{step_url(2)}"')
+        self.assertContains(response, f'hx-get="{get_step_url(2)}"')
         self.assertNotIn(STATE_HEADER, response)
 
     def test_unknown_step_returns_404(self):
-        response = self.client.get(step_url(4), headers=htmx_headers())
+        response = self.client.get(get_step_url(4), headers=get_htmx_headers())
 
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_tampered_state_header_returns_400(self):
-        headers = {"HX-Request": "true", STATE_HEADER: "not-a-signed-token"}
+        headers = {"HX-Request": "true", STATE_HEADER: "not-an-encrypted-token"}
 
-        response = self.client.get(step_url(1), headers=headers)
+        response = self.client.get(get_step_url(1), headers=headers)
 
+        # The 400 is returned by Django's internal request handler
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
     def test_vlopse_step_preselects_previously_chosen_vlopses(self):
-        state = WizardState(vlopses=[self.mastodon.pk], answers={})
+        state = create_state([self.mastodon.pk], {})
 
-        response = self.client.get(step_url(1), headers=htmx_headers(state))
+        response = self.client.get(get_step_url(1), headers=get_htmx_headers(state))
 
         self.assertEqual(
             response.context["form"]["vlopses"].value(), [self.mastodon.pk]
         )
 
     def test_vlopse_step_rejects_empty_selection(self):
-        response = self.client.post(step_url(1), data={}, headers=htmx_headers())
+        response = self.client.post(
+            get_step_url(1), data={}, headers=get_htmx_headers()
+        )
 
-        self.assertEqual(response["HX-Push-Url"], step_url(1))
-        self.assertContains(response, "Please select at least one Vlopse")
+        self.assertEqual(response["HX-Push-Url"], get_step_url(1))
+        self.assertTrue(response.context["form"].has_error("vlopses", code="required"))
+        message = VlopseSelectionForm.base_fields["vlopses"].error_messages["required"]
+        self.assertContains(response, message)
 
     def test_vlopse_step_advances_to_questions_and_stores_selection(self):
         response = self.client.post(
-            step_url(1), data={"vlopses": [self.mastodon.pk]}, headers=htmx_headers()
+            get_step_url(1),
+            data={"vlopses": [self.mastodon.pk]},
+            headers=get_htmx_headers(),
         )
 
-        self.assertEqual(response["HX-Push-Url"], step_url(2))
+        self.assertEqual(response["HX-Push-Url"], get_step_url(2))
         self.assertContains(response, "Project title")
         self.assertNotContains(response, "Role in organisation")
         self.assertEqual(response_state(response)["vlopses"], [self.mastodon.pk])
 
-    def test_deselecting_vlopse_drops_answers_only_dropped_needed(self):
-        state = WizardState(
-            vlopses=[self.mastodon.pk, self.tiktok.pk],
-            answers={"email": "a@example.org", "role": "Researcher"},
+    def test_deselecting_vlopse_drops_answers_that_only_dropped_needed(self):
+        state = create_state(
+            [self.mastodon.pk, self.tiktok.pk],
+            {"email": "a@example.org", "role": "Researcher"},
         )
 
         response = self.client.post(
-            step_url(1),
+            get_step_url(1),
             data={"vlopses": [self.mastodon.pk]},
-            headers=htmx_headers(state),
+            headers=get_htmx_headers(state),
         )
 
         self.assertEqual(
@@ -163,44 +177,91 @@ class WizardViewTests(TestCase):
         )
 
     def test_questions_step_without_vlopses_falls_back_to_selection(self):
-        response = self.client.get(step_url(2), headers=htmx_headers())
+        response = self.client.get(get_step_url(2), headers=get_htmx_headers())
 
-        self.assertEqual(response["HX-Push-Url"], step_url(1))
-        self.assertContains(response, "Select VLOPSEs")
+        self.assertEqual(response["HX-Push-Url"], get_step_url(1))
+        self.assertTemplateUsed(response, VlopseSelectionStep.template_name)
 
     def test_questions_step_rejects_missing_required_answer(self):
-        state = WizardState(vlopses=[self.mastodon.pk], answers={})
+        state = create_state([self.mastodon.pk], {})
 
         response = self.client.post(
-            step_url(2),
+            get_step_url(2),
             data={"project-title": "Feed ranking audit"},
-            headers=htmx_headers(state),
+            headers=get_htmx_headers(state),
         )
 
-        self.assertEqual(response["HX-Push-Url"], step_url(2))
+        self.assertEqual(response["HX-Push-Url"], get_step_url(2))
         self.assertContains(response, "This field is required.")
         self.assertEqual(response_state(response)["answers"], {})
 
     def test_questions_step_advances_to_review_and_stores_answers(self):
-        state = WizardState(vlopses=[self.mastodon.pk], answers={})
+        state = create_state([self.mastodon.pk], {})
 
         response = self.client.post(
-            step_url(2),
+            get_step_url(2),
             data={"email": "a@example.org"},
-            headers=htmx_headers(state),
+            headers=get_htmx_headers(state),
         )
 
-        self.assertEqual(response["HX-Push-Url"], step_url(3))
+        self.assertEqual(response["HX-Push-Url"], get_step_url(3))
         self.assertContains(response, "a@example.org")
         self.assertEqual(response_state(response)["answers"]["email"], "a@example.org")
 
     def test_review_step_with_invalid_stored_answers_falls_back_to_questions(self):
-        state = WizardState(
-            vlopses=[self.mastodon.pk],
-            answers={"project-title": "Feed ranking audit"},
+        state = create_state(
+            [self.mastodon.pk], {"project-title": "Feed ranking audit"}
         )
 
-        response = self.client.get(step_url(3), headers=htmx_headers(state))
+        response = self.client.get(get_step_url(3), headers=get_htmx_headers(state))
 
-        self.assertEqual(response["HX-Push-Url"], step_url(2))
+        self.assertEqual(response["HX-Push-Url"], get_step_url(2))
         self.assertContains(response, "Institutional e-mail")
+
+    def test_step_response_carries_wizard_id_file_key_and_max_age(self):
+        response = self.client.get(
+            get_step_url(1), headers=get_htmx_headers(create_state([]))
+        )
+
+        self.assertEqual(response[WIZARD_ID_HEADER], "draft-1")
+        self.assertEqual(
+            response[FILE_KEY_HEADER], encode_file_encryption_key("draft-1")
+        )
+        self.assertEqual(response[MAX_AGE_HEADER], str(MAX_AGE))
+
+    def test_file_answer_is_stored_as_metadata_and_shown_in_review(self):
+        DsaQuestionFactory.create(
+            key="cv", text="Curriculum Vitae", input_type=InputType.FILE_UPLOAD
+        )
+        VlopseQuestionFactory.create(
+            key="mastodon-cv",
+            vlopse=self.mastodon,
+            required=True,
+            input_type=InputType.FILE_UPLOAD,
+        )
+        meta = {
+            "name": "cv.pdf",
+            "size": 2048,
+            "type": "application/pdf",
+            "sha256": "b" * 64,
+        }
+        configs = {
+            "mastodon": platform_config(
+                "mastodon", {"mastodon-email": "email", "mastodon-cv": "cv"}
+            )
+        }
+
+        # override mock to include the file field in the configs
+        with mock.patch(
+            "idat.dsa40.lib.mapping.get_vlopse_configuration_for",
+            new=configs.__getitem__,
+        ):
+            response = self.client.post(
+                get_step_url(2),
+                data={"email": "a@example.org", "cv": json.dumps(meta)},
+                headers=get_htmx_headers(create_state([self.mastodon.pk])),
+            )
+
+        self.assertEqual(response["HX-Push-Url"], get_step_url(3))
+        self.assertContains(response, "cv.pdf (2.0\xa0KB)")
+        self.assertEqual(response_state(response)["answers"]["cv"], meta)

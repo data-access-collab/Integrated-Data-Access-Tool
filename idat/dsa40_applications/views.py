@@ -16,10 +16,15 @@ from idat.dsa40.api.views import form_service
 from idat.dsa40.models import DSAQuestion, Vlopse
 from idat.dsa40_applications.forms import QuestionsForm, VlopseSelectionForm
 from idat.dsa40_applications.state import (
+    FILE_KEY_HEADER,
+    MAX_AGE,
+    MAX_AGE_HEADER,
     STATE_HEADER,
+    WIZARD_ID_HEADER,
     WizardState,
-    dump_state,
-    load_state,
+    dump_wizard_state,
+    encode_file_encryption_key,
+    load_wizard_state,
 )
 
 if typing.TYPE_CHECKING:
@@ -63,7 +68,7 @@ class ApplicationFormStep(View):
                 request, "dsa40_applications/base.html", {"load_url": request.path}
             )
 
-        self.state = load_state(request)
+        self.state = load_wizard_state(request)
         if redirect_to := self.check_prerequisites():
             return redirect_to
         return super().dispatch(request, *args, **kwargs)
@@ -115,8 +120,18 @@ class ApplicationFormStep(View):
                 **context,
             },
         )
-        response[STATE_HEADER] = dump_state(self.state)
+
+        response = self.add_response_headers(response)
         push_url(response, reverse("dsa40_applications:wizard_step", args=[self.step]))
+        return response
+
+    def add_response_headers(self, response: HttpResponse) -> HttpResponse:
+        response[STATE_HEADER] = dump_wizard_state(self.state)
+        # lets the browser encrypt/decrypt this draft's files (kept in memory)
+        response[WIZARD_ID_HEADER] = self.state["wizard_id"]
+        response[FILE_KEY_HEADER] = encode_file_encryption_key(self.state["wizard_id"])
+        # lets the browser expire stored files
+        response[MAX_AGE_HEADER] = str(MAX_AGE)
         return response
 
 
