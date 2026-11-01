@@ -80,6 +80,10 @@ def response_state(response) -> WizardState:
     "idat.dsa40.lib.mapping.get_vlopse_configuration_for",
     new=PLATFORM_CONFIGS.__getitem__,
 )
+@mock.patch(
+    "idat.dsa40.lib.transform.get_vlopse_configuration_for",
+    new=PLATFORM_CONFIGS.__getitem__,
+)
 class WizardViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -121,13 +125,17 @@ class WizardViewTests(TestCase):
 
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-    def test_tampered_state_header_returns_400(self):
+    def test_tampered_state_header_restarts_wizard_with_empty_state(self):
         headers = {"HX-Request": "true", STATE_HEADER: "not-an-encrypted-token"}
 
-        response = self.client.get(get_step_url(1), headers=headers)
+        response = self.client.get(get_step_url(3), headers=headers)
 
-        # The 400 is returned by Django's internal request handler
-        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response["HX-Push-Url"], get_step_url(1))
+        self.assertTemplateUsed(response, VlopseSelectionStep.template_name)
+        state = response_state(response)
+        self.assertEqual(state["vlopses"], [])
+        self.assertEqual(state["answers"], {})
 
     def test_vlopse_step_preselects_previously_chosen_vlopses(self):
         state = create_state([self.mastodon.pk], {})
@@ -252,9 +260,15 @@ class WizardViewTests(TestCase):
         }
 
         # override mock to include the file field in the configs
-        with mock.patch(
-            "idat.dsa40.lib.mapping.get_vlopse_configuration_for",
-            new=configs.__getitem__,
+        with (
+            mock.patch(
+                "idat.dsa40.lib.mapping.get_vlopse_configuration_for",
+                new=configs.__getitem__,
+            ),
+            mock.patch(
+                "idat.dsa40.lib.transform.get_vlopse_configuration_for",
+                new=configs.__getitem__,
+            ),
         ):
             response = self.client.post(
                 get_step_url(2),

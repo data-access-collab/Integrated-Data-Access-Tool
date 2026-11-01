@@ -6,7 +6,7 @@ import pycountry
 from django import forms
 from django.core.exceptions import ValidationError
 
-from idat.dsa40.models import DSAQuestion, InputType, Vlopse
+from idat.dsa40.models import DSAQuestion, InputType, Vlopse, VLOPSEQuestion
 
 CLIENT_FILE_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 
@@ -153,7 +153,7 @@ def get_question_field(question: DSAQuestion) -> forms.Field:  # noqa: PLR0911
         case InputType.MULTI_SELECT:
             return forms.MultipleChoiceField(choices=get_question_choices(question))
         case InputType.DATE_SELECT:
-            return forms.DateField()
+            return forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
         case _:
             return forms.CharField()
 
@@ -176,12 +176,14 @@ class QuestionsForm(forms.Form):
 
     def add_question_field(
         self,
-        question: DSAQuestion,
+        question: DSAQuestion | VLOPSEQuestion,
         required: bool,
         initial: Any,  # noqa: ANN401
     ) -> None:
         self.fields[question.key] = get_question_field(question)
         self.fields[question.key].label = question.text
-        self.fields[question.key].help_text = question.help_text
         self.fields[question.key].initial = initial
         self.fields[question.key].required = required
+
+        if isinstance(question, DSAQuestion):
+            self.fields[question.key].help_text = question.help_text

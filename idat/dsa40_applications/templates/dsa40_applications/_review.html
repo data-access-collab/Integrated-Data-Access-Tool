@@ -1,15 +1,29 @@
-<h2>Review Inputs</h2>
+<h2 class="text-lg font-bold mb-3">Review Inputs</h2>
 
 <div>
-  <p>Selected forms:</p>
+  {% for vlopse_form in vlopse_forms %}
+    <hr class="mb-3" />
+    <h3 class="text-md font-bold mb-3">{{ vlopse_form.name }} Application</h3>
 
-  <dl>
-    {% for field in vlopse_form %}
-      <dt>{{ field.label }}</dt><dd>{{ field.value|default:"—" }}</dd>
-    {% endfor %}
-  </dl>
+    <dl class="mb-3">
+      {% for field in vlopse_form.form %}
+        <dt>{{ field.label }}</dt>
+        <dd class="mb-2">
+          {% if field.widget_type == "clientfile" and field.value %}
+            {{ field.value.name }} ({{ field.value.size|filesizeformat }})
+          {% else %}
+            {{ field.value|default:"—" }}
+          {% endif %}
+        </dd>
+      {% endfor %}
+    </dl>
+  {% endfor %}
+</div>
 
-  <p>Your answers:</p>
+<hr class="mb-3" />
+
+<div>
+  <p>Your original answers:</p>
 
   <dl>
     {% for field in form %}
