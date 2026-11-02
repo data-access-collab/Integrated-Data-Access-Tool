@@ -5,10 +5,10 @@
     <hr class="mb-3" />
     <h3 class="text-md font-bold mb-3">{{ vlopse_form.name }} Application</h3>
 
-    <dl class="mb-3">
+    <dl class="mb-5">
       {% for field in vlopse_form.form %}
-        <dt>{{ field.label }}</dt>
-        <dd class="mb-2">
+        <dt class="w-full text-secondary inline-block mb-2">{{ field.label }}</dt>
+        <dd class="mb-4 p-2 rounded-sm bg-gray-100">
           {% if field.widget_type == "clientfile" and field.value %}
             {{ field.value.name }} ({{ field.value.size|filesizeformat }})
           {% else %}
@@ -38,7 +38,7 @@
     {% endfor %}
   </dl>
 
-  <p>To save progress, create an account</p>
+  <p class="text-danger mt-2 mb-2">To save progress, create an account</p>
 
   <form
     hx-post="{% url 'dsa40_applications:wizard_step' 3 %}"

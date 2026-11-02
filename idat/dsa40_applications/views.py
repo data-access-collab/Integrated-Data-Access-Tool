@@ -34,7 +34,7 @@ if typing.TYPE_CHECKING:
     from django import forms
     from django.http.request import HttpRequest
 
-STEPS = [(1, "Select VLOPSEs"), (2, "Answer Questions"), (3, "Review")]
+STEPS = [(1, "Select VLOPSEs"), (2, "Answer Questions"), (3, "Show Applications")]
 
 
 # TODO: Delete once form_handler has a service layer
