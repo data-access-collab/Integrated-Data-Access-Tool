@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from html import unescape
+from unittest import mock
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -13,9 +14,40 @@ from idat.dsa40.models import InputType
 from idat.dsa40.tests.factories import DsaQuestionFactory
 from idat.dsa40_applications.forms import (
     DEFAULT_CLIENT_FILE_TYPES,
+    TOP_COUNTRIES,
     ClientFileField,
+    IdatBaseForm,
     QuestionsForm,
+    country_field,
 )
+
+
+class IdatBaseFormTests(SimpleTestCase):
+    def test_bound_field_css_classes(self):
+        class _Form(IdatBaseForm):
+            name = forms.CharField(required=True)
+
+        form = _Form(data={})
+        form.is_valid()
+
+        self.assertTrue(
+            {"idat-form-field", "extra", "required", "error"}
+            <= set(form["name"].css_classes("extra").split())
+        )
+
+
+class CountryFieldTests(SimpleTestCase):
+    def test_validates_codes_from_both_groups_and_rejects_placeholders(self):
+        field = country_field()
+
+        self.assertEqual(field.clean(TOP_COUNTRIES[0]), TOP_COUNTRIES[0])
+        self.assertEqual(field.clean("FR"), "FR")
+        for value in ("", "---"):
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                field.clean(value)
+
+    def test_defaults_to_empty_placeholder(self):
+        self.assertEqual(country_field().choices[0][0], "")
 
 
 class QuestionsFormTests(SimpleTestCase):
@@ -61,6 +93,17 @@ class QuestionsFormTests(SimpleTestCase):
 
         self.assertTrue(valid.is_valid())
         self.assertFalse(invalid.is_valid())
+
+    def test_iso_3166_1_question_uses_country_field(self):
+        question = DsaQuestionFactory.build(
+            key="country", input_type=InputType.ISO_3166_1
+        )
+
+        with mock.patch("idat.dsa40_applications.forms.country_field") as factory:
+            form = QuestionsForm(question_config=[(True, question)], answers={})
+
+        factory.assert_called_once_with()
+        self.assertIs(form.fields["country"], factory.return_value)
 
 
 class ClientFileFieldTests(SimpleTestCase):

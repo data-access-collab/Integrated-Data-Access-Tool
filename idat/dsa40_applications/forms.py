@@ -1,5 +1,6 @@
 import json
 import re
+import typing
 from typing import Any
 
 import pycountry
@@ -7,6 +8,65 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from idat.dsa40.models import DSAQuestion, InputType, Vlopse, VLOPSEQuestion
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Iterable
+
+
+# TODO: Move to core once it exists
+class IdatBoundField(forms.BoundField):
+    """BoundField that adds the `idat-form-field` class to every field's wrapper."""
+
+    def css_classes(self, extra_classes: str | Iterable[str] | None = None) -> str:
+        return super().css_classes(["idat-form-field", *(extra_classes or [])])
+
+
+class IdatBaseForm(forms.Form):
+    """Provide css classes to target through tailwind."""
+
+    bound_field_class = IdatBoundField
+    required_css_class = "required"
+    error_css_class = "error"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.label_suffix = ""
+
+
+class IdatBaseModelForm(forms.ModelForm):
+    """Provide css classes to target through tailwind."""
+
+    bound_field_class = IdatBoundField
+    required_css_class = "required"
+    error_css_class = "error"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.label_suffix = ""
+
+
+TOP_COUNTRIES = ["CH", "DE", "NL"]
+
+
+def country_choices() -> list[tuple]:
+    names = {c.alpha_2: c.name for c in pycountry.countries}
+    top = [(code, names[code]) for code in TOP_COUNTRIES]
+    rest = sorted(
+        ((code, name) for code, name in names.items() if code not in TOP_COUNTRIES),
+        key=lambda item: item[1],
+    )
+    return [
+        ("", "Select a country…"),  # empty option, so nothing is pre-selected
+        ("---", top),  # nested lists render as <optgroup>
+        ("All countries", rest),
+    ]
+
+
+def country_field() -> forms.ChoiceField:
+    return forms.ChoiceField(choices=country_choices(), required=True)
+
+
+# TODO: END Move to core once it exists
 
 CLIENT_FILE_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 
@@ -31,8 +91,9 @@ DEFAULT_CLIENT_FILE_TYPES = (".pdf", ".docx")
 SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
-class VlopseSelectionForm(forms.Form):
+class VlopseSelectionForm(IdatBaseForm):
     vlopses = forms.ModelMultipleChoiceField(
+        label="Select VLOPSEs for which to generate a DSA40 application",
         queryset=Vlopse.objects.all(),
         widget=forms.CheckboxSelectMultiple,
         required=True,
@@ -143,9 +204,7 @@ def get_question_field(question: DSAQuestion) -> forms.Field:  # noqa: PLR0911
         case InputType.TEXT:
             return forms.CharField()
         case InputType.ISO_3166_1:
-            return forms.ChoiceField(
-                choices=[(c.alpha_2, c.name) for c in pycountry.countries],
-            )
+            return country_field()
         case InputType.FILE_UPLOAD:
             return ClientFileField()
         case InputType.SELECTION:
@@ -158,7 +217,7 @@ def get_question_field(question: DSAQuestion) -> forms.Field:  # noqa: PLR0911
             return forms.CharField()
 
 
-class QuestionsForm(forms.Form):
+class QuestionsForm(IdatBaseForm):
     def __init__(
         self,
         *args,
