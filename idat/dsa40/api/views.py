@@ -31,7 +31,6 @@ from idat.dsa40.services.condition_service import ConditionService
 from idat.dsa40.services.form_engine import FormService
 from idat.dsa40.services.questions import QuestionService
 from idat.vlopse.models import Vlopse
-from idat.vlopse.services.vlopse import VlopseConfigService
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -131,7 +130,6 @@ def create_dsa_question(
 
 form_router = Router(tags=["form"])
 
-service = VlopseConfigService()
 form_service = FormService()
 question_service = QuestionService()
 condition_service = ConditionService()
