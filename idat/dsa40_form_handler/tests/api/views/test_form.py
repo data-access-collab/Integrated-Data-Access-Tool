@@ -7,7 +7,6 @@ import pytest
 from django.test import TestCase
 
 from idat.conftest import api_prefix
-from idat.dsa40.loaders import load_questions
 from idat.dsa40_form_handler.api.views import AnswerRequest
 from idat.dsa40_form_handler.models import VLOPSEQuestion
 from idat.dsa40_form_handler.schema import Answer
@@ -52,11 +51,7 @@ def mastodon() -> Vlopse:
 class FormTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-
-        loadedqs = load_questions()
-        assert loadedqs > 4
-        mastodon = Vlopse(name="mastodon")
-        mastodon.save()
+        VlopseFactory.create(name="mastodon")
 
     @pytest.mark.django_db
     def test_applicable_questions_for_known_vlopse(self):
