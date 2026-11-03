@@ -96,6 +96,7 @@ LOCAL_APPS = [
     "idat.users",
     "idat.dsa40",
     "idat.vlopse",
+    "idat.dsa40_form_handler",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

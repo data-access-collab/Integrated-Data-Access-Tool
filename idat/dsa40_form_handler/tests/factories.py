@@ -3,7 +3,7 @@ from __future__ import annotations
 from factory import Faker, fuzzy
 from factory.django import DjangoModelFactory
 
-from idat.dsa40.models import DSAQuestion, InputType, VLOPSEQuestion
+from idat.dsa40_form_handler.models import DSAQuestion, InputType, VLOPSEQuestion
 
 
 class VlopseQuestionFactory(DjangoModelFactory[VLOPSEQuestion]):

@@ -8,7 +8,8 @@ from django.core.management import CommandError, CommandParser
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 
-from idat.dsa40.models import Vlopse, VLOPSEQuestion
+from idat.dsa40_form_handler.models import VLOPSEQuestion
+from idat.vlopse.models import Vlopse
 
 
 class Command(BaseCommand):

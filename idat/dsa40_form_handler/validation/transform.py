@@ -1,20 +1,20 @@
 from typing import TYPE_CHECKING
 
-from idat.dsa40.lib.mapping import Mapping, hydrate_mapping
-from idat.dsa40.lib.operator import (
-    AbstractOperator,
-    OperatorExecutionError,
-    hydrate_operator,
-)
-
-from .config import get_vlopse_configuration_for
-from .models import (
+from idat.dsa40_form_handler.schema import (
     Answer,
     MappedAnswer,
     MappingError,
     MappingResult,
     PlatformMapping,
     PlatformMappingComplex,
+)
+
+from .config import get_vlopse_configuration_for
+from .mapping import Mapping, hydrate_mapping
+from .operator import (
+    AbstractOperator,
+    OperatorExecutionError,
+    hydrate_operator,
 )
 
 if TYPE_CHECKING:
