@@ -509,7 +509,7 @@
   {
     "id": "G40",
     "Question": "How do you plan to scrape [SERVICE]?",
-    "Type": "selection",
+    "Type": "free form",
     "Classification": "Technical",
     "MAIN_Question": "tech-client, data-accmod, org-type",
     "Operation": "",
