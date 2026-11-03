@@ -11,13 +11,13 @@ from idat.dsa40_form_handler.api.views import AnswerRequest
 from idat.dsa40_form_handler.models import VLOPSEQuestion
 from idat.dsa40_form_handler.schema import Answer
 from idat.dsa40_form_handler.tests.factories import VlopseQuestionFactory
-from idat.vlopse.models import Vlopse
 from idat.vlopse.tests.factories import VlopseFactory
 
 if TYPE_CHECKING:
     from django.test import Client
 
     from idat.dsa40_form_handler.models import VLOPSEQuestion
+    from idat.vlopse.models import Vlopse
 
 VALID_ANSWERS = [
     {"question_id": "first-name", "value": "Joseph"},
@@ -41,13 +41,6 @@ def vlopse_question(vlopse: Vlopse) -> VLOPSEQuestion:
     return VlopseQuestionFactory.create(vlopse=vlopse)
 
 
-@pytest.fixture
-def mastodon() -> Vlopse:
-    mastodon = Vlopse(name="mastodon")
-    mastodon.save()
-    return mastodon
-
-
 class FormTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -56,7 +49,7 @@ class FormTests(TestCase):
     @pytest.mark.django_db
     def test_applicable_questions_for_known_vlopse(self):
         response = self.client.get(
-            f"{api_prefix}/questions", query_params={"vlopse": [mastodon.name]}
+            f"{api_prefix}/questions", query_params={"vlopse": "mastodon"}
         )
         assert response.status_code == 200
         body = response.json()
