@@ -7,9 +7,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.errors import HttpError
 
-from idat.dsa40.api.schema import (
-    ActionOut,
-)
+from idat.core.api.schema import ActionOut
 from idat.vlopse.api.schema import CreateVlopseSchema, UpdateVlopseSchema, VlopseOut
 from idat.vlopse.models import Vlopse
 

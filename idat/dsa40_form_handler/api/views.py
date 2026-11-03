@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Field, Path, Query, Router, Schema
 from ninja.errors import HttpError
 
-from idat.dsa40.api.schema import ActionOut
+from idat.core.api.schema import ActionOut
 from idat.dsa40_form_handler.api.schema import (
     CreateDSAQuestionSchema,
     CreateVlopseQuestionSchema,

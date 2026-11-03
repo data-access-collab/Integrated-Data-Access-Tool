@@ -2,9 +2,9 @@ from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
 
-class DSA40Config(AppConfig):
-    name = "idat.dsa40"
-    verbose_name = _("DSA40")
+class CoreConfig(AppConfig):
+    name = "idat.core"
+    verbose_name = _("IDAT Core App")
 
     def ready(self) -> None:
         """
