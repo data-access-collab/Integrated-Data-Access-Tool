@@ -9,16 +9,13 @@ from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.http import HttpRequest
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from idat.users.forms import UserAdminChangeForm
 from idat.users.tests.factories import UserFactory
-from idat.users.views import UserRedirectView
-from idat.users.views import UserUpdateView
-from idat.users.views import user_detail_view
+from idat.users.views import UserRedirectView, UserUpdateView, user_detail_view
 
 if TYPE_CHECKING:
     from django.test import RequestFactory

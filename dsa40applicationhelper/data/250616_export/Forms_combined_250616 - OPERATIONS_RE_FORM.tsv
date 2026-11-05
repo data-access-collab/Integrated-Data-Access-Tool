@@ -1,7 +1,0 @@
-Name	Description	Comments
-join-space	" ".join(inputs)	
-join-comma	", ".join(inputs)	
-make-report	create research report based on template	
-make-duration	combine start and end date	
-make-iso	map country to ISO code	
-make-data-summary	create summary of what data, how long, and why	
