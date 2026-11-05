@@ -45,8 +45,8 @@ def retrieve_health(request: HttpRequest) -> HealthOut:
     except DjangoDatabaseError:
         db_status = Status.ERROR
     try:
-        vlopses = Vlopse.objects.values_list("name", flat=True)
-        mapper = QuestionMapper.from_vlopse_names(vlopses, QuestionService())
+        vlopses = Vlopse.objects.values_list("slug", flat=True)
+        mapper = QuestionMapper.from_vlopse_slugs(vlopses, QuestionService())
         _ = mapper._validate()  # noqa: SLF001
         mapping_status = Status.OK
     except MappingValidationError:
@@ -64,7 +64,7 @@ api.add_router("/users/", "idat.users.api.views.router")
 api.add_router("/v1/health", health_router)
 api.add_router("/v1/vlopse", "idat.vlopse.api.views.router")
 api.add_router(
-    "/v1/vlopse/{vlopse_name}/question",
+    "/v1/vlopse/{vlopse_slug}/question",
     "idat.dsa40_form_handler.api.views.vlopse_question_router",
 )
 api.add_router("/v1/question", "idat.dsa40_form_handler.api.views.dsa_question_router")

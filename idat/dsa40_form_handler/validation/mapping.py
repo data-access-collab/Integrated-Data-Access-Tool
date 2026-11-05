@@ -42,7 +42,7 @@ class QuestionMapper:
     questions: QuestionService
 
     @classmethod
-    def from_vlopse_names(
+    def from_vlopse_slugs(
         cls, vlopses: list[str], questions: QuestionService
     ) -> QuestionMapper:
         try:

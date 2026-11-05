@@ -29,14 +29,14 @@ def vlopse_question(vlopse: Vlopse) -> VLOPSEQuestion:
 def test_list_vlopse_questions(client: Client, vlopse: Vlopse):
     question = VlopseQuestionFactory.create(vlopse=vlopse)
     response = client.get(
-        f"{api_prefix}/vlopse/{vlopse.name}/question",
+        f"{api_prefix}/vlopse/{vlopse.slug}/question",
     )
     assert response.status_code == 200
     assert response.json() == [
         {
             "key": question.key,
             "text": question.text,
-            "vlopse": question.vlopse.name,
+            "vlopse": question.vlopse.slug,
             "required": question.required,
             "input_type": question.input_type,
             "details": question.details,
@@ -49,13 +49,13 @@ def test_list_vlopse_questions(client: Client, vlopse: Vlopse):
 def test_get_single_vlopse_question(client: Client, vlopse_question: VLOPSEQuestion):
 
     response = client.get(
-        f"{api_prefix}/vlopse/{vlopse_question.vlopse.name}/question/{vlopse_question.key}"
+        f"{api_prefix}/vlopse/{vlopse_question.vlopse.slug}/question/{vlopse_question.key}"
     )
     assert response.status_code == 200
     assert response.json() == {
         "key": vlopse_question.key,
         "text": vlopse_question.text,
-        "vlopse": vlopse_question.vlopse.name,
+        "vlopse": vlopse_question.vlopse.slug,
         "required": vlopse_question.required,
         "input_type": vlopse_question.input_type,
         "details": vlopse_question.details,
@@ -94,7 +94,7 @@ def selection(key: str):
 def test_create_vlopse_question(client: Client, vlopse: Vlopse):
     body = boolean_selection()
     response = client.post(
-        f"{api_prefix}/vlopse/{vlopse.name}/question",
+        f"{api_prefix}/vlopse/{vlopse.slug}/question",
         data=json.dumps(body),
         content_type="application/json",
     )
@@ -104,7 +104,7 @@ def test_create_vlopse_question(client: Client, vlopse: Vlopse):
 
 @pytest.mark.django_db
 def test_get_nonexistent_vlopse_question(client: Client, vlopse: Vlopse):
-    response = client.get(f"{api_prefix}/vlopse/{vlopse.name}/question/does-not-exist")
+    response = client.get(f"{api_prefix}/vlopse/{vlopse.slug}/question/does-not-exist")
     assert response.status_code == 404
 
 
@@ -134,7 +134,7 @@ def test_create_duplicate_vlopse_question_conflicts(
 def test_create_vlopse_question_malformed_body(client: Client, vlopse: Vlopse):
     body = {"id": "x"}
     response = client.post(
-        f"{api_prefix}/vlopse/{vlopse.name}/question",
+        f"{api_prefix}/vlopse/{vlopse.slug}/question",
         data=json.dumps(body),
         content_type="application/json",
     )
@@ -146,12 +146,12 @@ def test_adding_vlopse_selection_question(client: Client, vlopse: Vlopse):
     question_key = "test_key"
     body = selection(question_key)
     response = client.post(
-        f"{api_prefix}/vlopse/{vlopse.name}/question",
+        f"{api_prefix}/vlopse/{vlopse.slug}/question",
         data=json.dumps(body),
         content_type="application/json",
     )
     assert response.status_code == 200
-    response = client.get(f"{api_prefix}/vlopse/{vlopse.name}/question/{question_key}")
+    response = client.get(f"{api_prefix}/vlopse/{vlopse.slug}/question/{question_key}")
     assert response.status_code == 200
     question = response.json()
     assert question["key"] == question_key

@@ -1,7 +1,8 @@
 - model: vlopse.Vlopse
   pk: 1
   fields:
-    name: mastodon
+    name: Mastodon
+    slug: mastodon
     platform_information: https://joinmastodon.org/
     account_required: False
     application_link: https://joinmastodon.org/hosting
