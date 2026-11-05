@@ -49,7 +49,7 @@ To run the tests, check your test coverage, and generate an HTML coverage report
 
 ### Frontend Assets (Tailwind & Alpine)
 
-[Tailwind CSS](https://tailwindcss.com/) is used for styles and 
+[Tailwind CSS](https://tailwindcss.com/) is used for styles and
 [Alpine.js](https://alpinejs.dev/) is used as Javascript/interactivity framework.
 Node.js runs on the host only.
 
@@ -62,7 +62,7 @@ Install the Node.js version pinned in `.nvmrc` (e.g. with [nvm](https://github.c
 
 #### Development
 
-Run the watcher next to the Docker stack. It rebuilds the assets 
+Run the watcher next to the Docker stack. It rebuilds the assets
 whenever a template or script changes:
 
     npm run watch
