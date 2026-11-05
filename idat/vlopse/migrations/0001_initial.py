@@ -15,7 +15,8 @@ class Migration(migrations.Migration):
             name='Vlopse',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(db_index=True, max_length=255, unique=True, verbose_name='Name of the VLOPSE')),
+                ('name', models.CharField(max_length=255, verbose_name='Name of the VLOPSE')),
+                ('slug', models.CharField(db_index=True, max_length=255, unique=True, verbose_name='Short identifier for the VLOPSE, used to key configs')),
                 ('platform_information', models.TextField(blank=True)),
                 ('account_required', models.BooleanField(default=False)),
                 ('application_link', models.URLField(blank=True)),
