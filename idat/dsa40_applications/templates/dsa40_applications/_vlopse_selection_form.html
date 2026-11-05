@@ -1,0 +1,18 @@
+<h2 class="text-lg font-bold mb-3">Select VLOPSEs</h2>
+
+<form
+  hx-post="{% url 'dsa40_applications:wizard_step' 1 %}"
+  hx-target="#application-wizard-body"
+  hx-swap="innerHTML"
+>
+  {% csrf_token %}
+
+  {{ form }}
+
+  <button
+    type="submit"
+    class="btn btn-primary"
+  >
+    Next
+  </button>
+</form>

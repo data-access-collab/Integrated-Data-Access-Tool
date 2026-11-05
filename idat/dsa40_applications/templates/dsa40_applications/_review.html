@@ -1,0 +1,52 @@
+<h2>Review Inputs</h2>
+
+<div>
+  <p>Selected forms:</p>
+
+  <dl>
+    {% for field in vlopse_form %}
+      <dt>{{ field.label }}</dt><dd>{{ field.value|default:"—" }}</dd>
+    {% endfor %}
+  </dl>
+
+  <p>Your answers:</p>
+
+  <dl>
+    {% for field in form %}
+      <dt>{{ field.label }}</dt>
+      <dd>
+        {% if field.widget_type == "clientfile" and field.value %}
+          {{ field.value.name }} ({{ field.value.size|filesizeformat }})
+        {% else %}
+          {{ field.value|default:"—" }}
+        {% endif %}
+      </dd>
+    {% endfor %}
+  </dl>
+
+  <p>To save progress, create an account</p>
+
+  <form
+    hx-post="{% url 'dsa40_applications:wizard_step' 3 %}"
+    hx-target="#application-wizard-body"
+    hx-swap="innerHTML"
+  >
+    {% csrf_token %}
+
+    <button
+      type="button"
+      hx-get="{% url 'dsa40_applications:wizard_step' 2 %}"
+      hx-target="#application-wizard-body"
+      class="btn btn-secondary"
+    >
+      Back
+    </button>
+    <button
+      type="submit"
+      class="btn btn-primary"
+      disabled
+    >
+      Not implemented yet
+    </button>
+  </form>
+</div>
