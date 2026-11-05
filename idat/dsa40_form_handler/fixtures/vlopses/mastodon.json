@@ -12,7 +12,8 @@
     "X4": "data-acc-start",
     "X5": "data-acc-end",
     "X6": "cv",
-    "X7": "prev-experience"
+    "X7": "prev-experience",
+    "X8": "research-publications"
   },
   "conditions": {
     "data-acc-end": [

@@ -38,9 +38,9 @@ vlopse_question_router = Router(tags=["vlopse", "question"])
 @vlopse_question_router.get("", response=list[VlopseQuestionOut], auth=None)
 def list_vlopse_questions(
     request: HttpRequest,
-    vlopse_name: Path[str],
+    vlopse_slug: Path[str],
 ) -> QuerySet[VLOPSEQuestion]:
-    return VLOPSEQuestion.objects.filter(vlopse__name=vlopse_name).select_related(
+    return VLOPSEQuestion.objects.filter(vlopse__slug=vlopse_slug).select_related(
         "vlopse"
     )
 
@@ -48,19 +48,19 @@ def list_vlopse_questions(
 @vlopse_question_router.get("/{question_key}", response=VlopseQuestionOut, auth=None)
 def get_vlopse_question(
     request: HttpRequest,
-    vlopse_name: Path[str],
+    vlopse_slug: Path[str],
     question_key: str,
 ) -> VLOPSEQuestion:
-    return get_object_or_404(VLOPSEQuestion, vlopse__name=vlopse_name, key=question_key)
+    return get_object_or_404(VLOPSEQuestion, vlopse__slug=vlopse_slug, key=question_key)
 
 
 @vlopse_question_router.post("", response=ActionOut, auth=None)
 def create_vlopse_question(
     request: HttpRequest,
-    vlopse_name: Path[str],
+    vlopse_slug: Path[str],
     data: CreateVlopseQuestionSchema,
 ) -> tuple[int, dict[str, bool]]:
-    vlopse = get_object_or_404(Vlopse, name=vlopse_name)
+    vlopse = get_object_or_404(Vlopse, slug=vlopse_slug)
     vlopse_question = VLOPSEQuestion(
         vlopse=vlopse, **data.model_dump(exclude_unset=True)
     )
@@ -115,9 +115,9 @@ def applicable_questions(
     request: HttpRequest,
     vlopse: list[str] = Query(...),  # noqa: B008
 ) -> list[DSAQuestionOut]:
-    selected_vlopses = Vlopse.objects.filter(name__in=vlopse)
+    selected_vlopses = Vlopse.objects.filter(slug__in=vlopse)
     if len(selected_vlopses) != len(vlopse):
-        names = [v.name for v in selected_vlopses]
+        names = [v.slug for v in selected_vlopses]
         missing = [v for v in vlopse if v not in names]
         if missing:
             raise HttpError(322, f"Unknown vlopse(s): {missing}")

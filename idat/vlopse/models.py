@@ -13,8 +13,9 @@ class Vlopse(models.Model):
         FORM = "form", _("Form")
         EMAIL = "email", _("eMail")
 
-    name = CharField(
-        _("Name of the VLOPSE"),
+    name = CharField(_("Name of the VLOPSE"), blank=False, max_length=255)
+    slug = CharField(
+        _("Short identifier for the VLOPSE, used to key configs"),
         blank=False,
         max_length=255,
         unique=True,
@@ -30,4 +31,4 @@ class Vlopse(models.Model):
     )
 
     def __str__(self) -> str:
-        return self.name
+        return self.slug

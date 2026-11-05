@@ -1,7 +1,8 @@
 - model: vlopse.Vlopse
   pk: 1
   fields:
-    name: mastodon
+    name: Mastodon
+    slug: mastodon
     platform_information: https://joinmastodon.org/
     account_required: False
     application_link: https://joinmastodon.org/hosting
@@ -53,6 +54,13 @@
   fields:
     key: test7
     text: "First name of Lead Researcher"
+    input_type: selection
+    required: True
+    vlopse: 1
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test8
+    text: "What are the applications of your research?"
     input_type: selection
     required: True
     vlopse: 1

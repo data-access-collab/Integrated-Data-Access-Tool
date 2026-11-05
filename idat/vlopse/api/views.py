@@ -25,10 +25,10 @@ def list_vlopses(request: HttpRequest) -> QuerySet[Vlopse]:
     return Vlopse.objects.all()
 
 
-@router.get("/{name}", response=VlopseOut, auth=None)
-def retrieve_vlopse(request: HttpRequest, name: str) -> Vlopse:
+@router.get("/{slug}", response=VlopseOut, auth=None)
+def retrieve_vlopse(request: HttpRequest, slug: str) -> Vlopse:
     """Get specific VLOPSE by its name"""
-    return get_object_or_404(Vlopse, name=name)
+    return get_object_or_404(Vlopse, slug=slug)
 
 
 @router.post("", response={200: ActionOut}, auth=None)
@@ -45,22 +45,22 @@ def add_vlopse(
     return 200, {"success": True}
 
 
-@router.put("/{name}", response={200: ActionOut}, auth=None)
+@router.put("/{slug}", response={200: ActionOut}, auth=None)
 def update_vlopse(
-    request: HttpRequest, name: str, data: UpdateVlopseSchema
+    request: HttpRequest, slug: str, data: UpdateVlopseSchema
 ) -> tuple[int, dict[str, bool]]:
-    vlopse = get_object_or_404(Vlopse, name=name)
-    vlopse.name = data.new_name
+    vlopse = get_object_or_404(Vlopse, slug=slug)
+    vlopse.slug = data.new_slug
     vlopse.save()
     return 200, {"success": True}
 
 
 @router.delete(
-    "/{name}",
+    "/{slug}",
     response={200: ActionOut} | {202: ActionOut},
     auth=None,
 )
-def delete_vlopse(request: HttpRequest, name: str) -> tuple[int, dict[str, bool]]:
-    vlopse = get_object_or_404(Vlopse, name=name)
+def delete_vlopse(request: HttpRequest, slug: str) -> tuple[int, dict[str, bool]]:
+    vlopse = get_object_or_404(Vlopse, slug=slug)
     vlopse.delete()
     return 200, {"success": True}

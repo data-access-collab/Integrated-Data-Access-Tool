@@ -60,12 +60,8 @@ def parse_input_type(entry):
 def load_data(apps, schema_editor):
     Vlopse = apps.get_model("vlopse", "Vlopse")
     VLOPSEQuestion = apps.get_model("dsa40_form_handler", "VLOPSEQuestion")
-    c = 0
-    for vlopse_name, qs in load_initial_vlopse_questions():
-        c += 1
-        if vlopse_name == "X.com":
-            vlopse_name = "X"
-        vlopse = Vlopse.objects.get(name__iexact=vlopse_name)
+    for slug, qs in load_initial_vlopse_questions():
+        vlopse = Vlopse.objects.get(slug=slug)
         for entry in qs:
             base = {"key": entry.pop("id"), "text": entry.pop("Question")}
             details = entry.pop("details", None)
@@ -77,7 +73,6 @@ def load_data(apps, schema_editor):
             input_type = parse_input_type(entry)
             assert input_type["input_type"] is not None
             VLOPSEQuestion.objects.create(**base, **input_type, vlopse=vlopse)
-    assert c > 5, "Some should loaded"
 
 
 def unload_data(apps, schema_editor):

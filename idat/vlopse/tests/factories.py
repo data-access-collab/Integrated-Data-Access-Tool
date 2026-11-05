@@ -8,6 +8,7 @@ from idat.vlopse.models import Vlopse
 
 class VlopseFactory(DjangoModelFactory[Vlopse]):
     name = Faker("name")
+    slug = Faker("first_name")
     platform_information = Faker("paragraph")
     account_required = Faker("pybool")
     application_link = Faker("url")

@@ -4,7 +4,7 @@ from idat.dsa40_form_handler.models import DSAQuestion, VLOPSEQuestion
 
 
 class VlopseQuestionOut(ModelSchema):
-    vlopse: str = Field(..., alias="vlopse.name")
+    vlopse: str = Field(..., alias="vlopse.slug")
 
     class Meta:
         model = VLOPSEQuestion

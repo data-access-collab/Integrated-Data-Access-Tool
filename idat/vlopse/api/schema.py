@@ -16,4 +16,4 @@ class CreateVlopseSchema(ModelSchema):
 
 
 class UpdateVlopseSchema(Schema):
-    new_name: str
+    new_slug: str

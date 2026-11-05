@@ -52,7 +52,7 @@ class FormService:
         self, answers: list[Answer], vlopses: list[str]
     ) -> dict[str, str]:
         result: dict[str, str] = {}
-        mapper = QuestionMapper.from_vlopse_names(vlopses, self.question_service)
+        mapper = QuestionMapper.from_vlopse_slugs(vlopses, self.question_service)
         mapped = mapper.map_vlopse_to_unified()
 
         for a in answers:
@@ -79,7 +79,7 @@ class FormService:
         self, vlopses: list[str]
     ) -> list[tuple[bool, DSAQuestion]]:
         # FIXME: Question mapper should just build a mapping and provide traces, can be annotated in a amapper service later. this form engine is way too huge anyhow  # noqa: E501
-        mapper = QuestionMapper.from_vlopse_names(vlopses, self.question_service)
+        mapper = QuestionMapper.from_vlopse_slugs(vlopses, self.question_service)
         return mapper.map_vlopse_to_unified()
 
     def enhance_with_text(

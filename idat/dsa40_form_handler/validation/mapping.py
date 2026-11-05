@@ -42,7 +42,7 @@ class QuestionMapper:
     questions: QuestionService
 
     @classmethod
-    def from_vlopse_names(
+    def from_vlopse_slugs(
         cls, vlopses: list[str], questions: QuestionService
     ) -> QuestionMapper:
         try:
@@ -55,7 +55,7 @@ class QuestionMapper:
             raise MappingValidationError from e
 
     def _validate(self) -> None:
-        question_ids = [q.id for q in self.questions.get_all_unified()]
+        question_ids = [q.key for q in self.questions.get_all_unified()]
         invalid: set[Mapping] = set()
         # TODO: Check if a mapping refers to a question not defined by the vlopse
         for vlopse, mappings in self._mapping.items():
