@@ -13,7 +13,3 @@ class HealthOut(Schema):
     db: Status
     dsa_status: int | Status
     mapping_status: int | Status
-
-
-class ActionOut(Schema):
-    success: bool

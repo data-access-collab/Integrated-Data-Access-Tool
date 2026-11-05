@@ -45,10 +45,14 @@ class QuestionMapper:
     def from_vlopse_names(
         cls, vlopses: list[str], questions: QuestionService
     ) -> QuestionMapper:
-        mapping = {
-            vlopse: get_vlopse_configuration_for(vlopse).mappings for vlopse in vlopses
-        }
-        return cls(mapping, questions)
+        try:
+            mapping = {
+                vlopse: get_vlopse_configuration_for(vlopse).mappings
+                for vlopse in vlopses
+            }
+            return cls(mapping, questions)
+        except FileNotFoundError as e:
+            raise MappingValidationError from e
 
     def _validate(self) -> None:
         question_ids = [q.id for q in self.questions.get_all_unified()]
