@@ -23,6 +23,7 @@ VALID_ANSWERS = [
     {"question_id": "data-acc-end", "value": "01-07-2000"},
     {"question_id": "cv", "value": "cv.pdf"},
     {"question_id": "prev-experience", "value": "No"},
+    {"question_id": "research-publications", "value": "No"},
 ]
 
 

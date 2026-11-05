@@ -56,4 +56,11 @@
     input_type: selection
     required: True
     vlopse: 1
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test8
+    text: "What are the applications of your research?"
+    input_type: selection
+    required: True
+    vlopse: 1
     # // "Options": "Yes, No",
