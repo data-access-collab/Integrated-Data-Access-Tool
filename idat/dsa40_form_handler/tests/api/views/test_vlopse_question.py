@@ -65,7 +65,7 @@ def test_get_single_vlopse_question(client: Client, vlopse_question: VLOPSEQuest
 
 def boolean_selection():
     return {
-        "key": "V1",
+        "key": "test_1",
         "text": "Are you affiliated with an academic institution?",
         "required": True,
         "input_type": "selection",
@@ -143,7 +143,7 @@ def test_create_vlopse_question_malformed_body(client: Client, vlopse: Vlopse):
 
 @pytest.mark.django_db
 def test_adding_vlopse_selection_question(client: Client, vlopse: Vlopse):
-    question_key = "T2"
+    question_key = "test_key"
     body = selection(question_key)
     response = client.post(
         f"{api_prefix}/vlopse/{vlopse.name}/question",

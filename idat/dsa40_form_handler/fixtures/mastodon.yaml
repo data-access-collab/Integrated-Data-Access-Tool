@@ -1,0 +1,59 @@
+- model: vlopse.Vlopse
+  pk: 1
+  fields:
+    name: mastodon
+    platform_information: https://joinmastodon.org/
+    account_required: False
+    application_link: https://joinmastodon.org/hosting
+    modality: form
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test1
+    text: "Full Name"
+    input_type: "free-form"
+    required: True
+    vlopse: 1
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test2
+    text: eMail in your institution
+    input_type: free-form
+    # help_text: "The Applicant's email address must show their institutional affiliation. Example: emailaddress@umich.edu, emailaddress2@pewresearch.org"
+    required: True
+    vlopse: 1
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test3
+    text: "What country is the research taking place in?"
+    input_type: free-form
+    required: True
+    vlopse: 1
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test4
+    text: "When does the access start?"
+    input_type: free-form
+    required: True
+    vlopse: 1
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test5
+    text: "When does the access end?"
+    input_type: free-form
+    required: True
+    vlopse: 1
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test6
+    text: "Please upload your most recent cv"
+    input_type: file-upload
+    required: True
+    vlopse: 1
+- model: dsa40_form_handler.VLOPSEQuestion
+  fields:
+    key: test7
+    text: "First name of Lead Researcher"
+    input_type: selection
+    required: True
+    vlopse: 1
+    # // "Options": "Yes, No",
