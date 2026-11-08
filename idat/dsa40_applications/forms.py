@@ -7,7 +7,8 @@ import pycountry
 from django import forms
 from django.core.exceptions import ValidationError
 
-from idat.dsa40.models import DSAQuestion, InputType, Vlopse, VLOPSEQuestion
+from idat.dsa40_form_handler.models import DSAQuestion, InputType, VLOPSEQuestion
+from idat.vlopse.models import Vlopse
 
 if typing.TYPE_CHECKING:
     from collections.abc import Iterable

@@ -13,9 +13,6 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from django_htmx.http import push_url
 
-from idat.dsa40.api.views import form_service
-from idat.dsa40.lib.models import Answer
-from idat.dsa40.models import DSAQuestion, Vlopse, VLOPSEQuestion
 from idat.dsa40_applications.forms import QuestionsForm, VlopseSelectionForm
 from idat.dsa40_applications.state import (
     FILE_KEY_HEADER,
@@ -29,6 +26,10 @@ from idat.dsa40_applications.state import (
     encode_file_encryption_key,
     load_wizard_state,
 )
+from idat.dsa40_form_handler.api.views import form_service
+from idat.dsa40_form_handler.models import DSAQuestion, VLOPSEQuestion
+from idat.dsa40_form_handler.schema import Answer
+from idat.vlopse.models import Vlopse
 
 if typing.TYPE_CHECKING:
     from django import forms
