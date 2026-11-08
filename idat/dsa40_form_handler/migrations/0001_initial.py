@@ -22,7 +22,16 @@ class Migration(migrations.Migration):
                 ('help_text', models.TextField(blank=True)),
                 ('input_type', models.CharField(choices=[('text', 'Text'), ('file_upload', 'File Upload'), ('date_select', 'Date Select'), ('selection', 'Selection'), ('multi_select', 'Multi Select'), ('iso-3166-1', 'Iso 3166 1')], default='text', max_length=16)),
                 ('config', models.JSONField(blank=True, null=True)),
+                ('category', models.CharField(choices=[
+                    ('general', 'General'), ('contact_details', 'Contact details'), ('collaboration', 'Collaboration'),
+                    ('qualifications', 'Qualifications'), ('affiliation', 'Affiliation'),
+                    ('funding_commercial_interests', 'Funding'), ('research_project', 'Research project'),
+                    ('technical', 'Technical'), ('requested_data', 'Requested data'),
+                    ('previous_experience', 'Previous experience'), ('data_security', 'Data security'),
+                    ('legal', 'Legal')
+                ], default='general', max_length=32)),
             ],
+            options={'verbose_name': 'DSA Question'},
         ),
         migrations.CreateModel(
             name='VLOPSEQuestion',
@@ -35,6 +44,15 @@ class Migration(migrations.Migration):
                 ('details', models.TextField(blank=True)),
                 ('config', models.JSONField(blank=True, null=True)),
                 ('vlopse', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='vlopse.vlopse')),
+                ('category', models.CharField(choices=[
+                    ('general', 'General'), ('contact_details', 'Contact details'), ('collaboration', 'Collaboration'),
+                    ('qualifications', 'Qualifications'), ('affiliation', 'Affiliation'),
+                    ('funding_commercial_interests', 'Funding'), ('research_project', 'Research project'),
+                    ('technical', 'Technical'), ('requested_data', 'Requested data'),
+                    ('previous_experience', 'Previous experience'), ('data_security', 'Data security'),
+                    ('legal', 'Legal')
+                ], default='general', max_length=32)),
             ],
+            options={'verbose_name': 'VLOPSE Question'},
         ),
     ]

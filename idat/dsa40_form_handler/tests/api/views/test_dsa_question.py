@@ -51,6 +51,7 @@ def test_get_single_dsa_question(client: Client, dsa_question: DSAQuestion):
         "config": dsa_question.config,
         "options": [],
         "required": True,
+        "category": dsa_question.category,
     }
 
 

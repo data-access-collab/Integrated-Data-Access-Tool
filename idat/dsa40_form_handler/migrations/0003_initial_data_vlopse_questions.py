@@ -26,12 +26,12 @@ def parse_input_type(entry):
             result["input_type"] = "text"
         case "selection" | "multi-select":
             if opts == "New Research Program Application":
-                result["input_type"] = "free form"
+                result["input_type"] = "text"
             elif opts == "[Date]":
-                result["input_type"] = "date-select"
+                result["input_type"] = "date_select"
             elif opts in {"[EU Countries]", "[Countries]"}:
-                result["input_type"] = i_type
-                result["config"] = {"type": "selection", "options": opts}
+                result["input_type"] = "iso-3166-1"
+                result["config"] = {"type": "iso-3166-1"}
             else:
                 if opts in {"I agree", "I understand", None, ""}:
                     opts = "Yes, No"
@@ -44,13 +44,16 @@ def parse_input_type(entry):
                 if len(opts) <= 1:
                     raise TypeError
 
-                result["input_type"] = i_type
-                result["config"] = {"type": i_type, "options": opts}
+                multiple = i_type == "multi-select"
+                result["input_type"] = "multi_select" if multiple else "selection"
+                result["config"] = {"type": "selection", "options": opts}
+                if multiple:
+                    result["config"]["multiple"] = True
         case "file upload":
             result["input_type"] = "file_upload"
 
         case "date-select":
-            result["input_type"] = i_type
+            result["input_type"] = "date_select"
         case _:
             raise NotImplementedError(f"{i_type} not yet implemented!")
 
@@ -67,8 +70,12 @@ def load_data(apps, schema_editor):
             vlopse_name = "X"
         vlopse = Vlopse.objects.get(name__iexact=vlopse_name)
         for entry in qs:
-            base = {"key": entry.pop("id"), "text": entry.pop("Question")}
-            details = entry.pop("details", None)
+            base = {
+                "key": entry.pop("id"),
+                "text": entry.pop("Question"),
+                "category": entry.pop("category"),
+            }
+            details = entry.pop("Details", None)
             if details is None:
                 details = ""
             base["details"] = details
@@ -83,7 +90,6 @@ def load_data(apps, schema_editor):
 def unload_data(apps, schema_editor):
     # Optional but nice for reversibility in dev
     apps.get_model("dsa40_form_handler", "VLOPSEQuestion").objects.all().delete()
-    apps.get_model("dsa40_form_handler", "DSAQuestion").objects.all().delete()
 
 
 class Migration(migrations.Migration):

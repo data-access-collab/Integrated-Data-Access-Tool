@@ -26,7 +26,6 @@ def load_data(apps, schema_editor):
     for entry in load_initial_dsa_questions():
         config = None
         assert "config" not in entry, "You're importing old fixtures"
-        entry.pop("category", None)
         entry.pop("granularity", None)
         entry["key"] = entry.pop("id")
         entry["text"] = entry.pop("text_en")
