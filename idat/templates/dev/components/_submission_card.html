@@ -1,0 +1,29 @@
+<div class="flex flex-col gap-md">
+  <c-submission-card
+    platform="YouTube"
+    operator="Google Ireland Ltd. · Researcher program"
+    form-url="https://example.org/youtube-form"
+    copy-href="#submission-card"
+    :field="form.submitted_youtube"
+  />
+  <c-submission-card
+    kind="account"
+    platform="TikTok"
+    operator="TikTok Technology Ltd. · Research API"
+    account="TikTok for Developers"
+    form-url="https://example.org/tiktok-form"
+    copy-href="#submission-card"
+    name="submitted_tiktok_{{ theme }}"
+  />
+  <c-submission-card
+    kind="email"
+    platform="Snapchat"
+    operator="Snap B.V. · DSA researcher access"
+    email-to="DSA-Researcher-Access@snapchat.com"
+    email-subject="Art. 40(12) DSA data access application — Recommender systems & youth mental health"
+    :email-body="submission.email_body"
+    :attachments="submission.attachments"
+    zip-href="#submission-card"
+    name="submitted_snapchat_{{ theme }}"
+  />
+</div>

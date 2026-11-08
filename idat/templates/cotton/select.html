@@ -1,0 +1,109 @@
+{% comment %}
+  Label above input.
+  Required = small red asterisk.
+  Help icon opens the matching tip in the help panel.
+
+  Props:
+    field        Django BoundField (:field="form.x"): options (selection included), id, name,
+                 label, required, disabled, help_text and errors come from it
+    options      list of (value, label) pairs without a form: :options="org_types"
+    value        selected value without a form
+    placeholder  text of a leading empty option, e.g. "Select organisation type";
+                 replaces the field's own blank choice
+    label        label text without a form
+    name         select name without a form
+    id           select id without a form; defaults to name
+    required     boolean attribute, without a form
+    help-text    helper text without a form
+    help-tip     help-panel tip id; shows the help icon
+
+  Focus, error and disabled are CSS states; errors replace the helper text.
+  {{ attrs }} go on the <select> (x-model, x-on:change, disabled …); class goes on the wrapper.
+
+  Usage:
+    <c-select :field="form.organisation_type" placeholder="Select organisation type" help-tip="organisation-type" />
+    <c-select name="role" label="Role" :options="roles" value="pi" />
+{% endcomment %}
+
+<c-vars
+  field=""
+  options=""
+  value=""
+  placeholder=""
+  label=""
+  name=""
+  id=""
+  :required="False"
+  help-text=""
+  help-tip=""
+  class=""
+/>
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name help=field.help_text|default:help_text current=field.value|default:value|default_if_none:"" %}
+  <c-field-layout
+    :field="field"
+    :input-id="input_id"
+    :label="label"
+    :required="required"
+    :help-text="help_text"
+    :help-tip="help_tip"
+    class="{{ class }}"
+  >
+    <div class="relative">
+      <select
+        {% if input_id %}id="{{ input_id }}"{% endif %}
+        {% if input_name %}name="{{ input_name }}"{% endif %}
+        {% if required or field.field.required %}required{% endif %}
+        {% if field.field.disabled %}disabled{% endif %}
+        {% if field.errors %}
+          aria-invalid="true"
+          aria-describedby="{{ input_id }}-error"
+        {% elif help %}
+          aria-describedby="{{ input_id }}-help"
+        {% endif %}
+        x-data="{ empty: {% if current|stringformat:"s" %}false{% else %}true{% endif %} }"
+        x-on:change="empty = $el.value === ''"
+        x-bind:class="{ 'text-tertiary': empty, 'text-primary': !empty }"
+        class="
+          h-11 w-full cursor-pointer appearance-none rounded-sm border bg-surface bg-none py-xs pl-sm pr-10 type-body-md
+          {% if current|stringformat:"s" %}text-primary{% else %}text-tertiary{% endif %}
+          focus:border-focus focus:ring-1 focus:ring-inset focus:ring-focus
+          disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled
+          {% if field.errors %}border-danger ring-1 ring-inset ring-danger{% else %}border-strong{% endif %}
+        "
+        {{ attrs }}
+      >
+        {% if placeholder %}<option value="">{{ placeholder }}</option>{% endif %}
+        {% if field %}
+          {% for option in field.subwidgets %}
+            {% with option_value=option.data.value|stringformat:"s" %}
+              {% if option_value or not placeholder %}
+                <option
+                  value="{{ option_value }}"
+                  class="text-primary"
+                  {% if option.data.selected %}selected{% endif %}
+                >
+                  {{ option.choice_label }}
+                </option>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        {% else %}
+          {% for option_value, option_label in options %}
+            <option
+              value="{{ option_value }}"
+              class="text-primary"
+              {% if option_value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}
+            >
+              {{ option_label }}
+            </option>
+          {% endfor %}
+        {% endif %}
+      </select>
+      <c-icon
+        name="chevron-down"
+        class="pointer-events-none absolute top-1/2 right-sm size-5 -translate-y-1/2 text-icon-default group-has-disabled:text-disabled"
+      />
+    </div>
+  </c-field-layout>
+{% endwith %}

@@ -1,0 +1,25 @@
+<div class="flex max-w-md flex-col gap-lg">
+  <p class="type-body-sm text-tertiary">
+    Type a date (DD / MM / YYYY) or open the calendar with the button or Alt + ↓. Escape or a click outside closes it.
+  </p>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Default (bound field, initial date)</span>
+    <c-date-field :field="form.planned_start" help-tip="planned-start" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Error</span>
+    <c-date-field :field="form_errors.planned_start" help-tip="planned-start" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Empty · custom helper (plain props)</span>
+    <c-date-field
+      name="date_empty_{{ theme }}"
+      label="Planned end of data access"
+      help-text="Leave empty for open-ended access."
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Disabled (not designed in Figma)</span>
+    <c-date-field name="date_disabled_{{ theme }}" label="Submitted on" value="2026-11-05" disabled />
+  </div>
+</div>

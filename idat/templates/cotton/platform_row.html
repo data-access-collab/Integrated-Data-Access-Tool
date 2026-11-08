@@ -1,0 +1,71 @@
+{% comment %}
+  Compact, selectable platform row for the platform picker once all designated
+  VLOPs/VLOSEs are in the tool. Use instead of <c-platform-card> when more than ~12
+  platforms are listed. The whole row is the checkbox's label.
+
+  Props:
+    name        platform name, e.g. "TikTok"
+    initial     letter in the logo tile; defaults to the first letter of name
+    operator    legal entity, e.g. "TikTok Technology Ltd."; omitted when empty
+    questions   number of platform-specific questions ("+14 questions")
+    channel     submission channel, e.g. "Web form"
+    response    typical response time, e.g. "4–6 weeks"
+    selected    boolean attribute: checked
+    input-name  checkbox name
+    value       submitted value, e.g. the VLOPSE id
+
+  The extra columns keep fixed widths so rows line up as a table; they render empty when
+  their prop is. When the row is narrower than 672px (container query, @2xl) they move into
+  a line under the name ("+14 questions · Web form · 4–6 weeks"), so the name never gets
+  squeezed. {{ attrs }} (x-model, disabled, aria-*) go on the checkbox; class goes on
+  the row.
+
+  Usage:
+    <div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
+      {% for vlopse in vlopses %}
+        <c-platform-row :name="vlopse.name" :operator="vlopse.operator" questions="14"
+          channel="Web form" response="4–6 weeks" input-name="vlopses" :value="vlopse.pk" />
+      {% endfor %}
+    </div>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars
+  name=""
+  initial=""
+  operator=""
+  questions=""
+  channel=""
+  response=""
+  selected=""
+  input-name=""
+  value=""
+  class=""
+/>
+{% if questions %}{% blocktranslate count n=questions|add:"0" asvar questions_label %}+{{ n }} question{% plural %}+{{ n }} questions{% endblocktranslate %}{% endif %}
+<label
+  class="@container flex min-h-14 cursor-pointer items-center gap-md border-b border-default bg-surface px-md py-xs has-checked:bg-selected {{ class }}"
+>
+  <c-checkbox.control :name="input_name" :value="value" :checked="selected" :attrs="attrs" />
+  <span
+    class="flex size-8 shrink-0 items-center justify-center rounded-sm bg-brand type-label-lg text-on-brand"
+    aria-hidden="true"
+  >{{ initial|default:name|slice:":1" }}</span>
+  <span class="flex min-w-0 flex-1 flex-col">
+    <span class="truncate type-label-lg text-primary">{{ name }}</span>
+    {% if operator %}<span class="truncate type-body-sm text-tertiary">{{ operator }}</span>{% endif %}
+    {# Narrow rows: the columns move into a line under the name. #}
+    {% if questions or channel or response %}
+      <span class="flex flex-wrap gap-x-xs type-body-sm text-secondary @2xl:hidden">
+        {% if questions %}<span>{{ questions_label }}</span>{% endif %}
+        {% if channel %}{% if questions %}<span aria-hidden="true">·</span>{% endif %}<span
+          >{{ channel }}</span>{% endif %}
+        {% if response %}{% if questions or channel %}<span aria-hidden="true">·</span>{% endif %}<span
+          >{{ response }}</span>{% endif %}
+      </span>
+    {% endif %}
+  </span>
+  <span class="hidden w-37.5 shrink-0 type-body-sm text-secondary @2xl:block">{{ questions_label }}</span>
+  <span class="hidden w-30 shrink-0 type-body-sm text-secondary @2xl:block">{{ channel }}</span>
+  <span class="hidden w-25 shrink-0 type-body-sm text-secondary @2xl:block">{{ response }}</span>
+</label>

@@ -1,0 +1,53 @@
+{% comment %}
+  One DocumentVersion (version, editor, edited_at) and where it was sent.
+
+  Props:
+    state          "draft" (default) · "sent" · "superseded"; sets the tag and badge tone
+    version        version tag, e.g. "v2"
+    title          e.g. "Reply to clarification"
+    meta           e.g. "Edited by Jana Doe · 3 Nov 2026"
+    status         badge label, e.g. "Draft · not sent"; omitted when empty
+    download-href  download link; the icon is omitted when empty
+
+  Renders an <li>: put the versions in a <ul>.
+
+  Usage:
+    <ul>
+      <c-document-version-row version="v2" title="Reply to clarification"
+        meta="Edited by Jana Doe · 3 Nov 2026" status="Draft · not sent" download-href="…" />
+      <c-document-version-row state="sent" version="v1" title="Generated application"
+        meta="Generated 1 Oct 2026 · 18 fields" status="Sent to TikTok · 2 Oct" download-href="…" />
+    </ul>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars state="draft" version="" title="" meta="" status="" download-href="" class="" />
+<li class="flex list-none items-start gap-sm py-sm {{ class }}" {{ attrs }}>
+  <span
+    class="shrink-0 rounded-sm px-xs py-2xs type-label-md text-primary {% if state == "draft" %}bg-warning-subtle{% else %}bg-surface-muted{% endif %}"
+  >{{ version }}</span>
+  <div class="flex min-w-0 flex-1 flex-col items-start gap-2xs">
+    <p class="type-label-lg text-primary">{{ title }}</p>
+    {% if meta %}<p class="type-body-sm text-tertiary">{{ meta }}</p>{% endif %}
+    {% if status %}
+      <c-badge
+        tone="{% if state == "sent" %}info{% elif state == "superseded" %}neutral{% else %}warning{% endif %}"
+        :label="status"
+        :dot="False"
+      />
+    {% endif %}
+  </div>
+  {% if download_href %}
+    <a
+      href="{{ download_href }}"
+      download
+      class="shrink-0 rounded-sm text-icon-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      <c-icon
+        name="download"
+        class="size-5"
+        label="{% blocktranslate %}Download {{ title }} {{ version }}{% endblocktranslate %}"
+      />
+    </a>
+  {% endif %}
+</li>

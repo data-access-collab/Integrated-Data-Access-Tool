@@ -1,0 +1,38 @@
+<div class="flex flex-col gap-sm">
+  <c-community-issue-card
+    platform="TikTok"
+    status-label="Open · 23 researchers affected"
+    updated="Updated 2 days ago"
+    title="Research API form rejects teams with non-EU co-applicants"
+    href="#community-issue-card"
+    votes="12"
+    comments="8"
+    cases="3"
+  >
+    The form blocks submission as soon as any team member is based outside the EU, although Art. 40(8) only requires
+    the applicant organisation to be established in the EU.
+    <c-slot name="categories">
+      <c-badge tone="neutral" label="Eligibility" :dot="False" />
+      <c-badge tone="neutral" label="Art. 40(8)" :dot="False" />
+      <c-badge tone="neutral" label="Form validation" :dot="False" />
+    </c-slot>
+  </c-community-issue-card>
+  <c-community-issue-card
+    status="resolved"
+    platform="TikTok"
+    status-label="Resolved by TikTok"
+    updated="Resolved 20 Oct 2026"
+    title="Research API form rejects teams with non-EU co-applicants"
+    href="#community-issue-card"
+    votes="13"
+    voted
+    comments="8"
+    cases="3"
+  >
+    TikTok changed the form on 20 Oct: only the applicant organisation has to be established in the EU.
+    <c-slot name="categories">
+      <c-badge tone="neutral" label="Eligibility" :dot="False" />
+      <c-badge tone="neutral" label="Art. 40(8)" :dot="False" />
+    </c-slot>
+  </c-community-issue-card>
+</div>

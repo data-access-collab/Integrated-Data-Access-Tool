@@ -1,0 +1,50 @@
+{% comment %}
+  CaseTracker: records a CaseStatusEvent and stores the platform's reply as a
+  Communication + Document (pasted text or uploaded .eml/.msg/PDF).
+
+  Props:
+    form    Django form with the fields platform, response_type, response_date, reply,
+            reply_file (FileField), deadline and remind (:form="reply_form")
+    action  form target (POST)
+    id      dialog id, default "log-platform-reply"
+    open    boolean attribute: render open in place (gallery)
+
+  Open it with $dispatch('open-dialog', { id: 'log-platform-reply' }). Cancel and × close
+  it without saving. The reply file is a plain upload submitted with the form (not the
+  browser-encrypted wizard flow): .pdf, .eml or .msg, max. 10 MB, checked in the browser.
+
+  Usage:
+    <c-dialog.log-platform-reply :form="reply_form" action="{% url … %}" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars form="" action="" id="log-platform-reply" :open="False" class="" />
+<c-dialog
+  :id="id"
+  :action="action"
+  multipart
+  :open="open"
+  :class="class"
+  :attrs="attrs"
+  title="{% translate "Log platform reply" %}"
+  description="{% translate "The reply is saved in the case documents with its date and sender, so every step stays traceable. If you opted in, the anonymised reply time feeds the community statistics." %}"
+>
+  <c-select :field="form.platform" />
+  <c-select :field="form.response_type" />
+  <c-date-field :field="form.response_date" help-tip="reply-date" />
+  <c-textarea :field="form.reply" />
+  <c-file-upload
+    :field="form.reply_file"
+    help-tip="reply-file"
+    plain
+    accept=".pdf,.eml,.msg"
+    max-size="10485760"
+    hint="{% translate "PDF, EML or MSG · max. 10 MB" %}"
+  />
+  <c-date-field :field="form.deadline" help-tip="reply-deadline" />
+  <c-checkbox :field="form.remind" />
+  <c-slot name="footer">
+    <c-button variant="secondary" label="{% translate "Cancel" %}" x-on:click="$el.closest('dialog').close()" />
+    <c-button label="{% translate "Save update" %}" type="submit" />
+  </c-slot>
+</c-dialog>

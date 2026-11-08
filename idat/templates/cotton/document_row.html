@@ -1,0 +1,56 @@
+{% comment %}
+  One row per case document (Documents tab). Versions open on click; the status badge
+  shows the state of the latest version.
+
+  Props:
+    title          e.g. "Application · TikTok"
+    meta           e.g. "Web form · 18 fields · 2 versions"
+    href           opens the versions; the whole row is the hit target
+    icon           document icon, default "file-text"
+    status         badge label of the latest version; omitted when empty
+    status-tone    badge tone, default "warning" (see <c-badge>)
+    date           e.g. "3 Nov 2026"
+    download-href  download link; the icon is omitted when empty
+
+  Renders an <li>: put the rows in a <ul>.
+
+  Usage:
+    <ul>
+      <c-document-row title="Application · TikTok" meta="Web form · 18 fields · 2 versions"
+        href="{% url … %}" status="Draft" date="3 Nov 2026" download-href="…" />
+    </ul>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars title="" meta="" href="" icon="file-text" status="" status-tone="warning" date="" download-href="" class="" />
+<li
+  class="relative flex min-h-16 list-none items-center gap-md border-b border-default bg-surface px-md py-xs {{ class }}"
+  {{ attrs }}
+>
+  <span class="flex size-9 shrink-0 items-center justify-center rounded-md bg-info-subtle">
+    <c-icon :name="icon" class="size-5 text-icon-default" />
+  </span>
+  <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+    {% if href %}
+      <a
+        href="{{ href }}"
+        class="type-label-lg text-primary outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
+      >{{ title }}</a>
+    {% else %}
+      <p class="type-label-lg text-primary">{{ title }}</p>
+    {% endif %}
+    {% if meta %}<p class="type-body-sm text-tertiary">{{ meta }}</p>{% endif %}
+  </div>
+  {% if status %}<c-badge :tone="status_tone" :label="status" class="shrink-0" />{% endif %}
+  <span class="w-21 shrink-0 text-right type-body-sm text-secondary">{{ date }}</span>
+  {% if download_href %}
+    <a
+      href="{{ download_href }}"
+      download
+      class="relative z-10 shrink-0 rounded-sm text-icon-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      <c-icon name="download" class="size-5" label="{% blocktranslate %}Download {{ title }}{% endblocktranslate %}" />
+    </a>
+  {% endif %}
+  {% if href %}<c-icon name="chevron-right" class="size-5 shrink-0 text-icon-default" />{% endif %}
+</li>

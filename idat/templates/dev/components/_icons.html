@@ -1,0 +1,45 @@
+{# Every file in templates/icons/ (icon_names from the view), so new icons show up here by themselves. #}
+<div class="flex flex-col gap-lg">
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Sizes · colours</span>
+    <div class="flex flex-wrap items-end gap-md text-primary">
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" class="size-3.5" /><code
+          class="type-body-sm text-tertiary"
+        >size-3.5</code></span>
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" class="size-4" /><code
+          class="type-body-sm text-tertiary"
+        >size-4</code></span>
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" class="size-4.5" /><code
+          class="type-body-sm text-tertiary"
+        >size-4.5</code></span>
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" /><code class="type-body-sm text-tertiary"
+        >size-5</code></span>
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" class="size-6" /><code
+          class="type-body-sm text-tertiary"
+        >size-6</code></span>
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" class="size-5 text-icon-default" /><code
+          class="type-body-sm text-tertiary"
+        >icon-default</code></span>
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" class="size-5 text-success" /><code
+          class="type-body-sm text-tertiary"
+        >success</code></span>
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" class="size-5 text-danger" /><code
+          class="type-body-sm text-tertiary"
+        >danger</code></span>
+      <span class="flex flex-col items-center gap-2xs"><c-icon name="check" class="size-5 text-accent" /><code
+          class="type-body-sm text-tertiary"
+        >accent</code></span>
+    </div>
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">{{ icon_names|length }} icons · name="…"</span>
+    <ul class="grid grid-cols-2 gap-xs sm:grid-cols-3 2xl:grid-cols-4">
+      {% for icon_name in icon_names %}
+        <li class="flex min-w-0 items-center gap-sm rounded-md border border-default bg-surface px-sm py-xs">
+          <c-icon :name="icon_name" class="size-6 text-icon-default" />
+          <code class="truncate type-body-sm text-secondary">{{ icon_name }}</code>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>

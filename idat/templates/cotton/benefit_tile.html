@@ -1,0 +1,21 @@
+{% comment %}
+  Props:
+    title  benefit headline (rendered as <h3>)
+    body   one or two sentences
+    icon   icon name, default "layout-grid"
+
+  Usage:
+    <div class="grid gap-md md:grid-cols-3">
+      <c-benefit-tile icon="layout-grid" title="Answer once, apply everywhere"
+        body="One questionnaire is mapped to every platform's own form." />
+    </div>
+{% endcomment %}
+
+<c-vars title="" body="" icon="layout-grid" class="" />
+<div class="flex flex-col gap-sm rounded-lg border border-default bg-surface p-lg {{ class }}" {{ attrs }}>
+  <span class="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent-subtle">
+    <c-icon :name="icon" class="size-5.5 text-accent" />
+  </span>
+  <h3 class="type-title-lg text-primary">{{ title }}</h3>
+  {% if body %}<p class="type-body-md text-secondary">{{ body }}</p>{% endif %}
+</div>

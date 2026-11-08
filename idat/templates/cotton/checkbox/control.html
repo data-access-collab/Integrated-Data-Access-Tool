@@ -1,0 +1,44 @@
+{% comment %}
+  The bare checkbox control (box + check, no label), for rows and cards that are a <label>
+  themselves. <c-checkbox> uses it too.
+
+  Props:
+    checked      boolean attribute
+    id, name     input id / name; omitted when empty
+    value        submitted value, default "on"
+    required     boolean attribute
+    invalid      boolean attribute: sets aria-invalid
+    describedby  ids for aria-describedby; omitted when empty
+
+  {{ attrs }} (x-model, disabled, aria-*) go on the native <input>; class goes on the wrapper.
+
+  Usage:
+    <label class="flex items-center gap-md">
+      <c-checkbox.control name="vlopses" value="3" />
+      TikTok
+    </label>
+{% endcomment %}
+
+<c-vars checked="" id="" name="" value="on" required="" invalid="" describedby="" class="" />
+<span class="relative flex size-5 shrink-0 items-center justify-center {{ class }}">
+  <input
+    type="checkbox"
+    class="peer absolute inset-0 m-0 size-5 cursor-pointer opacity-0"
+    {% if id %}id="{{ id }}"{% endif %}
+    {% if name %}name="{{ name }}"{% endif %}
+    value="{{ value }}"
+    {% if checked %}checked{% endif %}
+    {% if required %}required{% endif %}
+    {% if invalid %}aria-invalid="true"{% endif %}
+    {% if describedby %}aria-describedby="{{ describedby }}"{% endif %}
+    {{ attrs }}
+  />
+  <span
+    class="pointer-events-none size-5 rounded-sm border-2 border-strong bg-surface peer-checked:border-transparent peer-checked:bg-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus"
+    aria-hidden="true"
+  ></span>
+  <c-icon
+    name="check"
+    class="pointer-events-none absolute size-3.5 text-on-brand opacity-0 peer-checked:opacity-100"
+  />
+</span>

@@ -1,0 +1,17 @@
+<div x-data class="flex flex-col items-start gap-md">
+  <c-button
+    variant="secondary"
+    label="Open as modal"
+    leading-icon="external-link"
+    x-on:click="$dispatch('open-dialog', { id: 'log-reply-{{ theme }}' })"
+  />
+  {# In-place preview: open, not modal. #}
+  <c-dialog.log-platform-reply
+    id="log-reply-preview-{{ theme }}"
+    :form="form"
+    action="#dialog-log-platform-reply"
+    open
+    class="static mx-0"
+  />
+  <c-dialog.log-platform-reply id="log-reply-{{ theme }}" :form="modal_form" action="#dialog-log-platform-reply" />
+</div>

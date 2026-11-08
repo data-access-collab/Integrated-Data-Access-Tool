@@ -1,0 +1,46 @@
+{% comment %}
+  Verbose lifecycle tab for the applications overview: icon + label + count line.
+  Tabs sit in a row with 1px dividers and fill it.
+
+  Props:
+    label   tab name
+    sub     count line, e.g. "4 projects · 12 applications"
+    icon    icon name, e.g. "layout-grid"; omitted when empty
+    href    link target (each tab is a link to a filtered overview)
+    active  boolean attribute: the tab shown (aria-current="page")
+
+  Renders an <li> that fills its row:
+    <nav aria-label="Applications by stage">
+      <ul class="flex divide-x divide-default">
+        <c-overview-tab label="All projects" sub="4 projects · 12 applications" icon="layout-grid" href="?" active />
+        <c-overview-tab label="Drafts" sub="2 applications" icon="pencil" href="?stage=draft" />
+      </ul>
+    </nav>
+{% endcomment %}
+
+<c-vars label="" sub="" icon="" href="" :active="False" class="" />
+<li class="flex min-w-0 flex-1 list-none {{ class }}" {{ attrs }}>
+  <a
+    href="{{ href }}"
+    {% if active %}aria-current="page"{% endif %}
+    class="
+      relative flex min-w-0 flex-1 items-start gap-2.5 p-sm transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus
+      {% if active %}bg-surface{% else %}border-b border-default bg-surface-muted hover:bg-surface{% endif %}
+    "
+  >
+    {% if icon %}
+      <span
+        class="flex size-8 shrink-0 items-center justify-center rounded-full {% if active %}bg-surface-muted{% else %}bg-surface{% endif %}"
+      >
+        <c-icon :name="icon" class="size-4.5 {% if active %}text-primary{% else %}text-icon-default{% endif %}" />
+      </span>
+    {% endif %}
+    <span class="flex min-w-0 flex-1 flex-col">
+      <span
+        class="truncate type-label-lg {% if active %}text-primary{% else %}text-secondary{% endif %}"
+      >{{ label }}</span>
+      {% if sub %}<span class="type-body-sm text-tertiary">{{ sub }}</span>{% endif %}
+    </span>
+    {% if active %}<span class="absolute inset-x-0 bottom-0 h-0.5 bg-brand" aria-hidden="true"></span>{% endif %}
+  </a>
+</li>

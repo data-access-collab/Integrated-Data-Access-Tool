@@ -1,0 +1,67 @@
+{% comment %}
+  A Document (application per platform, ethics letter, DPIA …) with its versions.
+  The header toggles the version list.
+
+  Props:
+    title     e.g. "Application · TikTok"
+    meta      e.g. "Web form · 18 fields · 2 versions"
+    summary   shown while collapsed, e.g. "Current: v2 draft · last sent: v1 to TikTok on 2 Oct"
+    icon      document icon, default "file-text"
+    expanded  boolean attribute: initial state (toggled in the browser)
+
+  Slots:
+    slot    <c-document-version-row> items (rendered inside a <ul>)
+    footer  shown under the versions while expanded, e.g. a "Compare v1 and v2" link
+
+  Usage:
+    <c-document-card title="Application · TikTok" meta="Web form · 18 fields · 2 versions"
+      summary="Current: v2 draft · last sent: v1 to TikTok on 2 Oct">
+      <c-document-version-row version="v2" … />
+      <c-document-version-row state="sent" version="v1" … />
+      <c-slot name="footer"><a class="type-label-lg text-link hover:underline" href="…">Compare v1 and v2</a></c-slot>
+    </c-document-card>
+{% endcomment %}
+
+<c-vars title="" meta="" summary="" icon="file-text" :expanded="False" class="" />
+<div
+  x-data="{ open: {% if expanded %}true{% else %}false{% endif %} }"
+  x-id="['document-versions']"
+  class="flex flex-col gap-sm rounded-lg border border-default bg-surface px-lg py-md {{ class }}"
+  {{ attrs }}
+>
+  <h3>
+    <button
+      type="button"
+      x-on:click="open = !open"
+      aria-expanded="{% if expanded %}true{% else %}false{% endif %}"
+      x-bind:aria-expanded="open"
+      x-bind:aria-controls="$id('document-versions')"
+      class="flex w-full cursor-pointer items-center gap-sm rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      <span class="flex size-9 shrink-0 items-center justify-center rounded-md bg-info-subtle">
+        <c-icon :name="icon" class="size-5 text-info" />
+      </span>
+      <span class="flex min-w-0 flex-1 flex-col gap-2xs">
+        <span class="type-title-md text-primary">{{ title }}</span>
+        {% if meta %}<span class="type-body-sm text-tertiary">{{ meta }}</span>{% endif %}
+      </span>
+      <c-icon
+        name="chevron-right"
+        class="size-5 shrink-0 text-icon-default transition-transform {% if expanded %}rotate-90{% endif %}"
+        x-bind:class="{ 'rotate-90': open }"
+      />
+    </button>
+  </h3>
+  {% if summary %}
+    <p {% if expanded %}hidden{% endif %} x-bind:hidden="open" class="type-body-sm text-secondary">{{ summary }}</p>
+  {% endif %}
+  <div
+    x-bind:id="$id('document-versions')"
+    {% if not expanded %}hidden{% endif %}
+    x-bind:hidden="!open"
+    class="flex flex-col gap-sm"
+  >
+    <ul class="flex flex-col gap-sm">{{ slot }}</ul>
+    {% if footer %}<div class="flex">{{ footer }}</div>{% endif %}
+  </div>
+</div>

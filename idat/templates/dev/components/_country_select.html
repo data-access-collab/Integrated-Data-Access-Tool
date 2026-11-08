@@ -1,0 +1,23 @@
+<div class="flex max-w-md flex-col gap-lg">
+  <p class="type-body-sm text-tertiary">
+    Open with a click, Enter or ↓; type to filter (e.g. "ger"); ↑ ↓ and Enter pick; Escape closes.
+  </p>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Default · selected (bound field, real country_choices)</span>
+    <c-country-select :field="form.country" help-tip="country" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Error · empty (not designed in Figma)</span>
+    <c-country-select :field="form_errors.country" help-tip="country" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Plain props · disabled (not designed in Figma)</span>
+    <c-country-select
+      name="country_disabled_{{ theme }}"
+      label="Country of establishment"
+      value="NL"
+      disabled
+      :options="[('DE', 'Germany'), ('NL', 'Netherlands')]"
+    />
+  </div>
+</div>

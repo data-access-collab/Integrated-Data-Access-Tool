@@ -1,0 +1,70 @@
+{% comment %}
+  Issue board item: platform, title, categories, linked cases, +1s and comments.
+
+  Props:
+    status        "open" (default, warning badge) · "resolved" (success badge)
+    status-label  badge text, e.g. "Open · 23 researchers affected" / "Resolved by TikTok"
+    platform      platform name for the chip
+    updated       e.g. "Updated 2 days ago"
+    title         issue title (rendered as <h3>; a link with href)
+    href          issue page
+    votes         "+1" count; voted (boolean attribute): the user has voted
+    comments      number of comments; omitted when empty
+    cases         number of linked cases; omitted when empty
+
+  Slots:
+    slot        issue description
+    categories  neutral badges, e.g. <c-badge tone="neutral" label="Eligibility" :dot="False" />
+
+  The vote button dispatches "vote" ({ voted, count }); listen with x-on:vote on the card.
+
+  Usage:
+    <c-community-issue-card platform="TikTok" status-label="Open · 23 researchers affected"
+      updated="Updated 2 days ago" title="Research API form rejects teams with non-EU co-applicants"
+      href="…" votes="12" comments="8" cases="3">
+      The form blocks submission as soon as …
+      <c-slot name="categories"><c-badge tone="neutral" label="Eligibility" :dot="False" /></c-slot>
+    </c-community-issue-card>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars
+  status="open"
+  status-label=""
+  platform=""
+  updated=""
+  title=""
+  href=""
+  votes="0"
+  :voted="False"
+  comments=""
+  cases=""
+  class=""
+/>
+<article class="flex flex-col gap-sm rounded-lg border border-default bg-surface px-lg py-md {{ class }}" {{ attrs }}>
+  <div class="flex flex-wrap items-center gap-xs">
+    {% if platform %}<c-platform-chip :name="platform" />{% endif %}
+    {% if status_label %}<c-badge
+        tone="{% if status == "resolved" %}success{% else %}warning{% endif %}"
+        :label="status_label"
+      />{% endif %}
+    {% if updated %}<span class="ml-auto whitespace-nowrap type-body-sm text-tertiary">{{ updated }}</span>{% endif %}
+  </div>
+  <h3 class="type-title-md text-primary">
+    {% if href %}<a
+        href="{{ href }}"
+        class="rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >{{ title }}</a>{% else %}{{ title }}{% endif %}
+  </h3>
+  {% if slot %}<div class="type-body-md text-secondary">{{ slot }}</div>{% endif %}
+  {% if categories %}<div class="flex flex-wrap gap-xs">{{ categories }}</div>{% endif %}
+  <div class="flex flex-wrap items-center gap-md">
+    <c-vote-button :count="votes" :voted="voted" />
+    {% if comments %}<span
+        class="type-label-lg text-secondary"
+      >{% blocktranslate count n=comments|add:"0" %}{{ n }} comment{% plural %}{{ n }} comments{% endblocktranslate %}</span>{% endif %}
+    {% if cases %}<span
+        class="type-body-sm text-tertiary"
+      >{% blocktranslate count n=cases|add:"0" %}Linked to {{ n }} case{% plural %}Linked to {{ n }} cases{% endblocktranslate %}</span>{% endif %}
+  </div>
+</article>

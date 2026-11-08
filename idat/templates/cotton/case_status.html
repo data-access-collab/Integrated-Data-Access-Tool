@@ -1,0 +1,34 @@
+{% comment %}
+  Status of one platform application within a case.
+  Order: Draft → Submitted → Receipt confirmed → Clarification requested ↺ →
+  Access granted | Rejected | Withdrawn.
+
+  Props:
+    status  "draft" (default) · "submitted" · "receipt-confirmed" · "clarification-requested" ·
+            "access-granted" · "rejected" · "withdrawn"
+
+  Usage:
+    <c-case-status status="receipt-confirmed" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars status="draft" class="" />
+
+{# Assign tone and label #}
+{% if status == 'submitted' %}
+  {% define 'info' as tone %}{% translate 'Submitted · awaiting reply' as label %}
+{% elif status == 'receipt-confirmed' %}
+  {% define 'info' as tone %}{% translate 'Receipt confirmed' as label %}
+{% elif status == 'clarification-requested' %}
+  {% define 'warning' as tone %}{% translate 'Clarification requested' as label %}
+{% elif status == 'access-granted' %}
+  {% define 'success' as tone %}{% translate 'Access granted' as label %}
+{% elif status == 'rejected' %}
+  {% define 'danger' as tone %}{% translate 'Rejected' as label %}
+{% elif status == 'withdrawn' %}
+  {% define 'neutral' as tone %}{% translate 'Withdrawn' as label %}
+{% else %}
+  {% define 'neutral' as tone %}{% translate 'Draft' as label %}
+{% endif %}
+
+<c-badge tone="{{ tone }}" label="{{ label }}" class="{{ class }}" />

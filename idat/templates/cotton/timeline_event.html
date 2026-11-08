@@ -1,0 +1,66 @@
+{% comment %}
+  One CaseStatusEvent / Communication in a case timeline. The last item is usually
+  "upcoming": the expected decision with the community median and sample size.
+
+  Props:
+    state     "done" (default) · "action-needed" · "upcoming" · "rejected" · "withdrawn"
+    title     event, e.g. "Submitted to TikTok"
+    date      display date, e.g. "2 Oct 2026" or "expected ~ Dec 2026"; "—" when unknown
+    datetime  ISO date for <time datetime>; optional
+
+  Slot: the event body (quotes, links, community median …).
+
+  Renders an <li>: put the events in an <ol>. The marker icon carries the state for
+  screen readers.
+
+  Usage:
+    <ol>
+      <c-timeline-event title="Submitted to TikTok" date="2 Oct 2026" datetime="2026-10-02">
+        Via TikTok Research API web form · application v1.
+      </c-timeline-event>
+      <c-timeline-event state="upcoming" title="Decision" date="expected ~ Dec 2026">
+        Community median for TikTok: 9 weeks after submission (n = 23).
+      </c-timeline-event>
+    </ol>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars state="done" title="" date="" datetime="" class="" />
+<li class="flex list-none items-start gap-md {{ class }}" {{ attrs }}>
+  <div class="flex shrink-0 flex-col items-center gap-2xs self-stretch">
+    {% if state == "upcoming" %}
+      <span
+        class="size-7 shrink-0 rounded-full border border-strong bg-surface"
+        role="img"
+        aria-label="{% translate "Upcoming" %}"
+      ></span>
+    {% elif state == "action-needed" %}
+      <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-warning">
+        <c-icon name="alert-triangle" class="size-4 text-on-nav" label="{% translate "Action needed" %}" />
+      </span>
+    {% elif state == "rejected" %}
+      <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-danger">
+        <c-icon name="x" class="size-4 text-on-nav" label="{% translate "Rejected" %}" />
+      </span>
+    {% elif state == "withdrawn" %}
+      <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-current text-tertiary">
+        <c-icon name="x" class="size-4 text-on-nav" label="{% translate "Withdrawn" %}" />
+      </span>
+    {% else %}
+      <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-success">
+        <c-icon name="check" class="size-4 text-on-nav" label="{% translate "Done" %}" />
+      </span>
+    {% endif %}
+    <span class="w-0 flex-1 border-l-2 border-default" aria-hidden="true"></span>
+  </div>
+  <div class="flex min-w-0 flex-1 flex-col gap-2xs pb-lg">
+    <div class="flex items-start gap-sm">
+      <h3 class="min-w-0 flex-1 type-title-md text-primary">{{ title }}</h3>
+      {% if date %}<time
+          {% if datetime %}datetime="{{ datetime }}"{% endif %}
+          class="shrink-0 whitespace-nowrap type-body-sm text-tertiary"
+        >{{ date }}</time>{% endif %}
+    </div>
+    {% if slot %}<div class="type-body-md text-secondary">{{ slot }}</div>{% endif %}
+  </div>
+</li>

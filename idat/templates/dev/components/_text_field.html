@@ -1,0 +1,41 @@
+<div class="flex max-w-md flex-col gap-lg" x-data x-on:help-tip="console.log('help-tip', $event.detail)">
+  <p class="type-body-sm text-tertiary">
+    Click or Tab into a field to see the focus state. The help icon dispatches "help-tip" (logged to the console).
+  </p>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Default · required · help icon · helper</span>
+    <c-text-field
+      name="tf_default_{{ theme }}"
+      label="Institutional e-mail"
+      type="email"
+      value="j.doe@uni-example.eu"
+      required
+      help-text="Used by platforms to verify your affiliation."
+      help-tip="institutional-email"
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Bound field · optional · maxlength</span>
+    <c-text-field :field="form.project_title" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Bound field · error</span>
+    <c-text-field :field="form_errors.institutional_email" help-tip="institutional-email" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Disabled</span>
+    <c-text-field
+      name="tf_disabled_{{ theme }}"
+      label="Institutional e-mail"
+      value="j.doe@uni-example.eu"
+      required
+      help-text="Used by platforms to verify your affiliation."
+      help-tip="institutional-email"
+      disabled
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Placeholder · no helper</span>
+    <c-text-field name="tf_placeholder_{{ theme }}" label="Website" type="url" placeholder="https://" />
+  </div>
+</div>

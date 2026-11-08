@@ -1,0 +1,23 @@
+{% comment %}
+  Initials avatar for researchers, collaborators and comment authors.
+
+  Props:
+    size      small (default, 32px) · medium (48px)
+    initials  e.g. "JD"
+
+  Usage:
+    <c-avatar initials="JD" />
+    <c-avatar initials="JD" size="medium" />
+    <c-avatar initials="JD" aria-hidden="true" />   next to the visible name, so it isn't read twice
+{% endcomment %}
+
+<c-vars size="small" initials="" class="" />
+<span
+  class="
+    inline-flex shrink-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-full bg-brand text-on-brand
+    {% if size == "medium" %}size-12 type-title-md
+    {% else %}size-8 type-label-md
+    {% endif %} {{ class }}
+  "
+  {{ attrs }}
+>{{ initials }}</span>

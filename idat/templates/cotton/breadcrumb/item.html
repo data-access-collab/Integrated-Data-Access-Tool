@@ -1,0 +1,24 @@
+{% comment %}
+  One level inside <c-breadcrumb>. A chevron is drawn before every item except the first.
+
+  Props:
+    href     makes the level a link
+    current  boolean attribute for the current page (last item)
+    slot     the level's text
+
+  Usage:
+    <c-breadcrumb.item href="{% url 'home' %}">Enter details</c-breadcrumb.item>
+    <c-breadcrumb.item current>Research question</c-breadcrumb.item>
+{% endcomment %}
+
+<c-vars href="" current="" class="" />
+<li class="group flex items-center gap-xs {{ class }}" {{ attrs }}>
+  <c-icon name="chevron-right" class="size-3.5 text-tertiary group-first:hidden" />
+  {% if current %}
+    <span aria-current="page" class="type-label-md text-primary">{{ slot }}</span>
+  {% elif href %}
+    <a href="{{ href }}" class="type-body-sm text-tertiary hover:underline">{{ slot }}</a>
+  {% else %}
+    <span class="type-body-sm text-tertiary">{{ slot }}</span>
+  {% endif %}
+</li>

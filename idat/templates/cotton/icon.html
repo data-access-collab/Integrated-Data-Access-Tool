@@ -1,0 +1,36 @@
+{% comment %}
+  Lucide icon.
+  Shapes come from idat/templates/icons/<name>.svg (a complete Lucide SVG; its root
+  attributes are ignored, this component sets size, stroke and aria).
+
+  Usage:
+    <c-icon name="check" class="size-4 text-success" />          16px, status colour
+    <c-icon name="flask" class="size-4.5 text-icon-on-nav" />    18px, as in Nav / Section Item
+    <c-icon name="target" />                                     20px (default), inherits text colour
+    <c-icon name="x" label="Close" class="size-5" />             meaningful icon → announced by screen readers
+
+  - Colour comes from the text colour (currentColor). Dark mode works automatically.
+  - Size via class (size-4 = 16px, size-4.5 = 18px, size-5 = 20px, size-6 = 24px).
+    Passing class replaces the default, so always include a size.
+  - The stroke stays 1.75px at every size.
+  - Without label the icon is decorative (aria-hidden). Inside a button that has no visible
+    text, put the label on the icon or use aria-label on the button.
+  - Unknown name → TemplateDoesNotExist (loud on purpose, so typos don't fail silently).
+{% endcomment %}
+
+<c-vars name="" label="" class="size-5" />
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.75"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="shrink-0 {{ class }}"
+  {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %}
+  focusable="false"
+  {{ attrs }}
+>
+  {% icon_content name %}
+</svg>

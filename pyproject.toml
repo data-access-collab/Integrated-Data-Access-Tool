@@ -19,6 +19,7 @@ dependencies = [
   "django-allauth[mfa]==65.19.7",
   "django-anymail==15.2",
   "django-cors-headers==4.9.0",
+  "django-cotton>=2.8.0",
   "django-environ==0.14.0",
   "django-model-utils==5.0.0",
   "django-ninja==1.7.1",
@@ -64,6 +65,7 @@ include = "H017,H035"
 custom_blocks = "element,slot"
 # TODO: remove T002 when fixed https://github.com/djlint/djLint/issues/687
 ignore = "H006,H030,H031,T002"
+per-file-ignores."idat/templates/cotton/" = "H026"
 
 # ==== ruff ====
 [tool.ruff]

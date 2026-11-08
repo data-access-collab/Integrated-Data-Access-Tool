@@ -1,0 +1,40 @@
+<div class="flex flex-wrap gap-md">
+  <div class="h-225">
+    <c-app-sidebar new-href="#app-sidebar" user-name="Jana D." initials="JD" account-href="#app-sidebar">
+      <c-nav.app-item label="Home" icon="layout-grid" href="#app-sidebar" current />
+      <c-nav.app-item label="Tasks" icon="bell" href="#app-sidebar" count="1" />
+      <c-nav.app-item label="My applications" icon="file-text" href="#app-sidebar" />
+      <c-nav.app-item label="Community" icon="users" href="#app-sidebar" />
+      <c-slot name="drafts">
+        <c-nav.app-item
+          label="Youth mental health · draft"
+          icon="pencil"
+          href="#app-sidebar"
+          count="62 %"
+          count-tone="muted"
+        />
+      </c-slot>
+    </c-app-sidebar>
+  </div>
+  <div class="h-225">
+    <c-app-sidebar new-href="#app-sidebar" user-name="Jana D." initials="JD" account-href="#app-sidebar">
+      <c-nav.app-item label="Home" icon="layout-grid" href="#app-sidebar" current />
+      <c-nav.app-item label="Tasks" icon="bell" href="#app-sidebar" count="1" />
+      <c-nav.app-item label="My applications" icon="file-text" href="#app-sidebar" />
+      <c-nav.app-item label="Community" icon="users" href="#app-sidebar" />
+      <c-slot name="admin">
+        <c-nav.app-item label="Users" icon="users" href="#app-sidebar" />
+        <c-nav.app-item label="Audit log" icon="shield" href="#app-sidebar" />
+      </c-slot>
+      <c-slot name="drafts">
+        <c-nav.app-item
+          label="Youth mental health · draft"
+          icon="pencil"
+          href="#app-sidebar"
+          count="62 %"
+          count-tone="muted"
+        />
+      </c-slot>
+    </c-app-sidebar>
+  </div>
+</div>

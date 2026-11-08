@@ -1,0 +1,25 @@
+{% comment %}
+  Props:
+    author    e.g. "Dr. P. Hinterwald"
+    initials  avatar initials, e.g. "PH"
+    meta      affiliation and time, e.g. "University of Zurich · 1 day ago"
+
+  Slot: the comment text.
+
+  Usage:
+    <c-comment author="Dr. M. Keller" initials="MK" meta="University of Zurich · 1 day ago">
+      Same here. TikTok accepted our application after …
+    </c-comment>
+{% endcomment %}
+
+<c-vars author="" initials="" meta="" class="" />
+<div class="flex items-start gap-sm {{ class }}" {{ attrs }}>
+  <c-avatar :initials="initials" aria-hidden="true" />
+  <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+    <p class="flex flex-wrap items-start gap-x-xs">
+      <span class="type-label-lg text-primary">{{ author }}</span>
+      {% if meta %}<span class="type-body-sm text-tertiary">{{ meta }}</span>{% endif %}
+    </p>
+    <div class="type-body-md text-secondary">{{ slot }}</div>
+  </div>
+</div>

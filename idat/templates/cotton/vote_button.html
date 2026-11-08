@@ -1,0 +1,42 @@
+{% comment %}
+  "+1" on a community issue: a toggle button (aria-pressed) with the running count.
+  Toggling updates the count in the browser and dispatches a "vote" event
+  ({ voted, count }) so the page can persist it.
+
+  Props:
+    count  votes including the user's own, e.g. "12"
+    voted  boolean attribute: the user has already voted
+    label  default "Affects me too"
+
+  Usage:
+    <c-vote-button count="12" x-on:vote="fetch('…', { method: 'POST', body: … })" />
+    <c-vote-button count="13" voted />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars count="0" :voted="False" label="" class="" />
+{% with text=label|default:_("Affects me too") %}
+  <button
+    type="button"
+    x-data="{ voted: {{ voted|yesno:'true,false' }}, count: {{ count|default:0 }} }"
+    x-on:click="voted = !voted; count += voted ? 1 : -1; $dispatch('vote', { voted, count })"
+    aria-pressed="{{ voted|yesno:'true,false' }}"
+    x-bind:aria-pressed="voted.toString()"
+    x-bind:class="{ 'border-accent bg-accent-subtle text-accent': voted, 'border-default bg-surface text-secondary': !voted }"
+    class="
+      inline-flex cursor-pointer items-center gap-2xs whitespace-nowrap rounded-full border px-sm py-2xs type-label-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus {{ class }}
+      {% if voted %}border-accent bg-accent-subtle text-accent{% else %}border-default bg-surface text-secondary{% endif %}
+    "
+    {{ attrs }}
+  >
+    <span x-show="!voted" {% if voted %}x-cloak{% endif %} class="flex"><c-icon
+        name="plus"
+        class="size-4 text-icon-default"
+      /></span>
+    <span x-show="voted" {% if not voted %}x-cloak{% endif %} class="flex"><c-icon
+        name="check"
+        class="size-4"
+      /></span>
+    {{ text }} · <span x-text="count">{{ count }}</span>
+  </button>
+{% endwith %}

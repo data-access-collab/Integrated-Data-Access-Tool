@@ -1,0 +1,24 @@
+<div class="flex max-w-sm flex-col gap-md">
+  <c-text-field
+    name="acc_demo_{{ theme }}"
+    label="Research question"
+    help-tip="funding-{{ theme }}"
+    help-text="Click the ? icon: it opens “Who pays for data access?” below."
+  />
+  <div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
+    <c-help.accordion
+      title="How detailed should my research question be?"
+      tip="research-question-{{ theme }}"
+      expanded
+    >
+      Platforms assess whether your question relates to systemic risks in the EU (Art. 34 DSA). Name the risk category,
+      the platform feature you study and the population concerned.
+    </c-help.accordion>
+    <c-help.accordion title="Who pays for data access?" tip="funding-{{ theme }}">
+      Platforms may not charge for access under Art. 40(4) DSA, but you cover your own infrastructure costs.
+    </c-help.accordion>
+    <c-help.accordion title="Accordion without a tip id">
+      Plain toggle; no help icon opens it.
+    </c-help.accordion>
+  </div>
+</div>

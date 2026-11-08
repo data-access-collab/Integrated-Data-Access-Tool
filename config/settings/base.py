@@ -90,6 +90,7 @@ THIRD_PARTY_APPS = [
     "allauth.mfa",
     "allauth.socialaccount",
     "corsheaders",
+    "django_cotton",
 ]
 
 LOCAL_APPS = [
@@ -202,6 +203,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "idat.users.context_processors.allauth_settings",
             ],
+            "builtins": ["idat.core.templatetags.idat_base_tags"],
         },
     },
 ]

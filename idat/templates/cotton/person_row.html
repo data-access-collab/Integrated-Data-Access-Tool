@@ -1,0 +1,43 @@
+{% comment %}
+  Collaborator on an application (AccessCase.collaborator_ids).
+
+  Props:
+    person-role        "owner" (default) · "collaborator" (can edit) · "invited"; sets the badge
+    name        e.g. "Dr. Amira Kaya"
+    initials    avatar initials, e.g. "AK"
+    email       e.g. "a.kaya@uni.eu"
+    remove-url  POST target of the remove (×) button; owners can't be removed, so the
+                button is only shown for collaborators and invitations
+
+  Usage:
+    <c-person-row person-role="collaborator" name="Dr. Amira Kaya" initials="AK" email="a.kaya@uni.eu"
+      remove-url="{% url … %}" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars person-role="owner" name="" initials="" email="" remove-url="" class="" />
+<div class="flex items-center gap-sm py-sm {{ class }}" {{ attrs }}>
+  <c-avatar :initials="initials" aria-hidden="true" />
+  <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+    <p class="type-label-lg text-primary">{{ name }}</p>
+    {% if email %}<p class="truncate type-body-sm text-tertiary">{{ email }}</p>{% endif %}
+  </div>
+  {% if person_role == "invited" %}
+    <c-badge tone="warning" label="{% translate "Invitation sent" %}" :dot="False" class="shrink-0" />
+  {% elif person_role == "collaborator" %}
+    <c-badge tone="info" label="{% translate "Can edit" %}" :dot="False" class="shrink-0" />
+  {% else %}
+    <c-badge tone="neutral" label="{% translate "Owner" %}" :dot="False" class="shrink-0" />
+  {% endif %}
+  {% if remove_url and person_role != "owner" %}
+    <form method="post" action="{{ remove_url }}" class="flex shrink-0">
+      {% csrf_token %}
+      <button
+        type="submit"
+        class="cursor-pointer rounded-sm text-icon-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        <c-icon name="x" class="size-5" label="{% blocktranslate %}Remove {{ name }}{% endblocktranslate %}" />
+      </button>
+    </form>
+  {% endif %}
+</div>

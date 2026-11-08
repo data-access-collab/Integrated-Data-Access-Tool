@@ -1,0 +1,77 @@
+{# djangofmt: file-ignore[invalid-syntax] #}
+
+{% comment %}
+  Modal dialog (native <dialog> opened with showModal(): focus stays inside, Esc closes it).
+  The × closes without saving.
+
+  Props:
+    id           required; open it with $dispatch('open-dialog', { id: '…' })
+    title        heading
+    description  optional text under the heading
+    action       form target: wraps the content in <form method="post"> with the CSRF token;
+                 without it the content is plain markup
+    multipart    boolean attribute: enctype="multipart/form-data", for file inputs
+    open         boolean attribute: render open in place, not modal (gallery, previews)
+
+  Slots:
+    slot    the fields
+    footer  buttons, right-aligned. A cancel button closes the dialog with
+            x-on:click="$el.closest('dialog').close()"
+
+  Usage:
+    <c-button variant="secondary" label="Log reply" x-on:click="$dispatch('open-dialog', { id: 'log-reply' })" />
+    <c-dialog id="log-reply" title="Log platform reply" description="…" action="{% url … %}">
+      <c-select :field="form.platform" />
+      <c-slot name="footer">
+        <c-button variant="secondary" label="Cancel" x-on:click="$el.closest('dialog').close()" />
+        <c-button label="Save update" type="submit" />
+      </c-slot>
+    </c-dialog>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars id="" title="" description="" action="" :multipart="False" :open="False" class="" />
+{% define "flex flex-col gap-md" as form_div_class %}
+
+<dialog
+  id="{{ id }}"
+  aria-labelledby="{{ id }}-title"
+  {% if description %}aria-describedby="{{ id }}-description"{% endif %}
+  {% if open %}open{% endif %}
+  x-data
+  x-on:open-dialog.window="$event.detail.id === $el.id && $el.showModal()"
+  class="m-auto w-full max-w-140 rounded-lg bg-surface p-lg text-primary shadow-3 backdrop:bg-nav/50 {{ class }}"
+  {{ attrs }}
+>
+  {% if action %}
+    <form
+      method="post"
+      action="{{ action }}"
+      {% if multipart %} enctype="multipart/form-data" {% endif %}
+      class="{{ form_div_class }}"
+    >
+  {% else %}
+    <div class="{{ form_div_class }}">
+  {% endif %}
+
+    {% if action %}{% csrf_token %}{% endif %}
+    <div class="flex items-start gap-sm">
+      <h2 id="{{ id }}-title" class="min-w-0 flex-1 type-title-lg text-primary">{{ title }}</h2>
+      <button
+        type="button"
+        aria-label="{% translate "Close" %}"
+        x-on:click="$el.closest('dialog').close()"
+        class="shrink-0 cursor-pointer rounded-sm text-icon-default hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        <c-icon name="x" class="size-5" />
+      </button>
+    </div>
+    {% if description %}<p id="{{ id }}-description" class="type-body-md text-secondary">{{ description }}</p>{% endif %}
+    {{ slot }}
+    {% if footer %}<div class="flex flex-wrap justify-end gap-sm">{{ footer }}</div>{% endif %}
+  {% if action %}
+    </form>
+  {% else %}
+    </div>
+  {% endif %}
+</dialog>

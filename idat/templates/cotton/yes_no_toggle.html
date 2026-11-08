@@ -1,0 +1,65 @@
+{% comment %}
+  Selected segment is navy with a check mark, so state is not conveyed by colour alone.
+
+  Props:
+    field  Django BoundField (:field="form.x", BooleanField or NullBooleanField):
+           name, id, initial value, label (aria-label), required and errors come from it
+    label  accessible name of the group, without a form
+    name   input name without a form
+    value  "" (unset, default) · "yes" · "no", without a form
+
+  Submits "true" / "false"; nothing is sent while unset.
+  {{ attrs }} go on the radiogroup (two inputs) — use x-on:change, it bubbles.
+
+  Usage:
+    <c-yes-no-toggle :field="form.has_ethics_approval" />
+    <c-yes-no-toggle name="is_affiliated" label="Are you affiliated with a research organisation?" value="yes" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars field="" label="" name="" value="" class="" />
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:name input_name=field.html_name|default:name group_label=field.label|default:label current=field.value|stringformat:"s"|lower %}
+  <div class="flex flex-col items-start gap-xs {{ class }}">
+    <div
+      role="radiogroup"
+      {% if group_label %}aria-label="{{ group_label }}"{% endif %}
+      {% if field.field.required %}aria-required="true"{% endif %}
+      {% if field.errors %}aria-invalid="true" aria-describedby="{{ input_id }}-error"{% endif %}
+      class="inline-flex gap-0.5 rounded-full border border-strong bg-surface p-0.75"
+      {{ attrs }}
+    >
+      <label
+        class="group flex h-9 w-19 cursor-pointer items-center justify-center gap-1.5 rounded-full type-label-lg text-secondary has-checked:bg-brand has-checked:text-on-brand has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus"
+      >
+        <input
+          type="radio"
+          class="sr-only"
+          {% if input_name %}name="{{ input_name }}"{% endif %}
+          {% if input_id %}id="{{ input_id }}"{% endif %}
+          value="true"
+          {% if current == "true" or value == "yes" %}checked{% endif %}
+          {% if field.field.required %}required{% endif %}
+        />
+        <c-icon name="check" class="hidden size-4 group-has-checked:block" />
+        {% translate "Yes" %}
+      </label>
+      <label
+        class="group flex h-9 w-19 cursor-pointer items-center justify-center gap-1.5 rounded-full type-label-lg text-secondary has-checked:bg-brand has-checked:text-on-brand has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus"
+      >
+        <input
+          type="radio"
+          class="sr-only"
+          {% if input_name %}name="{{ input_name }}"{% endif %}
+          value="false"
+          {% if current == "false" or value == "no" %}checked{% endif %}
+        />
+        <c-icon name="check" class="hidden size-4 group-has-checked:block" />
+        {% translate "No" %}
+      </label>
+    </div>
+    {% if field.errors %}<c-field-message
+        id="{{ input_id }}-error"
+      >{{ field.errors|join:" " }}</c-field-message>{% endif %}
+  </div>
+{% endwith %}

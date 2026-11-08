@@ -1,0 +1,33 @@
+{% comment %}
+  Props:
+    title        e.g. "No applications yet" (rendered as <h2>)
+    body         what to do next; omitted when empty
+    icon         icon name, default "file-text"
+    action       primary button label, e.g. "Create application"; omitted when empty
+    action-href  where the button goes; without it the button is a <button>
+    action-icon  leading icon of the button, default "plus"
+
+  Slot: replaces the button, e.g. a <form> with a submit button.
+
+  Usage:
+    <c-empty-state title="No applications yet"
+      body="Start with one questionnaire: we turn it into an application for every platform you pick."
+      action="Create application" action-href="{% url … %}" />
+{% endcomment %}
+
+<c-vars title="" body="" icon="file-text" action="" action-href="" action-icon="plus" class="" />
+<div
+  class="flex flex-col items-center gap-md rounded-lg border border-default bg-surface p-xl text-center {{ class }}"
+  {{ attrs }}
+>
+  <span class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-accent-subtle">
+    <c-icon :name="icon" class="size-6 text-accent" />
+  </span>
+  <h2 class="type-title-lg text-primary">{{ title }}</h2>
+  {% if body %}<p class="max-w-100 type-body-md text-secondary">{{ body }}</p>{% endif %}
+  {% if slot %}
+    {{ slot }}
+  {% elif action %}
+    <c-button :label="action" :href="action_href" :leading-icon="action_icon" />
+  {% endif %}
+</div>

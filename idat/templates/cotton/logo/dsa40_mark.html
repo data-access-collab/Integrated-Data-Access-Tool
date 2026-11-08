@@ -1,0 +1,20 @@
+{% comment %}
+  Logo / DSA40 Mark
+
+  Usage:
+    <c-logo.dsa40-mark />                     alt="DSA40"
+    <c-logo.dsa40-mark label="" />            decorative, e.g. next to visible "DSA40" text
+
+    Use on light and navy backgrounds
+{% endcomment %}
+
+{% load static %}
+<c-vars label="DSA40" class="" />
+<img
+  src="{% static 'img/logos/dsa40_logo.svg' %}"
+  alt="{{ label }}"
+  width="38"
+  height="36"
+  class="h-9 w-auto shrink-0 {{ class }}"
+  {{ attrs }}
+/>

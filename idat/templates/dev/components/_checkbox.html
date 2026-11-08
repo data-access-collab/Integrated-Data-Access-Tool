@@ -1,0 +1,22 @@
+<div class="flex max-w-md flex-col gap-md">
+  <p class="type-body-sm text-tertiary">Click to toggle, Tab to see the focus ring.</p>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Plain props · unchecked · checked</span>
+    <c-checkbox name="plain_a" label="Data will only be used for non-commercial research" />
+    <c-checkbox name="plain_b" label="Data will only be used for non-commercial research" checked />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Bound field · help text · initial checked</span>
+    <c-checkbox :field="form.accept_terms" />
+    <c-checkbox :field="form.newsletter" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Bound field · error</span>
+    <c-checkbox :field="form_errors.accept_terms" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Slot label</span>
+    <c-checkbox name="plain_c">I accept the <a class="text-link underline" href="#checkbox"
+      >terms of use</a></c-checkbox>
+  </div>
+</div>

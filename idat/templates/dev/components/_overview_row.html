@@ -1,0 +1,29 @@
+<div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
+  <c-overview-row
+    title="Recommender systems & youth mental health"
+    activity="You edited section 4 of 9"
+    when="2 hours ago"
+    next="Continue"
+    href="#overview-row"
+  >
+    <c-slot name="platforms">
+      <c-platform-status-chip name="TikTok" />
+      <c-platform-status-chip name="Meta" status="in-review" />
+      <c-platform-status-chip name="YouTube" status="clarification-requested" />
+    </c-slot>
+    <c-slot name="status"><c-badge tone="info" label="Complete" /></c-slot>
+  </c-overview-row>
+  <c-overview-row
+    title="Political ads transparency in the 2026 elections"
+    activity="TikTok granted access"
+    when="Yesterday"
+    next="Open"
+    href="#overview-row"
+  >
+    <c-slot name="platforms">
+      <c-platform-status-chip name="TikTok" status="granted" />
+      <c-platform-status-chip name="X" status="rejected" />
+    </c-slot>
+    <c-slot name="status"><c-case-status status="access-granted" /></c-slot>
+  </c-overview-row>
+</div>

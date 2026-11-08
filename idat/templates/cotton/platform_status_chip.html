@@ -1,0 +1,48 @@
+{% comment %}
+  Platform tag carrying the status of that platform's access application (one project →
+  many applications). Statuses follow the Art. 40(12) flow: Draft → In review
+  (submitted / vetting) → Clarification requested → Granted / Rejected.
+  Shape + colour, so it works without colour too. Only "Clarification requested" gets a
+  tinted chip. Withdrawn = the researcher withdrew the application (neutral ✕, name struck
+  through).
+
+  Props:
+    name     platform name
+    initial  letter in the logo disc; defaults to the first letter of name
+    status   "draft" (default) · "in-review" · "clarification-requested" · "granted" ·
+             "rejected" · "withdrawn"
+
+  The status icon carries the status name for screen readers.
+
+  Usage:
+    <c-platform-status-chip name="TikTok" status="clarification-requested" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars name="" initial="" status="draft" class="" />
+<span
+  class="
+    inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border py-0.75 pr-xs pl-1 type-label-md text-secondary {{ class }}
+    {% if status == "clarification-requested" %}border-warning bg-warning-subtle{% else %}border-default bg-surface{% endif %}
+  "
+  {{ attrs }}
+>
+  <span
+    class="inline-flex size-4.5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-on-brand"
+    aria-hidden="true"
+  >{{ initial|default:name|slice:":1" }}</span>
+  <span {% if status == "withdrawn" %}class="line-through"{% endif %}>{{ name }}</span>
+  {% if status == "in-review" %}
+    <c-icon name="clock" class="size-3.5 text-info" label="{% translate "In review" %}" />
+  {% elif status == "clarification-requested" %}
+    <c-icon name="alert-circle" class="size-3.5 text-warning" label="{% translate "Clarification requested" %}" />
+  {% elif status == "granted" %}
+    <c-icon name="check" class="size-3.5 text-success" label="{% translate "Granted" %}" />
+  {% elif status == "rejected" %}
+    <c-icon name="x" class="size-3.5 text-danger" label="{% translate "Rejected" %}" />
+  {% elif status == "withdrawn" %}
+    <c-icon name="x" class="size-3.5 text-tertiary" label="{% translate "Withdrawn" %}" />
+  {% else %}
+    <c-icon name="circle" class="size-3.5 text-tertiary" label="{% translate "Draft" %}" />
+  {% endif %}
+</span>

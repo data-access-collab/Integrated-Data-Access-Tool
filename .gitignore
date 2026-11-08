@@ -282,3 +282,6 @@ idat/media/
 # Exclude compiled files from git
 idat/static/dist/*
 node_modules
+
+# Local files only
+.local_docs/

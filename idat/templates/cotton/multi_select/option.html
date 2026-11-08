@@ -1,0 +1,34 @@
+{% comment %}
+  One checkbox row in the open list of <c-multi-select>. Used only inside <c-multi-select>,
+  which provides the Alpine state (selected).
+
+  Props:
+    name     checkbox name
+    value    option value
+    label    option label
+    checked  "1" when selected on page load
+{% endcomment %}
+
+<c-vars name="" value="" label="" checked="" />
+<label
+  class="flex cursor-pointer items-center gap-sm rounded-sm p-xs type-body-md text-primary hover:bg-surface-muted has-checked:bg-selected"
+>
+  <span class="relative flex size-4.5 shrink-0">
+    <input
+      type="checkbox"
+      {% if name %}name="{{ name }}"{% endif %}
+      value="{{ value|stringformat:"s" }}"
+      x-model="selected"
+      {% if checked %}checked{% endif %}
+      class="peer absolute inset-0 size-full cursor-pointer opacity-0"
+    />
+    <span
+      class="size-full rounded-sm border-2 border-strong bg-surface peer-checked:border-transparent peer-checked:bg-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus"
+    ></span>
+    <c-icon
+      name="check"
+      class="pointer-events-none absolute inset-0 m-auto size-3.5 text-on-accent opacity-0 peer-checked:opacity-100"
+    />
+  </span>
+  <span class="min-w-0 flex-1">{{ label }}</span>
+</label>

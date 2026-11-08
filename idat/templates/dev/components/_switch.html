@@ -1,0 +1,17 @@
+<div class="flex flex-col gap-md">
+  <p class="type-body-sm text-tertiary">Click to toggle, Tab to see the focus ring.</p>
+  <div class="flex flex-wrap items-end gap-lg">
+    <div class="flex flex-col items-start gap-xs">
+      <span class="type-overline text-tertiary">Off</span>
+      <c-switch name="switch_off" label="Email updates" />
+    </div>
+    <div class="flex flex-col items-start gap-xs">
+      <span class="type-overline text-tertiary">On</span>
+      <c-switch name="switch_on" label="Email updates" checked />
+    </div>
+    <div class="flex flex-col items-start gap-xs">
+      <span class="type-overline text-tertiary">Bound field (initial on)</span>
+      <c-switch :field="form.newsletter" label="Send me updates about my application" />
+    </div>
+  </div>
+</div>

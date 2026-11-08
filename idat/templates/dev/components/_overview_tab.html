@@ -1,0 +1,19 @@
+<div class="flex flex-col gap-xs">
+  <p class="type-body-sm text-tertiary">
+    A row of tabs with 1px dividers; tabs fill the row (hover not designed: bg-surface).
+  </p>
+  <nav aria-label="Applications by stage {{ theme }}">
+    <ul class="flex divide-x divide-default">
+      <c-overview-tab
+        label="All projects"
+        sub="4 projects · 12 applications"
+        icon="layout-grid"
+        href="#overview-tab"
+        active
+      />
+      <c-overview-tab label="Drafts" sub="2 applications" icon="pencil" href="#overview-tab" />
+      <c-overview-tab label="Submitted" sub="7 applications" icon="mail" href="#overview-tab" />
+      <c-overview-tab label="Decided" sub="3 applications" icon="check" href="#overview-tab" />
+    </ul>
+  </nav>
+</div>

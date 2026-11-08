@@ -1,0 +1,60 @@
+{# djangofmt: file-ignore[invalid-syntax] #}
+
+{% comment %}
+  Primary = the one main action per view (gold, navy text: 8.4:1).
+  Brand = strong alternative on light surfaces. Secondary = outlined.
+  Ghost = header / low-emphasis actions (e.g. "Why are we doing this?").
+  Danger = confirms a destructive action in a dialog (e.g. "Withdraw from Meta").
+  44px min height for touch targets; Focus shows a 2px navy ring
+  (offset 2px so it stays visible on navy and gold fills).
+
+  Props:
+    variant       primary (default) · brand · secondary · ghost · danger
+    label         button text
+    icon          trailing Lucide icon name, e.g. "arrow-right"
+    leading-icon  leading Lucide icon name
+    href          renders an <a> instead of a <button>
+    type          button (default) · submit · reset; ignored with href
+
+  Hover, focus and disabled are CSS states. Disable with the native attribute (<button> only).
+
+  Usage:
+    <c-button label="{% translate 'Continue' %}" icon="arrow-right" type="submit" />
+    <c-button variant="secondary" label="Save draft" leading-icon="save" />
+    <c-button variant="ghost" label="Why are we doing this?" leading-icon="help-circle" x-on:click="open = true" />
+    <c-button variant="brand" label="Start application" href="{% url 'home' %}" />
+    <c-button label="Submit" disabled />
+{% endcomment %}
+
+<c-vars variant="primary" label="" icon="" leading-icon="" href="" type="button" class="" />
+{# Set button variant classes #}
+{% if variant == "brand" %}
+  {% define "bg-brand text-on-brand hover:bg-nav-hover disabled:bg-disabled disabled:text-disabled" as variant_class %}
+{% elif variant == "secondary" %}
+  {% define "border border-strong bg-surface text-primary hover:bg-surface-muted disabled:border-transparent disabled:bg-disabled disabled:text-disabled" as variant_class %}
+{% elif variant == "ghost" %}
+  {% define "text-primary hover:bg-surface-muted disabled:bg-transparent disabled:text-disabled" as variant_class %}
+{% elif variant == "danger" %}
+  {% define "bg-danger text-on-brand disabled:bg-disabled disabled:text-disabled" as variant_class %}
+{% else %}
+  {% define "bg-accent text-on-accent hover:bg-accent-hover disabled:bg-disabled disabled:text-disabled" as variant_class %}
+{% endif %}
+
+{# djlint:off H025 #}
+{% if href %}
+  <a href="{{ href }}"
+{% else %}
+  <button type="{{ type }}"
+{% endif %}
+  class="inline-flex h-11 shrink-0 cursor-pointer items-center justify-center gap-xs whitespace-nowrap rounded-md px-lg type-label-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed
+         {{ variant_class }} {{ class }}"
+  {{ attrs }}
+>
+  {% if leading_icon %}<c-icon :name="leading_icon" class="size-4.5" />{% endif %}
+  {{ label }}
+  {% if icon %}<c-icon :name="icon" class="size-4.5" />{% endif %}
+{% if href %}
+  </a>
+{% else %}
+  </button>
+{% endif %}

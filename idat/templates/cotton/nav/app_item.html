@@ -1,0 +1,43 @@
+{% comment %}
+  App-level navigation item for the App Sidebar. Same navy styling as the Wizard Sidebar so
+  dashboard and wizard read as one app. The gold count badge means "needs your action"
+  (e.g. Tasks).
+
+  Props:
+    label    item name
+    href     link target
+    icon     icon name, e.g. "layout-grid"; omitted when empty
+    count    badge number; omitted when empty
+    count-tone  "accent" (default, gold: needs your action) · "muted" (information only,
+                e.g. a draft's progress "62 %")
+    current  boolean attribute: the page shown (aria-current="page")
+
+  Renders an <li>: put the items in an <ol> or <ul> inside a <nav>.
+
+  Usage:
+    <c-nav.app-item label="Home" icon="layout-grid" href="{% url 'home' %}" current />
+    <c-nav.app-item label="Tasks" icon="check" href="…" count="1" />
+{% endcomment %}
+
+<c-vars label="" href="" icon="" count="" count-tone="accent" :current="False" class="" />
+<li class="list-none {{ class }}" {{ attrs }}>
+  <a
+    href="{{ href }}"
+    {% if current %}aria-current="page"{% endif %}
+    class="
+      flex items-center gap-sm rounded-md py-2.5 pr-sm pl-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus
+      {% if current %}bg-nav-hover{% else %}hover:bg-nav-hover{% endif %}
+    "
+  >
+    {% if icon %}<c-icon
+        :name="icon"
+        class="size-4.5 {% if current %}text-on-nav{% else %}text-icon-on-nav{% endif %}"
+      />{% endif %}
+    <span
+      class="min-w-0 flex-1 truncate {% if current %}type-label-lg text-on-nav{% else %}type-body-md text-on-nav-muted{% endif %}"
+    >{{ label }}</span>
+    {% if count %}<span
+        class="shrink-0 rounded-full px-1.75 py-px type-label-md {% if count_tone == "muted" %}bg-nav-hover text-on-nav-muted{% else %}bg-accent text-on-accent{% endif %}"
+      >{{ count }}</span>{% endif %}
+  </a>
+</li>

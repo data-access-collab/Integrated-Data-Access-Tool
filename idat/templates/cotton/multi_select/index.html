@@ -1,0 +1,162 @@
+{% comment %}
+  Maps InputType.MULTI_SELECT (forms.MultipleChoiceField).
+  Chips show the selection; the options list with checkboxes opens below.
+  The helper shows "N selected" once something is picked.
+
+  Props:
+    field        Django BoundField (:field="form.x", MultipleChoiceField): options, selection,
+                 id, name, label, required, help_text and errors come from it
+    options      list of (value, label) pairs without a form: :options="risk_categories"
+    value        list of selected values without a form: :value="['health']"
+    placeholder  shown while nothing is selected; default "Select all that apply"
+    label        label text without a form
+    name         checkbox name without a form
+    id           id of the toggle button without a form; defaults to name
+    required     boolean, without a form (shows the asterisk)
+    help-text    helper text without a form
+    help-tip     help-panel tip id; shows the help icon
+
+  Submits one value per checked option, like CheckboxSelectMultiple. Needs Alpine.
+  {{ attrs }} go on the toggle button; class goes on the wrapper.
+
+  Usage:
+    <c-multi-select :field="form.risk_categories" help-tip="risk-categories" />
+    <c-multi-select name="risks" label="Risk categories" :options="risks" :value="['health']" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars
+  field=""
+  options=""
+  value=""
+  placeholder=""
+  label=""
+  name=""
+  id=""
+  :required="False"
+  help-text=""
+  help-tip=""
+  class=""
+/>
+{% translate "Select all that apply" as default_placeholder %}
+{% translate "{count} selected" as count_template %}
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name label_text=field.label|default:label help=field.help_text|default:help_text %}
+  <c-field-layout
+    :field="field"
+    :input-id="input_id"
+    :label="label"
+    :required="required"
+    :help-text="help_text"
+    :help-tip="help_tip"
+    class="{{ class }}"
+    x-data="{ open: false, selected: [{% if field %}{% for option in field.subwidgets %}{% if option.data.selected %}'{{ option.data.value|stringformat:"s"|escapejs }}',{% endif %}{% endfor %}{% else %}{% for option_value, option_label in options %}{% if option_value in value %}'{{ option_value|escapejs }}',{% endif %}{% endfor %}{% endif %}] }"
+    x-on:keydown.escape="if (open) { open = false; $refs.toggle.focus() }"
+    x-on:click.outside="open = false"
+  >
+    <div class="relative">
+      <div
+        {% if not field.errors %}
+          x-bind:class="{ 'border-strong': !open, 'border-focus ring-1 ring-inset ring-focus': open }"
+        {% endif %}
+        class="
+          relative flex min-h-11 items-center gap-xs rounded-sm border bg-surface px-sm py-xs
+          has-focus-visible:border-focus has-focus-visible:ring-1 has-focus-visible:ring-inset has-focus-visible:ring-focus
+          group-has-disabled:bg-disabled
+          {% if field.errors %}border-danger ring-1 ring-inset ring-danger{% else %}border-strong{% endif %}
+        "
+      >
+        {# Covers the whole box so a click anywhere opens the list; chips sit above it. #}
+        <button
+          type="button"
+          x-ref="toggle"
+          {% if input_id %}id="{{ input_id }}"{% endif %}
+          aria-expanded="false"
+          x-bind:aria-expanded="open"
+          aria-controls="{{ input_id }}-options"
+          {% if field.errors %}
+            aria-invalid="true"
+            aria-describedby="{{ input_id }}-error"
+          {% else %}
+            aria-describedby="{{ input_id }}-help"
+          {% endif %}
+          x-on:click="open = !open"
+          class="absolute inset-0 cursor-pointer rounded-sm focus-visible:outline-none disabled:cursor-not-allowed"
+          {{ attrs }}
+        >
+        </button>
+        <span
+          {% if field.value or value %}hidden{% endif %}
+          x-bind:hidden="selected.length"
+          class="pointer-events-none relative flex-1 type-body-md text-tertiary group-has-disabled:text-disabled"
+        >{{ placeholder|default:default_placeholder }}</span>
+        <ul
+          {% if not field.value and not value %}hidden{% endif %}
+          x-bind:hidden="!selected.length"
+          class="pointer-events-none relative flex min-w-0 flex-1 flex-wrap gap-1.5"
+        >
+          {% if field %}
+            {% for option in field.subwidgets %}
+              {% with option_value=option.data.value|stringformat:"s" %}
+                <c-multi-select.chip
+                  :value="option_value"
+                  :label="option.choice_label"
+                  selected="{% if option.data.selected %}1{% endif %}"
+                />
+              {% endwith %}
+            {% endfor %}
+          {% else %}
+            {% for option_value, option_label in options %}
+              <c-multi-select.chip
+                :value="option_value"
+                :label="option_label"
+                selected="{% if option_value in value %}1{% endif %}"
+              />
+            {% endfor %}
+          {% endif %}
+        </ul>
+        <c-icon
+          name="chevron-down"
+          class="pointer-events-none relative size-5 shrink-0 text-icon-default group-has-disabled:text-disabled"
+        />
+      </div>
+
+      <div
+        id="{{ input_id }}-options"
+        role="group"
+        aria-label="{{ label_text }}"
+        x-show="open"
+        x-cloak
+        class="absolute inset-x-0 top-full z-10 mt-xs flex max-h-80 flex-col gap-2xs overflow-y-auto rounded-md border border-default bg-surface p-xs shadow-2"
+      >
+        {% if field %}
+          {% for option in field.subwidgets %}
+            <c-multi-select.option
+              :name="input_name"
+              :value="option.data.value"
+              :label="option.choice_label"
+              checked="{% if option.data.selected %}1{% endif %}"
+            />
+          {% endfor %}
+        {% else %}
+          {% for option_value, option_label in options %}
+            <c-multi-select.option
+              :name="input_name"
+              :value="option_value"
+              :label="option_label"
+              checked="{% if option_value in value %}1{% endif %}"
+            />
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+    <c-slot name="helper">
+      <span
+        {% if not field.value and not value %}hidden{% endif %}
+        x-bind:hidden="!selected.length"
+        x-text="'{{ count_template|escapejs }}'.replace('{count}', selected.length)"
+      ></span>
+      <span {% if field.value or value %}hidden{% endif %} x-bind:hidden="selected.length">{{ help }}</span>
+    </c-slot>
+  </c-field-layout>
+{% endwith %}
