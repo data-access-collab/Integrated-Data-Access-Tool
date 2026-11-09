@@ -1,76 +1,31 @@
-import json
-import re
-import typing
-from typing import Any
+from __future__ import annotations
 
-import pycountry
+import itertools
+import json
+import logging
+import re
+from collections import defaultdict
+from dataclasses import dataclass, field
+from functools import cached_property
+from typing import NamedTuple
+
 from django import forms
 from django.core.exceptions import ValidationError
 
-from idat.dsa40_form_handler.models import DSAQuestion, InputType, VLOPSEQuestion
+from idat.core.forms.base import IdatBaseForm
+from idat.core.forms.fields import YesNoField, country_field
+from idat.dsa40_applications.sections import SECTION_META
+from idat.dsa40_form_handler.models import (
+    DSAQuestion,
+    InputType,
+    QuestionCategory,
+    VLOPSEQuestion,
+)
 from idat.vlopse.models import Vlopse
 
-if typing.TYPE_CHECKING:
-    from collections.abc import Iterable
-
-
-# TODO: Move to core once it exists
-class IdatBoundField(forms.BoundField):
-    """BoundField that adds the `idat-form-field` class to every field's wrapper."""
-
-    def css_classes(self, extra_classes: str | Iterable[str] | None = None) -> str:
-        return super().css_classes(["idat-form-field", *(extra_classes or [])])
-
-
-class IdatBaseForm(forms.Form):
-    """Provide css classes to target through tailwind."""
-
-    bound_field_class = IdatBoundField
-    required_css_class = "required"
-    error_css_class = "error"
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.label_suffix = ""
-
-
-class IdatBaseModelForm(forms.ModelForm):
-    """Provide css classes to target through tailwind."""
-
-    bound_field_class = IdatBoundField
-    required_css_class = "required"
-    error_css_class = "error"
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.label_suffix = ""
-
-
-TOP_COUNTRIES = ["CH", "DE", "NL"]
-
-
-def country_choices() -> list[tuple]:
-    names = {c.alpha_2: c.name for c in pycountry.countries}
-    top = [(code, names[code]) for code in TOP_COUNTRIES]
-    rest = sorted(
-        ((code, name) for code, name in names.items() if code not in TOP_COUNTRIES),
-        key=lambda item: item[1],
-    )
-    return [
-        ("", "Select a country…"),  # empty option, so nothing is pre-selected
-        ("---", top),  # nested lists render as <optgroup>
-        ("All countries", rest),
-    ]
-
-
-def country_field() -> forms.ChoiceField:
-    return forms.ChoiceField(choices=country_choices(), required=True)
-
-
-# TODO: END Move to core once it exists
+logger = logging.getLogger(__name__)
 
 CLIENT_FILE_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
-
 
 # file types the client file field knows: extension -> content type; fields
 # pick their subset. The browser only checks the extension; the file's content
@@ -94,11 +49,10 @@ SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 class VlopseSelectionForm(IdatBaseForm):
     vlopses = forms.ModelMultipleChoiceField(
-        label="Select VLOPSEs for which to generate a DSA40 application",
         queryset=Vlopse.objects.all(),
         widget=forms.CheckboxSelectMultiple,
         required=True,
-        error_messages={"required": "Please select at least one Vlopse"},
+        error_messages={"required": "Please select at least one VLOPSE"},
     )
 
 
@@ -186,7 +140,7 @@ class ClientFileField(forms.JSONField):
         super().__init__(**kwargs)
 
     def bound_data(self, data: object, initial: object) -> object:
-        # ReviewStep binds the stored answers, which are already parsed
+        # bound to already parsed metadata (e.g. stored answers), not JSON text
         return data if isinstance(data, dict) else super().bound_data(data, initial)
 
     def prepare_value(self, value: object) -> object:
@@ -194,13 +148,30 @@ class ClientFileField(forms.JSONField):
         return value
 
 
-def get_question_choices(question: DSAQuestion) -> list[tuple[str, str]]:
+def get_question_choices(
+    question: DSAQuestion | VLOPSEQuestion,
+) -> list[tuple[str, str]]:
+    """Get choices from the question's config["options"]."""
     if not isinstance(question.config, dict):
         return []
     return [(option, option) for option in question.config.get("options", [])]
 
 
-def get_question_field(question: DSAQuestion) -> forms.Field:  # noqa: PLR0911
+def get_question_field(question: DSAQuestion | VLOPSEQuestion) -> forms.Field:  # noqa: PLR0911
+    """Get the correct form field for a question's input_type.
+
+    A selection without options could never be answered: it falls back to a text
+    field and logs a warning, so the data gets fixed.
+    """
+    is_selection = question.input_type in (InputType.SELECTION, InputType.MULTI_SELECT)
+    if is_selection and not get_question_choices(question):
+        logger.warning(
+            "Question %s is a %s without options; showing a text field.",
+            question.key,
+            question.input_type,
+        )
+        return forms.CharField()
+
     match question.input_type:
         case InputType.TEXT:
             return forms.CharField()
@@ -209,7 +180,11 @@ def get_question_field(question: DSAQuestion) -> forms.Field:  # noqa: PLR0911
         case InputType.FILE_UPLOAD:
             return ClientFileField()
         case InputType.SELECTION:
-            return forms.ChoiceField(choices=get_question_choices(question))
+            choices = get_question_choices(question)
+            # Yes / No in any order; the toggle always shows Yes first
+            if set(choices) == set(YesNoField.CHOICES):
+                return YesNoField()
+            return forms.ChoiceField(choices=choices)
         case InputType.MULTI_SELECT:
             return forms.MultipleChoiceField(choices=get_question_choices(question))
         case InputType.DATE_SELECT:
@@ -218,32 +193,149 @@ def get_question_field(question: DSAQuestion) -> forms.Field:  # noqa: PLR0911
             return forms.CharField()
 
 
+@dataclass(eq=False)
+class FormSection:
+    """The fields of one question category, as one section of the form."""
+
+    category: str
+    label: str
+    icon: str
+    description: str
+    fields: list[forms.BoundField]
+    # neighbouring sections, for Back / Next
+    previous: FormSection | None = field(default=None, repr=False)
+    next: FormSection | None = field(default=None, repr=False)
+
+    @property
+    def total(self) -> int:
+        return len(self.fields)
+
+    @property
+    def answered(self) -> int:
+        return sum(1 for f in self.fields if not is_unanswered(f.value()))
+
+    @property
+    def complete(self) -> bool:
+        return self.answered == self.total
+
+    @property
+    def has_errors(self) -> bool:
+        return any(f.errors for f in self.fields)
+
+
+def is_unanswered(value: object) -> bool:
+    """Whether an answer value counts as not answered: None, blank text, or an
+    empty selection or file."""
+    if isinstance(value, str):
+        return not value.strip()
+    return value in (None, [], {})
+
+
+# UI library field component per question input type (QuestionBoundField.kind)
+QUESTION_KINDS = {
+    InputType.TEXT: "text",
+    InputType.ISO_3166_1: "country",
+    InputType.FILE_UPLOAD: "file",
+    InputType.SELECTION: "select",
+    InputType.MULTI_SELECT: "multi-select",
+    InputType.DATE_SELECT: "date",
+}
+
+
+class FormQuestion(NamedTuple):
+    """A question for a QuestionsForm, and whether the form requires an answer."""
+
+    question: DSAQuestion | VLOPSEQuestion
+    required: bool
+
+
+class QuestionBoundField(forms.BoundField):
+    @property
+    def kind(self) -> str:
+        """Which field component renders the question (see _questions_form.html)."""
+        if isinstance(self.field, YesNoField):
+            return "yes-no"
+        if type(self.field) is forms.CharField:
+            # includes selections without options (see get_question_field)
+            return "text"
+        input_type = self.form.questions[self.name].input_type
+        return QUESTION_KINDS.get(input_type, "text")
+
+
 class QuestionsForm(IdatBaseForm):
+    bound_field_class = QuestionBoundField
+
     def __init__(
         self,
         *args,
-        question_config: list[tuple[bool, DSAQuestion]],
-        answers: dict,
+        form_questions: list[FormQuestion],
         **kwargs,
     ) -> None:
+        """One field per form question. Prefill answers with Django's `initial`
+        ({question key: value}); a bound form shows its data instead."""
         super().__init__(*args, **kwargs)
-
-        for q in question_config:
-            question = q[1]
-            required = q[0]
-            answer = answers.get(question.key)
-            self.add_question_field(question, required, answer)
+        # the question behind each field, by field name (= question key)
+        self.questions: dict[str, DSAQuestion | VLOPSEQuestion] = {}
+        for question, required in form_questions:
+            self.add_question_field(question, required)
 
     def add_question_field(
-        self,
-        question: DSAQuestion | VLOPSEQuestion,
-        required: bool,
-        initial: Any,  # noqa: ANN401
+        self, question: DSAQuestion | VLOPSEQuestion, required: bool
     ) -> None:
-        self.fields[question.key] = get_question_field(question)
-        self.fields[question.key].label = question.text
-        self.fields[question.key].initial = initial
-        self.fields[question.key].required = required
-
+        field = get_question_field(question)
+        field.label = question.text
+        field.required = required
         if isinstance(question, DSAQuestion):
-            self.fields[question.key].help_text = question.help_text
+            field.help_text = question.help_text
+        self.fields[question.key] = field
+        self.questions[question.key] = question
+
+    @cached_property
+    def sections(self) -> list[FormSection]:
+        """The fields grouped by question category, in SECTION_META order.
+
+        Categories without questions are left out. Within a section, fields keep
+        the order of form_questions.
+
+        DSA questions (Enter details) and VLOPSE questions (per-platform forms
+        = applications) are grouped by their own category.
+        """
+        # TODO: Order fields within a section explicitly (e.g. first name before
+        #  email). Currently, they just follow form_questions, which follow the $
+        #  question mapper, so we should consider an `order` field on DSAQuestion
+        #  (and VlopseQuestion).
+        fields: dict[str, list[forms.BoundField]] = defaultdict(list)
+        for bound_field in self:
+            category = self.questions[bound_field.name].category
+            if category not in SECTION_META:
+                # unknown category: still shown, under "Other"
+                category = QuestionCategory.GENERAL
+            fields[category].append(bound_field)
+
+        sections = []
+        for category in SECTION_META:
+            if not fields[category]:
+                continue
+            meta = SECTION_META[category]
+            sections.append(
+                FormSection(
+                    category=category,
+                    label=meta.label or QuestionCategory(category).label,
+                    icon=meta.icon,
+                    description=meta.description,
+                    fields=fields[category],
+                )
+            )
+        for previous, following in itertools.pairwise(sections):
+            previous.next = following
+            following.previous = previous
+        return sections
+
+    @property
+    def initial_section(self) -> str:
+        """The section to show first: the first one with errors, else the first."""
+        sections = self.sections
+        for section in sections:
+            if section.has_errors:
+                return section.category
+        return sections[0].category if sections else ""

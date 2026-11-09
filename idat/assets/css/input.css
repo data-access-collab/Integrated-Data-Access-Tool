@@ -13,6 +13,230 @@
   padding-inline: 1rem;
 }
 
+/* Fonts live in idat/static/fonts/. The url()s below are copied unchanged into the built
+   file idat/static/dist/main.css, so they are relative to static/dist/, not to this file. */
+@font-face {
+  font-family: "Montserrat";
+  src: url("../fonts/Montserrat-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../fonts/Montserrat-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("../fonts/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("../fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Dark mode is switched by adding class="dark" on <html>.
+   To follow the OS setting instead, delete this line and wrap the .dark
+   block below in @media (prefers-color-scheme: dark) { :root { ... } } */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------
+   1. Raw tokens: light values on :root, dark values on .dark
+   Names match the Figma variables' code syntax (Dev Mode / MCP output),
+   e.g. Figma color/bg/canvas → var(--color-bg-canvas).
+   ------------------------------------------------------------------ */
+:root {
+  /* bg */
+  --color-bg-canvas: #F7F8FA;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-surface-muted: #EEF0F3;
+  --color-bg-nav: #212D45;
+  --color-bg-nav-hover: #2A3549;
+  --color-bg-nav-active: #3A4762;
+  --color-bg-accent: #FFC03D;
+  --color-bg-accent-hover: #F8B526;
+  --color-bg-accent-subtle: #FFF3D6;
+  --color-bg-brand: #212D45;
+  --color-bg-selected: #F3F5F8;
+  --color-bg-disabled: #EEF0F3;
+  --color-bg-success-subtle: #E8F5EE;
+  --color-bg-danger-subtle: #FDECEC;
+  --color-bg-warning-subtle: #FEF3C7;
+  --color-bg-info-subtle: #EAF1FE;
+
+  /* text */
+  --color-text-primary: #1C2230;
+  --color-text-secondary: #4B4F58;
+  --color-text-tertiary: #646B78;
+  --color-text-disabled: #8F96A3;
+  --color-text-on-accent: #212D45;
+  --color-text-on-brand: #FFFFFF;
+  --color-text-on-nav: #F2F5F7;
+  --color-text-on-nav-muted: #AEB6C6;
+  --color-text-accent: #8A5A00;
+  --color-text-link: #1D4ED8;
+
+  /* status */
+  --color-status-success: #1E7D4F;
+  --color-status-danger: #C62828;
+  --color-status-warning: #B45309;
+  --color-status-info: #1D4ED8;
+  --color-status-success-on-nav: #6FD3A0;
+  --color-status-danger-on-nav: #FF9A90;
+  --color-status-warning-on-nav: #F5C469;
+
+  /* border */
+  --color-border-default: #DDE1E7;
+  --color-border-strong: #C5CAD3;
+  --color-border-focus: #212D45;
+  --color-border-accent: #FFC03D;
+  --color-border-on-nav: #2A3549;
+
+  /* icon */
+  --color-icon-default: #4B4F58;
+  --color-icon-on-nav: #AEB6C6;
+
+  color-scheme: light; /* native controls, scrollbars */
+}
+
+.dark {
+  /* bg */
+  --color-bg-canvas: #161E30;
+  --color-bg-surface: #212D45;
+  --color-bg-surface-muted: #2A3549;
+  --color-bg-nav: #111827;
+  --color-bg-nav-hover: #212D45;
+  --color-bg-nav-active: #2A3549;
+  --color-bg-accent: #FFC03D;
+  --color-bg-accent-hover: #F8B526;
+  --color-bg-accent-subtle: #3A3220;
+  --color-bg-brand: #FFC03D;
+  --color-bg-selected: #2A3549;
+  --color-bg-disabled: #2A3549;
+  --color-bg-success-subtle: #17352A;
+  --color-bg-danger-subtle: #3A1E1E;
+  --color-bg-warning-subtle: #3A2E14;
+  --color-bg-info-subtle: #1C2A45;
+
+  /* text */
+  --color-text-primary: #F2F5F7;
+  --color-text-secondary: #AEB6C6;
+  --color-text-tertiary: #8F96A3;
+  --color-text-disabled: #55617A;
+  --color-text-on-accent: #212D45;
+  --color-text-on-brand: #212D45;
+  --color-text-on-nav: #F2F5F7;
+  --color-text-on-nav-muted: #AEB6C6;
+  --color-text-accent: #FFC03D;
+  --color-text-link: #8AB4FF;
+
+  /* status */
+  --color-status-success: #6FD3A0;
+  --color-status-danger: #FF9A90;
+  --color-status-warning: #F5C469;
+  --color-status-info: #8AB4FF;
+  --color-status-success-on-nav: #6FD3A0;
+  --color-status-danger-on-nav: #FF9A90;
+  --color-status-warning-on-nav: #F5C469;
+
+  /* border */
+  --color-border-default: #3A4762;
+  --color-border-strong: #55617A;
+  --color-border-focus: #FFC03D;
+  --color-border-accent: #FFC03D;
+  --color-border-on-nav: #2A3549;
+
+  /* icon */
+  --color-icon-default: #AEB6C6;
+  --color-icon-on-nav: #AEB6C6;
+
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------
+   2. Map tokens to Tailwind utilities.
+   "inline" makes utilities use var(--…) directly, so they follow dark mode.
+   initial wipes Tailwind's default palette (red-500 etc.). Delete those
+   lines if you still want the defaults available.
+   ------------------------------------------------------------------ */
+@theme inline {
+  --color-*: initial;
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* bg-*  →  bg-canvas, bg-surface, bg-nav-hover, … (only for bg- utilities) */
+  --background-color-canvas: var(--color-bg-canvas);
+  --background-color-surface: var(--color-bg-surface);
+  --background-color-surface-muted: var(--color-bg-surface-muted);
+  --background-color-nav: var(--color-bg-nav);
+  --background-color-nav-hover: var(--color-bg-nav-hover);
+  --background-color-nav-active: var(--color-bg-nav-active);
+  --background-color-accent: var(--color-bg-accent);
+  --background-color-accent-hover: var(--color-bg-accent-hover);
+  --background-color-accent-subtle: var(--color-bg-accent-subtle);
+  --background-color-brand: var(--color-bg-brand);
+  --background-color-selected: var(--color-bg-selected);
+  --background-color-disabled: var(--color-bg-disabled);
+  --background-color-success-subtle: var(--color-bg-success-subtle);
+  --background-color-danger-subtle: var(--color-bg-danger-subtle);
+  --background-color-warning-subtle: var(--color-bg-warning-subtle);
+  --background-color-info-subtle: var(--color-bg-info-subtle);
+
+  /* text-*  →  text-primary, text-on-accent, text-link, … */
+  --text-color-primary: var(--color-text-primary);
+  --text-color-secondary: var(--color-text-secondary);
+  --text-color-tertiary: var(--color-text-tertiary);
+  --text-color-disabled: var(--color-text-disabled);
+  --text-color-on-accent: var(--color-text-on-accent);
+  --text-color-on-brand: var(--color-text-on-brand);
+  --text-color-on-nav: var(--color-text-on-nav);
+  --text-color-on-nav-muted: var(--color-text-on-nav-muted);
+  --text-color-accent: var(--color-text-accent);
+  --text-color-link: var(--color-text-link);
+
+  /* border-*  →  border-default, border-strong, border-focus, … */
+  --border-color-default: var(--color-border-default);
+  --border-color-strong: var(--color-border-strong);
+  --border-color-focus: var(--color-border-focus);
+  --border-color-accent: var(--color-border-accent);
+  --border-color-on-nav: var(--color-border-on-nav);
+
+  /* focus rings / outlines  →  ring-focus, outline-focus */
+  --ring-color-focus: var(--color-border-focus);
+  --outline-color-focus: var(--color-border-focus);
+
+  /* status + icon: shared across all color utilities
+     →  text-success, bg-danger, border-warning, text-icon-default, fill-icon-on-nav, … */
+  --color-success: var(--color-status-success);
+  --color-danger: var(--color-status-danger);
+  --color-warning: var(--color-status-warning);
+  --color-info: var(--color-status-info);
+  --color-success-on-nav: var(--color-status-success-on-nav);
+  --color-danger-on-nav: var(--color-status-danger-on-nav);
+  --color-warning-on-nav: var(--color-status-warning-on-nav);
+  /* Same name as the raw token on purpose (it matches Figma). Tailwind's copy
+     is in @layer theme; the unlayered :root/.dark values above win. */
+  --color-icon-default: var(--color-icon-default);
+  --color-icon-on-nav: var(--color-icon-on-nav);
+}
+
+/* ------------------------------------------------------------------
+   3. Fonts, radius, elevation (static, so plain @theme)
+   ------------------------------------------------------------------ */
 @theme {
   --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;        /* font-sans (default) */
   --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;    /* font-display */
@@ -60,18 +284,6 @@
            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus
            disabled:pointer-events-none disabled:opacity-50;
   }
-
-  /*!* Global Django form overrides *!*/
-  /*.idat-form-field { @apply my-4; }*/
-  /*.idat-form-field label, .idat-form-field legend { @apply w-full text-secondary inline-block font-semibold; }*/
-  /*.idat-form-field input[type=text], .idat-form-field select, .idat-form-field input[type=date] { @apply rounded-sm bg-surface-muted p-2 min-w-40 }*/
-  /*.idat-form-field input[type=checkbox] { @apply size-4 rounded border-strong text-primary; }*/
-  /*.idat-form-field input[type=radio] { @apply size-4 border-strong text-primary; }*/
-  /*.idat-form-field label:has(input[type=checkbox]) { @apply cursor-pointer w-auto; }*/
-  /*.idat-form-field .helptext { @apply text-xs text-tertiary; }*/
-  /*.idat-form-field .errorlist { @apply text-xs text-danger; }*/
-  /*.idat-form-field .errorlist.nonfield { @apply mb-4 rounded-md bg-danger-subtle p-3 text-sm text-danger; }*/
-  /*.idat-form-field .required > label::after { content: " *"; @apply text-danger; }*/
 }
 
 /* ------------------------------------------------------------------

@@ -18,6 +18,10 @@
     slot       the control; give it aria-describedby="{input-id}-error|-warning|-help"
     helper     named slot replacing the help text, for live helpers, e.g. "2 selected"
     counter    named slot at the right end of the helper row, e.g. "312 / 1,500"
+    inline     boolean: label row and helper on the left, the control on the right (a
+               question answered with a Yes-No Toggle). The label is then a plain text
+               (no <label for>, which would pick the first radio): give the control its own
+               accessible name.
 
   Usage (inside a field component):
     <c-field-layout :field="field" :input-id="input_id" :label="label" :required="required" :help-text="help_text" :help-tip="help_tip">
@@ -26,52 +30,67 @@
 {% endcomment %}
 
 {% load i18n %}
-<c-vars field="" input-id="" label="" :required="False" help-text="" help-tip="" warning="" class="" />
+<c-vars field="" input-id="" label="" :required="False" help-text="" help-tip="" warning="" :inline="False" class="" />
 {% with label_text=field.label|default:label help=field.help_text|default:help_text %}
-  <div class="group flex w-full flex-col gap-xs {{ class }}" {{ attrs }}>
-    {% if label_text or help_tip %}
-      <div class="flex items-center gap-1.5">
-        {% if label_text %}
-          <label
-            {% if input_id %}for="{{ input_id }}"{% endif %}
-            class="type-label-lg text-primary group-has-disabled:text-disabled"
-          >{{ label_text }}</label>
-        {% endif %}
-        {% if required or field.field.required %}
-          <span
-            class="type-label-lg {% if warning and not field.errors %}text-warning{% else %}text-danger{% endif %}"
-            aria-hidden="true"
-          >*</span>
-        {% endif %}
-        {% if help_tip %}
-          <button
-            type="button"
-            class="cursor-pointer rounded-full text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            aria-label="{% translate "Help" %}: {{ label_text }}"
-            x-data
-            x-on:click="$dispatch('help-tip', { tip: '{{ help_tip|escapejs }}' })"
-          >
-            <c-icon name="help-circle" class="size-4" />
-          </button>
-        {% endif %}
-      </div>
-    {% endif %}
-    {{ slot }}
-    {% if field.errors or warning or helper or help or counter %}
-      <div class="flex items-start gap-1.5 type-body-sm {% if field.errors %}text-danger{% elif warning %}text-warning{% else %}text-tertiary{% endif %}">
-        <div class="min-w-0 flex-1">
-          {% if field.errors %}
-            <c-field-message id="{{ input_id }}-error">{{ field.errors|join:" " }}</c-field-message>
-          {% elif warning %}
-            <c-field-message tone="warning" id="{{ input_id }}-warning">{{ warning }}</c-field-message>
-          {% elif helper %}
-            <div id="{{ input_id }}-help">{{ helper }}</div>
-          {% elif help %}
-            <p id="{{ input_id }}-help">{{ help }}</p>
+  <div
+    class="group flex w-full {% if inline %}items-center gap-lg{% else %}flex-col gap-xs{% endif %} {{ class }}"
+    {{ attrs }}
+  >
+    {# the label column of inline; display: contents (no box) otherwise #}
+    <div class="{% if inline %}flex min-w-0 flex-1 flex-col gap-2xs{% else %}contents{% endif %}">
+      {% if label_text or help_tip %}
+        <div class="flex items-center gap-1.5">
+          {% if label_text and inline %}
+            <span
+              class="min-w-0 flex-1 type-label-lg text-primary group-has-disabled:text-disabled"
+            >{{ label_text }}</span>
+          {% elif label_text %}
+            <label
+              {% if input_id %}for="{{ input_id }}"{% endif %}
+              class="type-label-lg text-primary group-has-disabled:text-disabled"
+            >{{ label_text }}</label>
+          {% endif %}
+
+          {% if required or field.field.required %}
+            <span
+              class="type-label-lg {% if warning and not field.errors %}text-warning{% else %}text-danger{% endif %}"
+              aria-hidden="true"
+            >*</span>
+          {% endif %}
+
+          {% if help_tip %}
+            <button
+              type="button"
+              class="cursor-pointer rounded-full text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              aria-label="{% translate "Help" %}: {{ label_text }}"
+              x-data
+              x-on:click="$dispatch('help-tip', { tip: '{{ help_tip|escapejs }}' })"
+            >
+              <c-icon name="help-circle" class="size-4" />
+            </button>
           {% endif %}
         </div>
-        {% if counter %}<span class="shrink-0 whitespace-nowrap">{{ counter }}</span>{% endif %}
-      </div>
-    {% endif %}
+      {% endif %}
+
+      {% if not inline %}{{ slot }}{% endif %}
+
+      {% if field.errors or warning or helper or help or counter %}
+        <div class="flex items-start gap-1.5 type-body-sm {% if field.errors %}text-danger{% elif warning %}text-warning{% else %}text-tertiary{% endif %}">
+          <div class="min-w-0 flex-1">
+            {% if field.errors %}
+              <c-field-message id="{{ input_id }}-error">{{ field.errors|join:" " }}</c-field-message>
+            {% elif warning %}
+              <c-field-message tone="warning" id="{{ input_id }}-warning">{{ warning }}</c-field-message>
+            {% elif helper %}
+              <div id="{{ input_id }}-help">{{ helper }}</div>
+            {% elif help %}
+              <p id="{{ input_id }}-help">{{ help }}</p>
+            {% endif %}
+          </div>
+          {% if counter %}<span class="shrink-0 whitespace-nowrap">{{ counter }}</span>{% endif %}
+        </div>
+      {% endif %}
+    </div>
+    {% if inline %}{{ slot }}{% endif %}
   </div>
 {% endwith %}

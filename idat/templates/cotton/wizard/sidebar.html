@@ -1,0 +1,81 @@
+{% comment %}
+  Wizard / Sidebar
+
+  Wizard steps: 1 Choose platforms · 2 Enter details · 3 Review · 4 Generate
+  (platform-specific applications are built) · 5 Submit (researcher submits on each
+  platform and starts tracking). Tracking itself lives in the case dashboard, outside the
+  wizard.
+
+  Props:
+    current-step  "choose-vlopses" · "enter-details" (default) · "review" · "generate" ·
+                  "submit". Earlier steps show as done, later ones as upcoming.
+    hrefs         optional dict of step links, keys choose_vlopses, enter_details,
+                  review, generate, submit (:hrefs="wizard_urls"). Only done steps
+                  become links.
+
+  Slot: the Enter details sections (<c-wizard.section-item> with <c-wizard.sub-item>
+  inside), shown under "Enter your details" while that step is current.
+
+  The search box dispatches "wizard-search" with { query } while typing.
+
+  Usage:
+    <c-wizard.sidebar current-step="enter-details" :hrefs="wizard_urls">
+      <c-wizard.section-item state="complete" icon="user" label="About you" count="5/5" href="…" />
+      <c-wizard.section-item state="current" icon="flask" label="Research project" count="4/9" href="…">
+        <c-wizard.sub-item label="Research question" href="#research-question" current />
+      </c-wizard.section-item>
+    </c-wizard.sidebar>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars current-step="enter-details" hrefs="" class="" />
+<aside class="flex h-full w-75 shrink-0 flex-col gap-md overflow-y-auto bg-nav px-2.5 py-md {{ class }}" {{ attrs }}>
+  <label
+    x-data
+    class="flex h-10 shrink-0 items-center gap-xs rounded-sm bg-nav-hover px-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus"
+  >
+    <c-icon name="search" class="size-4 shrink-0 text-icon-on-nav" />
+    <span class="sr-only">{% translate "Search questions" %}</span>
+    <input
+      type="search"
+      autocomplete="off"
+      placeholder="{% translate "Search questions…" %}"
+      x-on:input.debounce="$dispatch('wizard-search', { query: $event.target.value })"
+      class="min-w-0 flex-1 border-0 bg-transparent p-0 type-body-md text-on-nav placeholder:text-on-nav-muted focus:ring-0"
+    />
+  </label>
+
+  <nav aria-label="{% translate "Application steps" %}">
+    <ol class="flex flex-col gap-2xs">
+      <c-wizard.step-item
+        number="1"
+        label="{% translate "Choose platforms" %}"
+        state="{% if current_step == "choose-vlopses" %}current{% else %}done{% endif %}"
+        href="{% if current_step != "choose-vlopses" %}{{ hrefs.choose_vlopses }}{% endif %}"
+      />
+      <c-wizard.step-item
+        number="2"
+        label="{% translate "Enter your details" %}"
+        state="{% if current_step == "choose-vlopses" %}upcoming{% elif current_step == "enter-details" %}current{% else %}done{% endif %}"
+        href="{% if current_step != "choose-vlopses" and current_step != "enter-details" %}{{ hrefs.enter_details }}{% endif %}"
+      >{% if current_step == "enter-details" %}{{ slot }}{% endif %}</c-wizard.step-item>
+      <c-wizard.step-item
+        number="3"
+        label="{% translate "Review" %}"
+        state="{% if current_step == "review" %}current{% elif current_step == "generate" or current_step == "submit" %}done{% else %}upcoming{% endif %}"
+        href="{% if current_step == "generate" or current_step == "submit" %}{{ hrefs.review }}{% endif %}"
+      />
+      <c-wizard.step-item
+        number="4"
+        label="{% translate "Generate" %}"
+        state="{% if current_step == "generate" %}current{% elif current_step == "submit" %}done{% else %}upcoming{% endif %}"
+        href="{% if current_step == "submit" %}{{ hrefs.generate }}{% endif %}"
+      />
+      <c-wizard.step-item
+        number="5"
+        label="{% translate "Submit" %}"
+        state="{% if current_step == "submit" %}current{% else %}upcoming{% endif %}"
+      />
+    </ol>
+  </nav>
+</aside>

@@ -44,12 +44,13 @@ shadow-md, rounded-xl … generate NO CSS.
 ### django-cotton components
 - One component per file in idat/templates/cotton/; snake_case file → kebab-case tag,
   subfolders → dots: button.html → <c-button>, user_card.html → <c-user-card>,
-  nav/section_item.html → <c-nav.section-item>. Folders follow the Figma prefix (Nav / …
-  → nav/, Help / … → help/, Form / … → forms/), at most one level deep.
+  wizard/section_item.html → <c-wizard.section-item>. Folders follow the Figma prefix
+  (Wizard / … → wizard/, Nav / … → nav/, Help / … → help/, Form / … → forms/), at most one
+  level deep.
 - File order: the {% comment %} block first (behaviour rules, props, usage only), a blank
   line, {% load %}, <c-vars>, then the markup. Never <c-vars> above the comment:
     {% comment %}
-      Nav / Section Item
+      Wizard / Section Item
       …
     {% endcomment %}
 

@@ -1,7 +1,9 @@
 {# djangofmt: file-ignore[invalid-syntax] #}
 
 {% comment %}
-  A question inside the current wizard section, listed under its <c-nav.section-item>.
+  Wizard / Sub Item
+
+  A question inside the current wizard section, listed under its <c-wizard.section-item>.
 
   Props:
     label    question (short form)
@@ -12,7 +14,7 @@
   gets aria-current="location".
 
   Usage:
-    <c-nav.sub-item label="Research question" href="#research-question" current />
+    <c-wizard.sub-item label="Research question" href="#research-question" current />
 {% endcomment %}
 
 {% load i18n %}

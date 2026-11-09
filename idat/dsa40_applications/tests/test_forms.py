@@ -10,16 +10,18 @@ from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from django.utils.html import escape
 
-from idat.dsa40.models import InputType
-from idat.dsa40.tests.factories import DsaQuestionFactory
+from idat.core.forms.base import IdatBaseForm
+from idat.core.forms.fields import TOP_COUNTRIES, YesNoField, country_field
 from idat.dsa40_applications.forms import (
     DEFAULT_CLIENT_FILE_TYPES,
-    TOP_COUNTRIES,
     ClientFileField,
-    IdatBaseForm,
+    FormQuestion,
     QuestionsForm,
-    country_field,
+    get_question_field,
 )
+from idat.dsa40_applications.sections import SECTION_META
+from idat.dsa40_form_handler.models import InputType, QuestionCategory
+from idat.dsa40_form_handler.tests.factories import DsaQuestionFactory
 
 
 class IdatBaseFormTests(SimpleTestCase):
@@ -31,7 +33,7 @@ class IdatBaseFormTests(SimpleTestCase):
         form.is_valid()
 
         self.assertTrue(
-            {"idat-form-field", "extra", "required", "error"}
+            {"extra", "required", "error"}
             <= set(form["name"].css_classes("extra").split())
         )
 
@@ -54,13 +56,13 @@ class QuestionsFormTests(SimpleTestCase):
     def test_questions_form_requires_only_required_questions(self):
         required = DsaQuestionFactory.build(key="email", input_type=InputType.TEXT)
         optional = DsaQuestionFactory.build(key="nickname", input_type=InputType.TEXT)
-        config = [(True, required), (False, optional)]
+        config = [FormQuestion(required, True), FormQuestion(optional, False)]
 
         with_required = QuestionsForm(
-            data={"email": "a@example.org"}, question_config=config, answers={}
+            data={"email": "a@example.org"}, form_questions=config
         )
         without_required = QuestionsForm(
-            data={"nickname": "ada"}, question_config=config, answers={}
+            data={"nickname": "ada"}, form_questions=config
         )
 
         self.assertTrue(with_required.is_valid())
@@ -71,7 +73,8 @@ class QuestionsFormTests(SimpleTestCase):
         question = DsaQuestionFactory.build(key="email", input_type=InputType.TEXT)
 
         form = QuestionsForm(
-            question_config=[(True, question)], answers={"email": "a@example.org"}
+            form_questions=[FormQuestion(question, True)],
+            initial={"email": "a@example.org"},
         )
 
         self.assertEqual(form["email"].value(), "a@example.org")
@@ -82,13 +85,11 @@ class QuestionsFormTests(SimpleTestCase):
             input_type=InputType.SELECTION,
             config={"type": "selection", "options": ["Yes", "No"]},
         )
-        config = [(True, question)]
+        config = [FormQuestion(question, True)]
 
-        valid = QuestionsForm(
-            data={"prev-experience": "No"}, question_config=config, answers={}
-        )
+        valid = QuestionsForm(data={"prev-experience": "No"}, form_questions=config)
         invalid = QuestionsForm(
-            data={"prev-experience": "Maybe"}, question_config=config, answers={}
+            data={"prev-experience": "Maybe"}, form_questions=config
         )
 
         self.assertTrue(valid.is_valid())
@@ -100,7 +101,7 @@ class QuestionsFormTests(SimpleTestCase):
         )
 
         with mock.patch("idat.dsa40_applications.forms.country_field") as factory:
-            form = QuestionsForm(question_config=[(True, question)], answers={})
+            form = QuestionsForm(form_questions=[FormQuestion(question, True)])
 
         factory.assert_called_once_with()
         self.assertIs(form.fields["country"], factory.return_value)
@@ -146,7 +147,8 @@ class ClientFileFieldTests(SimpleTestCase):
     def test_widget_submits_metadata_only_via_hidden_input(self):
         question = DsaQuestionFactory.build(key="cv", input_type=InputType.FILE_UPLOAD)
         form = QuestionsForm(
-            question_config=[(True, question)], answers={"cv": self.file_meta()}
+            form_questions=[FormQuestion(question, True)],
+            initial={"cv": self.file_meta()},
         )
 
         html = str(form["cv"])
@@ -177,3 +179,182 @@ class ClientFileFieldTests(SimpleTestCase):
     def test_unknown_types_are_rejected(self):
         with self.assertRaisesMessage(ValueError, ".exe"):
             ClientFileField(types=(".pdf", ".exe"))
+
+
+def text_question(key: str, category: str):
+    return DsaQuestionFactory.build(
+        key=key, input_type=InputType.TEXT, category=category
+    )
+
+
+class QuestionsFormSectionsTests(SimpleTestCase):
+    def make_form(self, questions, data=None, initial=None):
+        return QuestionsForm(
+            data=data,
+            form_questions=[FormQuestion(q, True) for q in questions],
+            initial=initial,
+        )
+
+    def test_sections_follow_category_order_with_other_last(self):
+        form = self.make_form(
+            [
+                text_question("misc", QuestionCategory.GENERAL),
+                text_question("title", QuestionCategory.RESEARCH_PROJECT),
+                text_question("email", QuestionCategory.CONTACT),
+                text_question("question", QuestionCategory.RESEARCH_PROJECT),
+            ]
+        )
+
+        self.assertEqual(
+            [(s.category, [f.name for f in s.fields]) for s in form.sections],
+            [
+                ("contact_details", ["email"]),
+                ("research_project", ["title", "question"]),
+                ("general", ["misc"]),
+            ],
+        )
+        self.assertEqual(form.sections[-1].label, "Other")
+        self.assertEqual(form.sections[0].label, "Contact details")
+
+    def test_unknown_category_is_shown_under_other(self):
+        form = self.make_form(
+            [
+                text_question("email", QuestionCategory.CONTACT),
+                text_question("legacy", "no_such_category"),
+            ]
+        )
+
+        self.assertEqual(
+            [(s.category, [f.name for f in s.fields]) for s in form.sections],
+            [("contact_details", ["email"]), ("general", ["legacy"])],
+        )
+
+    def test_every_category_has_section_meta(self):
+        self.assertEqual(set(SECTION_META), set(QuestionCategory))
+
+    def test_sections_link_their_neighbours(self):
+        form = self.make_form(
+            [
+                text_question("email", QuestionCategory.CONTACT),
+                text_question("title", QuestionCategory.RESEARCH_PROJECT),
+                text_question("terms", QuestionCategory.LEGAL),
+            ]
+        )
+        first, middle, last = form.sections
+
+        self.assertIsNone(first.previous)
+        self.assertIs(first.next, middle)
+        self.assertIs(middle.previous, first)
+        self.assertIs(middle.next, last)
+        self.assertIsNone(last.next)
+
+    def test_section_counts_answered_fields(self):
+        form = self.make_form(
+            [
+                text_question("email", QuestionCategory.CONTACT),
+                text_question("phone", QuestionCategory.CONTACT),
+                text_question("name", QuestionCategory.CONTACT),
+            ],
+            initial={"email": "a@example.org", "phone": "  "},
+        )
+        (section,) = form.sections
+
+        self.assertEqual((section.answered, section.total), (1, 3))
+        self.assertFalse(section.complete)
+
+    def test_initial_section_is_the_first_with_errors(self):
+        questions = [
+            text_question("email", QuestionCategory.CONTACT),
+            text_question("title", QuestionCategory.RESEARCH_PROJECT),
+        ]
+        unbound = self.make_form(questions)
+        invalid = self.make_form(questions, data={"email": "a@example.org"})
+        invalid.is_valid()
+
+        self.assertEqual(unbound.initial_section, "contact_details")
+        self.assertEqual(invalid.initial_section, "research_project")
+        self.assertTrue(invalid.sections[1].has_errors)
+
+
+class QuestionFieldComponentTests(SimpleTestCase):
+    def test_yes_no_selection_becomes_yes_no_field(self):
+        yes_no = DsaQuestionFactory.build(
+            input_type=InputType.SELECTION,
+            config={"type": "selection", "options": ["Yes", "No"]},
+        )
+        other = DsaQuestionFactory.build(
+            input_type=InputType.SELECTION,
+            config={"type": "selection", "options": ["Yes", "No", "Maybe"]},
+        )
+
+        self.assertIsInstance(get_question_field(yes_no), YesNoField)
+        self.assertNotIsInstance(get_question_field(other), YesNoField)
+
+    def test_yes_no_selection_is_detected_in_any_order(self):
+        no_yes = DsaQuestionFactory.build(
+            input_type=InputType.SELECTION,
+            config={"type": "selection", "options": ["No", "Yes"]},
+        )
+
+        self.assertIsInstance(get_question_field(no_yes), YesNoField)
+
+    def test_yes_no_field_keeps_yes_no_answers_from_the_toggle(self):
+        field = YesNoField()
+
+        self.assertEqual(field.clean("true"), "Yes")
+        self.assertEqual(field.clean("false"), "No")
+        self.assertEqual(field.clean("Yes"), "Yes")
+        with self.assertRaises(ValidationError):
+            field.clean("maybe")
+
+    def test_selection_without_options_falls_back_to_text(self):
+        for input_type in (InputType.SELECTION, InputType.MULTI_SELECT):
+            question = DsaQuestionFactory.build(
+                key="research-keywords", input_type=input_type, config=None
+            )
+            with (
+                self.subTest(input_type=input_type),
+                self.assertLogs("idat.dsa40_applications.forms", "WARNING") as logs,
+            ):
+                form = QuestionsForm(form_questions=[FormQuestion(question, True)])
+
+                self.assertIs(type(form.fields["research-keywords"]), forms.CharField)
+                self.assertEqual(form["research-keywords"].kind, "text")
+                self.assertIn("research-keywords", logs.output[0])
+
+    def test_bound_fields_name_their_component(self):
+        questions = [
+            DsaQuestionFactory.build(key="name", input_type=InputType.TEXT),
+            DsaQuestionFactory.build(key="country", input_type=InputType.ISO_3166_1),
+            DsaQuestionFactory.build(key="cv", input_type=InputType.FILE_UPLOAD),
+            DsaQuestionFactory.build(key="start", input_type=InputType.DATE_SELECT),
+            DsaQuestionFactory.build(
+                key="role",
+                input_type=InputType.SELECTION,
+                config={"type": "selection", "options": ["PI", "Co-PI"]},
+            ),
+            DsaQuestionFactory.build(
+                key="risks",
+                input_type=InputType.MULTI_SELECT,
+                config={"type": "selection", "options": ["A", "B"]},
+            ),
+            DsaQuestionFactory.build(
+                key="ethics",
+                input_type=InputType.SELECTION,
+                config={"type": "selection", "options": ["Yes", "No"]},
+            ),
+        ]
+        form = QuestionsForm(form_questions=[FormQuestion(q, True) for q in questions])
+
+        self.assertEqual(
+            {f.name: f.kind for f in form},
+            {
+                "name": "text",
+                "country": "country",
+                "cv": "file",
+                "start": "date",
+                "role": "select",
+                "risks": "multi-select",
+                "ethics": "yes-no",
+            },
+        )

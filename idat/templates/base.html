@@ -35,21 +35,52 @@
     hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'
   >
     {% block body %}
-      {% include "partials/_header.html" %}
+      {% block header_wrapper %}
+        <header id="header">
+          {% block header %}
+            {% include "partials/_header.html" %}
+          {% endblock header %}
+        </header>
+      {% endblock header_wrapper %}
 
-      <main id="main" class="flex-1 py-8">
-        <div class="container">
-          {% include "partials/_messages.html" %}
+      <main id="main" class="flex flex-1 flex-col">
+        {% include "partials/_messages.html" %}
 
-          {% block main %}
-            {% block content %}
-              <p>This is a placeholder. Override the content block.</p>
-            {% endblock content %}
-          {% endblock main %}
-        </div>
+        {% block main %}
+          <div id="hero" class="text-center grid gap-4">
+            <p class="type-overline text-accent">
+              {% translate "DSA Art. 40 · researcher data access" %}
+            </p>
+            <h1>
+              {% translate "Better applications for you." %}
+              <br />
+              {% translate "Better evidence for all." %}
+            </h1>
+            <p class="type-body-lg text-secondary">
+              {% blocktranslate %}
+                Are you applying for platform data access? Use IDAT to get support,
+                save time for multiple platforms and help the community to
+                enforce data access rights.
+              {% endblocktranslate %}
+            </p>
+            <div>
+              <c-button
+                label="{% translate 'Create Application' %}"
+                leading-icon="plus"
+                href="{% url 'dsa40_applications:create' %}"
+              />
+            </div>
+          </div>
+        {% endblock main %}
       </main>
 
-      {% include "partials/_footer.html" %}
+      {% block footer_wrapper %}
+        <footer id="footer" class="border-t">
+          {% block footer %}
+            {% include "partials/_footer.html" %}
+          {% endblock footer %}
+        </footer>
+      {% endblock footer_wrapper %}
     {% endblock body %}
 
     {% block modal %}{% endblock modal %}

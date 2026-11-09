@@ -1,26 +1,28 @@
 {# djangofmt: file-ignore[invalid-syntax] #}
 
 {% comment %}
-  Top-level process phases: Prepare · Enter details · Review & generate · Submit · Track.
+  Wizard / Step Item
+
+  One top-level wizard step: Choose platforms · Enter details · Review · Generate · Submit.
   Current = gold number; Done = green check (shape + colour).
 
   Props:
     state   "done" · "current" · "upcoming" (default)
     number  step number, shown while current or upcoming
-    label   phase name
-    href    makes the step a link (e.g. done phases); omit for plain text
-    slot    optional <c-nav.section-item> elements, listed under the step (the current
-            phase's sections in the Wizard Sidebar)
+    label   step name
+    href    makes the step a link (e.g. done steps); omit for plain text
+    slot    optional <c-wizard.section-item> elements, listed under the step (the current
+            step's sections in the Wizard / Sidebar)
 
   Renders an <li>: put the steps in an <ol> inside a <nav>. The current step gets
   aria-current="step".
 
   Usage:
-    <nav aria-label="Application phases">
+    <nav aria-label="Application steps">
       <ol class="flex flex-col gap-2xs">
-        <c-nav.phase-step state="done" number="1" label="Prepare" href="{% url … %}" />
-        <c-nav.phase-step state="current" number="2" label="Enter your details" />
-        <c-nav.phase-step number="3" label="Review & generate" />
+        <c-wizard.step-item state="done" number="1" label="Prepare" href="{% url … %}" />
+        <c-wizard.step-item state="current" number="2" label="Enter your details" />
+        <c-wizard.step-item number="3" label="Review & generate" />
       </ol>
     </nav>
 {% endcomment %}

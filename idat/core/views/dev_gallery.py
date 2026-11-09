@@ -14,7 +14,7 @@ from django import forms
 from django.conf import settings
 from django.views.generic import TemplateView
 
-from idat.core.forms import country_choices
+from idat.core.forms.fields import country_choices
 
 DPIA_LABEL = "Data-protection impact assessment"
 # File Upload demo config, in the format the DSA40 wizard's ClientFileWidget renders.
@@ -243,7 +243,7 @@ class ComponentGalleryView(TemplateView):
         icon_dir = Path(settings.APPS_DIR) / "templates" / "icons"
         context["icon_names"] = sorted(path.stem for path in icon_dir.glob("*.svg"))
         context["wizard_hrefs"] = dict.fromkeys(
-            ("choose_platforms", "enter_details", "review", "generate"),
+            ("choose_vlopses", "enter_details", "review", "generate"),
             "#wizard-sidebar",
         )
         return context

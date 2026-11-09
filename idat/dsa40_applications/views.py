@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import typing
+from enum import StrEnum
 from typing import Any
 
 from django.core.exceptions import SuspiciousOperation
@@ -10,10 +11,16 @@ from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
+from django.views.decorators.vary import vary_on_headers
 from django.views.generic import TemplateView
-from django_htmx.http import push_url
+from django_htmx.http import push_url, replace_url
 
-from idat.dsa40_applications.forms import QuestionsForm, VlopseSelectionForm
+from idat.dsa40_applications.forms import (
+    FormQuestion,
+    QuestionsForm,
+    VlopseSelectionForm,
+)
+from idat.dsa40_applications.services.applications import build_application_previews
 from idat.dsa40_applications.state import (
     FILE_KEY_HEADER,
     MAX_AGE,
@@ -26,50 +33,91 @@ from idat.dsa40_applications.state import (
     encode_file_encryption_key,
     load_wizard_state,
 )
-from idat.dsa40_form_handler.api.views import form_service
-from idat.dsa40_form_handler.models import DSAQuestion, VLOPSEQuestion
-from idat.dsa40_form_handler.schema import Answer
+from idat.dsa40_form_handler.services.questions import QuestionService
+from idat.dsa40_form_handler.validation.mapping import QuestionMapper
 from idat.vlopse.models import Vlopse
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Callable
+
     from django import forms
     from django.http.request import HttpRequest
 
-STEPS = [(1, "Select VLOPSEs"), (2, "Answer Questions"), (3, "Show Applications")]
+    from idat.dsa40_applications.services.applications import VlopseApplicationPreview
 
 
-# TODO: Delete once form_handler has a service layer
-def _temp_get_question_service(vlopse_ids: list[int]) -> list[tuple[bool, DSAQuestion]]:
-    vlopses = Vlopse.objects.filter(id__in=vlopse_ids).values_list("name", flat=True)
-    # TODO/NOTE: bit weird format (required, Question)
-    return form_service.get_mapped_questions_for(vlopses)
+class WizardStep(StrEnum):
+    """The wizard steps in order: URL slugs and the sidebar's `current-step`.
+    Keep in sync with the steps of templates/cotton/wizard/sidebar.html."""
+
+    CHOOSE_VLOPSES = "choose-vlopses"
+    ENTER_DETAILS = "enter-details"
+    REVIEW = "review"
+    GENERATE = "generate"
+    SUBMIT = "submit"
 
 
-class ApplicationFormView(TemplateView):
-    """Entry view for DSA 40 application creation"""
-
-    template_name = "dsa40_applications/base.html"
-    extra_context = {
-        "load_url": reverse_lazy("dsa40_applications:wizard_step", args=[1])
+def get_wizard_urls() -> dict[str, str]:
+    """Links of the sidebar's done steps (wizard.sidebar `hrefs`), keyed by slug with
+    underscores (choose_vlopses …): only steps that have a view."""
+    return {
+        step.replace("-", "_"): reverse("dsa40_applications:wizard_step", args=[step])
+        for step in STEP_VIEWS
     }
 
 
-@method_decorator(never_cache, name="dispatch")
-class ApplicationFormStep(View):
-    """Base view for application form steps"""
+def get_mapped_vlopse_questions(vlopse_ids: list[int]) -> list[FormQuestion]:
+    """The DSA questions the selected VLOPSEs map to, each required if at least one
+    of them requires it."""
+    vlopses = Vlopse.objects.filter(id__in=vlopse_ids).values_list("name", flat=True)
+    mapper = QuestionMapper.from_vlopse_names(list(vlopses), QuestionService())
+    return [
+        FormQuestion(question, required)
+        for required, question in mapper.map_vlopse_to_unified()
+    ]
 
-    step: int
-    next_step: type[ApplicationFormStep] | None = None
+
+class WizardFormView(TemplateView):
+    """Entry view for DSA 40 application wizard"""
+
+    template_name = "dsa40_applications/base.html"
+    extra_context = {
+        "load_url": reverse_lazy(
+            "dsa40_applications:wizard_step", args=[WizardStep.CHOOSE_VLOPSES]
+        ),
+        "current_step": WizardStep.CHOOSE_VLOPSES,
+    }
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        return super().get_context_data(wizard_urls=get_wizard_urls(), **kwargs)
+
+
+@method_decorator(never_cache, name="dispatch")
+# same URL, shell or step partial depending on HX-Request: keep caches apart
+@method_decorator(vary_on_headers("HX-Request"), name="dispatch")
+class WizardFormStep(View):
+    """Base view for wizard form steps"""
+
+    step: WizardStep
+    next_step: type[WizardFormStep] | None = None
     template_name: str
     form_class: type[forms.Form]
     state: WizardState
 
     def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponseBase:
-        if not request.htmx:
-            # plain page load (reload, typed URL): the server can't see
-            # sessionStorage, so return the base view and let htmx re-request
+        if not request.htmx or request.htmx.history_restore_request:
+            # plain page load (reload, typed URL) or browser back/forward: the
+            # server can't see sessionStorage, so return the base view and let
+            # htmx re-request. htmx swaps a history restore into <body>, so the
+            # step partial would replace the whole page layout.
             return render(
-                request, "dsa40_applications/base.html", {"load_url": request.path}
+                request,
+                "dsa40_applications/base.html",
+                {
+                    "load_url": request.path,
+                    "current_step": self.step,
+                    "wizard_urls": get_wizard_urls(),
+                },
             )
 
         try:
@@ -111,7 +159,7 @@ class ApplicationFormStep(View):
         """Extra template context, applied however the step gets rendered."""
         return {}
 
-    def go_to(self, step_cls: type[ApplicationFormStep] | None) -> HttpResponse:
+    def go_to(self, step_cls: type[WizardFormStep] | None) -> HttpResponse:
         """Render another step unbound, carrying the current state."""
         # TODO: Handle None (or drop it from possibilities)
         nxt = step_cls()
@@ -128,29 +176,34 @@ class ApplicationFormStep(View):
             "dsa40_applications/_step.html",
             {
                 "step_template": self.template_name,
-                "steps": STEPS,
-                "step": self.step,
+                "current_step": self.step,
+                "wizard_urls": get_wizard_urls(),
                 "form": form,
                 **context,
             },
         )
 
         response = self.add_response_headers(response)
-        push_url(response, reverse("dsa40_applications:wizard_step", args=[self.step]))
+        url = reverse("dsa40_applications:wizard_step", args=[self.step])
+        if self.request.method == "POST" and url != self.request.path:
+            # moved on to another step: new browser history entry
+            push_url(response, url)
+        else:
+            # load, back/forward, redirect or validation errors: a push would add
+            # a duplicate entry and drop the forward history
+            replace_url(response, url)
         return response
 
     def add_response_headers(self, response: HttpResponse) -> HttpResponse:
         response[STATE_HEADER] = dump_wizard_state(self.state)
-        # lets the browser encrypt/decrypt this draft's files (kept in memory)
         response[WIZARD_ID_HEADER] = self.state["wizard_id"]
         response[FILE_KEY_HEADER] = encode_file_encryption_key(self.state["wizard_id"])
-        # lets the browser expire stored files
         response[MAX_AGE_HEADER] = str(MAX_AGE)
         return response
 
 
-class VlopseSelectionStep(ApplicationFormStep):
-    step = 1
+class VlopseSelectionStep(WizardFormStep):
+    step = WizardStep.CHOOSE_VLOPSES
     template_name = "dsa40_applications/_vlopse_selection_form.html"
     form_class = VlopseSelectionForm
 
@@ -160,37 +213,42 @@ class VlopseSelectionStep(ApplicationFormStep):
     def update_state(self, form: forms.Form) -> None:
         """Update state in place and drop answers for deselected Vlopses."""
         vlopse_ids = [v.id for v in form.cleaned_data["vlopses"]]
-        active_qs = {str(q.key) for _, q in _temp_get_question_service(vlopse_ids)}
+        active_qs = {
+            str(fq.question.key) for fq in get_mapped_vlopse_questions(vlopse_ids)
+        }
         self.state["vlopses"] = vlopse_ids
         self.state["answers"] = {
             k: v for k, v in self.state["answers"].items() if k in active_qs
         }
 
 
-class QuestionsStep(ApplicationFormStep):
-    step = 2
+class QuestionsStep(WizardFormStep):
+    step = WizardStep.ENTER_DETAILS
     template_name = "dsa40_applications/_questions_form.html"
     form_class = QuestionsForm
 
     def check_prerequisites(self) -> HttpResponse | None:
+        """Checks that at least one VLOPSE is selected."""
         if not self.state["vlopses"]:
             return self.go_to(VlopseSelectionStep)
         return None
 
     def get_form_kwargs(self) -> dict[str, Any]:
         return {
-            "question_config": _temp_get_question_service(self.state["vlopses"]),
-            "answers": self.state["answers"],
+            "form_questions": get_mapped_vlopse_questions(self.state["vlopses"]),
+            "initial": self.state["answers"],
         }
 
     def update_state(self, form: forms.Form) -> None:
         self.state["answers"] = dict(form.cleaned_data)
 
 
-class ReviewStep(ApplicationFormStep):
-    step = 3
+class ReviewStep(WizardFormStep):
+    step = WizardStep.REVIEW
     template_name = "dsa40_applications/_review.html"
     form_class = QuestionsForm
+    # the same questions and answers as the questions step, read-only
+    get_form_kwargs = QuestionsStep.get_form_kwargs
 
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         # validate provided answers
@@ -200,64 +258,25 @@ class ReviewStep(ApplicationFormStep):
             return self.go_to(QuestionsStep)
         return self.render_step(form)
 
-    def get_step_context(self) -> dict[str, Any]:
-        # bind the stored answers to separate read-only forms for each VLOPSE
-        answers = self.state["answers"]
-        vlopse_forms = []
-        for vlopse_id in self.state["vlopses"]:
-            try:
-                vlopse = Vlopse.objects.get(id=vlopse_id)
-            except Vlopse.DoesNotExist:
-                continue
-
-            # Map general answers to vlopse answers
-            reshaped_answers: list[Answer] = [
-                Answer(question_id=k, value=str(v)) for k, v in answers.items()
-            ]
-            vlopse_answers = form_service.transform_answers_to_vlopse_answers(
-                [vlopse.name], reshaped_answers
+    def get_step_context(self) -> dict[str, list[VlopseApplicationPreview]]:
+        vlopse_ids = self.state["vlopses"]
+        input_types = {
+            fq.question.key: fq.question.input_type
+            for fq in get_mapped_vlopse_questions(vlopse_ids)
+        }
+        return {
+            "application_previews": build_application_previews(
+                vlopse_ids, self.state["answers"], input_types
             )
-
-            answer_dict: dict[str, Any] = {
-                v["question_id"]: v.get("value") for v in vlopse_answers[0][1]
-            }
-            vlopse_form = self.form_class(
-                data=answer_dict, **self.get_vlopse_form_kwargs(answer_dict)
-            )
-
-            vlopse_forms.append(
-                {
-                    "name": vlopse.name,
-                    "form": vlopse_form,
-                }
-            )
-
-        return {"vlopse_forms": vlopse_forms}
+        }
 
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         # TODO: Allow application creation if logged in
         #  -> may be handled by a different view.
         raise NotImplementedError
 
-    def get_form_kwargs(self) -> dict[str, Any]:
-        return {
-            "question_config": _temp_get_question_service(self.state["vlopses"]),
-            "answers": self.state["answers"],
-        }
-
-    def get_vlopse_form_kwargs(self, vlopse_answers: dict) -> dict[str, Any]:
-        vlopse_config: list[tuple[bool, VLOPSEQuestion]] = []
-        for k in vlopse_answers:
-            try:
-                vlopse_config.append((False, VLOPSEQuestion.objects.get(key=k)))
-            except VLOPSEQuestion.DoesNotExist:
-                continue
-        return {
-            "question_config": vlopse_config,
-            "answers": vlopse_answers,
-        }
-
     def check_prerequisites(self) -> HttpResponse | None:
+        """Checks that at least one VLOPSE is selected and that answers are present."""
         if not self.state["vlopses"]:
             return self.go_to(VlopseSelectionStep)
         if not self.state["answers"]:
@@ -269,14 +288,16 @@ VlopseSelectionStep.next_step = QuestionsStep
 QuestionsStep.next_step = ReviewStep
 
 
-STEP_VIEWS = {
-    1: VlopseSelectionStep.as_view(),
-    2: QuestionsStep.as_view(),
-    3: ReviewStep.as_view(),
+STEP_VIEWS: dict[WizardStep, Callable[..., HttpResponseBase]] = {
+    view.step: view.as_view()
+    for view in (VlopseSelectionStep, QuestionsStep, ReviewStep)
 }
 
 
-def wizard_step(request: HttpRequest, step: int) -> HttpResponseBase:
+def route_wizard_step(request: HttpRequest, step: WizardStep) -> HttpResponseBase:
+    """Route create/<step>/ to the view of that WizardStep slug: one URL pattern for
+    all steps, so links are built by slug. 404 for unknown steps and steps without a
+    view yet (generate, submit)."""
     view = STEP_VIEWS.get(step)
     if view is None:
         raise Http404

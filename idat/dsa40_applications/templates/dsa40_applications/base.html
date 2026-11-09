@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block javascript %}
   {# before main.js: module scripts are deferred and run in document order #}
@@ -7,17 +7,43 @@
   {{ block.super }}
 {% endblock javascript %}
 
-{% block content %}
-  <h1 class="font-bold text-xl">Create new DSA40 application</h1>
+{% block header %}
+  <c-top-bar
+    context="anonymous"
+    case-meta="{% translate 'Application' %}"
+    case-title="{% translate 'New Application' %}"
+    save-status="{% translate 'Not saved · kept in this tab for 6 h' %}"
+  >
+    <c-slot name="actions">
+      <c-button
+        variant="ghost"
+        label="{% translate 'Discard draft' %}"
+        x-data
+        x-on:click="$dispatch('wizard-discard', { href: '{% url 'dsa40_applications:create' %}' })"
+      />
+      <c-button label="{% translate 'Create account to save' %}" href="#top-bar" />
+      <a class="rounded-sm type-label-lg text-link hover:underline" href="#top-bar">
+        {% translate 'Sign in' %}
+      </a>
+    </c-slot>
+  </c-top-bar>
+{% endblock header %}
 
-  <div id="application-wizard">
-    <div
-      id="application-wizard-body"
-      hx-history="false"
-      hx-get="{{ load_url }}"
-      hx-trigger="load"
-      hx-target="this"
-    >
+{% block main %}
+  {# section: the question section shown in Enter details (sidebar and questions form) #}
+  <div class="flex flex-1 flex-row" x-data="{ section: '' }">
+    {% include "dsa40_applications/_sidebar.html" %}
+
+    <div id="application-wizard" class="min-w-0 flex-1">
+      <div
+        id="application-wizard-body"
+        class="pt-10 pl-12 pr-12 pb-16 flex flex-col gap-6 max-w-4xl"
+        hx-history="false"
+        hx-get="{{ load_url }}"
+        hx-trigger="load"
+        hx-target="this"
+      >
+      </div>
     </div>
   </div>
-{% endblock content %}
+{% endblock main %}

@@ -1,0 +1,12 @@
+<div class="flex flex-col gap-xs">
+  <p class="type-body-sm text-tertiary">Done and current steps are links (hover not designed: bg-nav-hover).</p>
+  <nav aria-label="Application steps {{ theme }}" class="max-w-xs rounded-lg bg-nav p-xs">
+    <ol class="flex flex-col gap-2xs">
+      <c-wizard.step-item state="done" number="1" label="Choose platforms" href="#wizard-step-item" />
+      <c-wizard.step-item state="current" number="2" label="Enter your details" href="#wizard-step-item" />
+      <c-wizard.step-item number="3" label="Review" />
+      <c-wizard.step-item number="4" label="Generate" />
+      <c-wizard.step-item number="5" label="Submit" />
+    </ol>
+  </nav>
+</div>

@@ -1,16 +1,47 @@
+{% load i18n %}
+
+<h1 class="type-headline-lg">{% translate 'Which platforms do you want data from?' %}</h1>
+
+<p class="type-body-lg text-secondary">
+  {% blocktranslate %}
+    Pick every very large online platform or search engine (VLOPSE) you want data from.
+    All 24 services designated by the European Commission are here.
+  {% endblocktranslate %}
+</p>
+
 <form
-  hx-post="{% url 'dsa40_applications:wizard_step' 1 %}"
+  hx-post="{% url 'dsa40_applications:wizard_step' 'choose-vlopses' %}"
   hx-target="#application-wizard-body"
   hx-swap="innerHTML"
+  class="flex flex-col gap-lg"
 >
   {% csrf_token %}
 
-  {{ form }}
+  {% with field=form.vlopses %}
+    <fieldset
+      class="flex flex-col gap-xs"
+      {% if field.errors %}aria-describedby="{{ field.auto_id }}-error"{% endif %}
+    >
+      <legend class="sr-only">{{ field.label }}</legend>
+      <div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
+        {% for choice in field %}
+          <c-platform-row
+            :name="choice.data.value.instance.name"
+            channel="{{ choice.data.value.instance.modality }}"
+            :input-name="choice.data.name"
+            :value="choice.data.value"
+            :selected="choice.data.selected"
+            id="{{ choice.id_for_label }}"
+          />
+        {% endfor %}
+      </div>
+      {% if field.errors %}
+        <c-field-message id="{{ field.auto_id }}-error">{{ field.errors|join:" " }}</c-field-message>
+      {% endif %}
+    </fieldset>
+  {% endwith %}
 
-  <button
-    type="submit"
-    class="btn btn-primary"
-  >
-    Next
-  </button>
+  <div class="flex justify-end">
+    <c-button label="{% translate 'Continue to questions' %}" icon="arrow-right" type="submit" />
+  </div>
 </form>
