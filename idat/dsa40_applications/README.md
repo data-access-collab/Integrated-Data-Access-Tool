@@ -12,24 +12,61 @@ Core features:
 ## Form Wizard for Application Creation
 
 The form wizard gathers and renders all necessary questions for a set of
-chosen VLOPSEs. For this, it uses the form handler included in the `dsa40`
-app.
+chosen VLOPSEs. For this, it uses the `dsa40_form_handler` app: `QuestionMapper`
+merges the selected VLOPSEs' questions into one set of DSA questions, and
+`AnswerTransformer` maps the answers back to each VLOPSE's own questions.
 
-It consists of three steps:
+It consists of these steps (URL slug in brackets):
 
-1. *VLOPSE selection*: select the VLOPSEs for which a DSA40 application should be created.
-2. *Questions*: fill out the questions for the selected VLOPSEs.
-3. *Review*: display a summary of the answers to the user. Optionally, users can
-save the application in IDAT (requires an account).
+1. *Choose platforms* (`choose-vlopses`): select the VLOPSEs for which a DSA40
+   application should be created.
+2. *Enter details* (`enter-details`): answer the DSA questions the selected VLOPSEs
+   need, one section (question category, see `sections.py`) at a time.
+3. *Review* (`review`): the answers, read-only. Continuing re-validates the stored
+   answers; the page itself submits none.
+4. *Generate* (`generate`): one read-only application per VLOPSE, i.e. the answers
+   mapped to that platform's questions (`services/applications.py`), with any mapping
+   errors. Saving the applications (requires an account) is not implemented yet.
+5. *Submit* (`submit`): planned, not implemented yet.
+
+### How the steps work
+
+- Each step is a `WizardFormStep` view in `views.py` (form, template, prerequisites,
+  `next_step`). All steps share one URL pattern, `create/<step>/`, routed by
+  `STEP_VIEWS`.
+- Steps are htmx partials swapped into `#application-wizard-body`. A plain page load
+  (reload, typed URL, history restore) returns the shell (`base.html`), which then
+  requests the step with the state token (see below).
+- A step whose prerequisites aren't met (e.g. no VLOPSE selected, or on Review a
+  question the details step hasn't stored an answer for) renders the step to fix instead (`go_to`).
+- Review and Generate render the provided answers read-only.
 
 ### How answers are stored
 
 Before a draft is saved, answers aren’t stored on the server.
 Instead, a `WizardState` (draft ID, selected VLOPSEs, answers) travels as an encrypted
 token (Fernet, key derived from `DJANGO_WIZARD_SECRET`) in the `X-Wizard-State`
-header, so it can’t be read from browser storage.
+header.
 The token expires 6 hours after the last step (sliding); changing the secret
 invalidates all open drafts.
+
+**Why a token:** the wizard works without an account, so the draft lives in the
+browser, per tab. Server-side storage (database or Django session) would keep
+personal answers of abandoned, anonymous drafts on the server, and a session cookie
+is shared by all tabs, so drafts in two tabs would overwrite each other. Keeping the
+draft in the browser as an encrypted, authenticated token instead gives:
+
+1. **Server-enforced expiry (the main reason).** Only the server can tell whether a
+   token is still valid (Fernet TTL), and it hands out the file key
+   (`X-Wizard-File-Key`) only along with a valid token. So once the token expires,
+   the draft's files in IndexedDB can no longer be decrypted, whatever the browser
+   keeps. With plain state in sessionStorage, anyone at the device could read the
+   draft ID and get the key at any time; expiry would be up to the browser.
+2. **Integrity.** The browser can't alter the state (e.g. the draft ID or the
+   selected VLOPSEs) without the server noticing; a tampered token resets the draft.
+3. **Confidentiality, as a side effect.** The answers aren't readable in browser
+   storage. As sessionStorage is per tab and short-lived, this matters least, but
+   browsers do restore it when a closed tab is reopened.
 
 *On the server side*, the information stored in the token is used to validate/render
 the form and persist answers between steps.
@@ -37,7 +74,23 @@ the form and persist answers between steps.
 *On the client side*, the token is stored in the tab-bound sessionStorage, so
 that the token survives tab reloads but a separate tab will get its own WizardState.
 
-This logic lives in `state.py`.
+**How the token is attached to requests:** The forms hold only
+the CSRF token and the fields; `wizard.js` adds the state to every htmx request:
+
+- `htmx:configRequest` reads the token from sessionStorage and sends it as the
+  `X-Wizard-State` request header (form posts and `hx-get` links alike).
+- Every step response carries a re-issued token (`add_response_headers`, also on
+  GET, which makes the expiry sliding); `htmx:afterRequest` stores it in
+  sessionStorage.
+- The first step request has no token yet: the server starts an empty state with a
+  new draft ID (`load_wizard_state`), whose token comes back with that response.
+
+So only htmx requests carry the state: a step must use `hx-post` / `hx-get`, never a
+plain `<form method="post">` or link. A plain page
+load returns the shell (`base.html`), which then requests the step through htmx.
+
+This logic lives in `state.py` (server) and `static/dsa40_applications/wizard.js`
+(client).
 
 ### How file uploads are handled
 
@@ -49,8 +102,10 @@ including its files.
 
 Implementation details:
 
-- `ClientFileWidget` renders an unnamed file input (never submitted) and a hidden
-  input. On selection, the browser checks the file (allowed extension, max. 10 MB,
+- `ClientFileWidget` (`ui_component = "file"`) is rendered by `<c-file-upload>`: an
+  unnamed file input (never submitted) and a hidden input. The `clientFile` Alpine
+  component in `wizard.js` drives it, so it only works on wizard pages. On selection,
+  the browser checks the file (allowed extension, max. 10 MB,
   not empty), computes its SHA-256 (for an integrity check on saving), encrypts it
   (AES-GCM) and stores it in IndexedDB. Only the metadata (`name`, `size`, `type`,
   `sha256`) is submitted via the hidden input.
