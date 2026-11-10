@@ -10,7 +10,6 @@ from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from django.utils.html import escape
 
-from idat.core.forms.base import IdatBaseForm
 from idat.core.forms.fields import TOP_COUNTRIES, YesNoField, country_field
 from idat.dsa40_applications.forms import (
     DEFAULT_CLIENT_FILE_TYPES,
@@ -22,20 +21,6 @@ from idat.dsa40_applications.forms import (
 from idat.dsa40_applications.sections import SECTION_META
 from idat.dsa40_form_handler.models import InputType, QuestionCategory
 from idat.dsa40_form_handler.tests.factories import DsaQuestionFactory
-
-
-class IdatBaseFormTests(SimpleTestCase):
-    def test_bound_field_css_classes(self):
-        class _Form(IdatBaseForm):
-            name = forms.CharField(required=True)
-
-        form = _Form(data={})
-        form.is_valid()
-
-        self.assertTrue(
-            {"extra", "required", "error"}
-            <= set(form["name"].css_classes("extra").split())
-        )
 
 
 class CountryFieldTests(SimpleTestCase):
@@ -319,7 +304,7 @@ class QuestionFieldComponentTests(SimpleTestCase):
                 form = QuestionsForm(form_questions=[FormQuestion(question, True)])
 
                 self.assertIs(type(form.fields["research-keywords"]), forms.CharField)
-                self.assertEqual(form["research-keywords"].kind, "text")
+                self.assertEqual(form["research-keywords"].component, "text")
                 self.assertIn("research-keywords", logs.output[0])
 
     def test_bound_fields_name_their_component(self):
@@ -347,7 +332,7 @@ class QuestionFieldComponentTests(SimpleTestCase):
         form = QuestionsForm(form_questions=[FormQuestion(q, True) for q in questions])
 
         self.assertEqual(
-            {f.name: f.kind for f in form},
+            {f.name: f.component for f in form},
             {
                 "name": "text",
                 "country": "country",

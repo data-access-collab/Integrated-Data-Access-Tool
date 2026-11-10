@@ -1,6 +1,8 @@
 import pycountry
 from django import forms
 
+from idat.core.forms.widgets import CountrySelect, YesNoWidget
+
 # COUNTRY FIELD ----------------------------------------------------------------
 
 TOP_COUNTRIES = ["DE", "CH", "NL"]
@@ -26,7 +28,9 @@ def country_choices() -> list[tuple]:
 
 
 def country_field() -> forms.ChoiceField:
-    return forms.ChoiceField(choices=country_choices(), required=True)
+    return forms.ChoiceField(
+        choices=country_choices(), required=True, widget=CountrySelect
+    )
 
 
 # YES-NO FIELD -----------------------------------------------------------------
@@ -40,6 +44,8 @@ class YesNoField(forms.ChoiceField):
     """
 
     CHOICES = [("Yes", "Yes"), ("No", "No")]
+
+    widget = YesNoWidget
 
     def __init__(self, **kwargs) -> None:
         kwargs.setdefault("choices", self.CHOICES)

@@ -1,0 +1,8 @@
+<div class="flex flex-col gap-sm">
+  <p class="type-body-sm text-secondary">
+    A plain <code>forms.Form</code> rendered with <code>{% templatetag openvariable %} form
+      {% templatetag closevariable %}</code>: no component tags in the page, the form renderer picks one per widget
+    (templates/forms/field.html).
+  </p>
+  {% if theme == "dark" %}{{ forms.dark.default_form }}{% else %}{{ forms.light.default_form }}{% endif %}
+</div>

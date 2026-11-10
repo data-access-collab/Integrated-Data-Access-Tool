@@ -1,0 +1,43 @@
+{% comment %}
+  Base field template (IdatFormRenderer.field_template_name) so {{ field.as_field_group }}
+  and {{ form }} render each field with its UI library component.
+  This is the only place a field is wired to a component: add new components here.
+
+  Widgets without a component ("fallback": radio groups, time, datetime, multi-widgets)
+  render natively inside <c-field-layout>, so label, asterisk, help and errors match.
+
+  Select placeholder: widget attrs["placeholder"], default "Select an option".
+  Plain file upload: accept from widget attrs["accept"] (file types).
+{% endcomment %}
+
+{% load i18n %}
+{% if field.component == "hidden" %}
+  {{ field }}
+{% elif field.component == "text" %}
+  <c-text-field :field="field" />
+{% elif field.component == "textarea" %}
+  <c-textarea :field="field" />
+{% elif field.component == "select" %}
+  {% translate "Select an option" as default_placeholder %}
+  <c-select :field="field" placeholder="{{ field.field.widget.attrs.placeholder|default:default_placeholder }}" />
+{% elif field.component == "multi-select" %}
+  <c-multi-select :field="field" />
+{% elif field.component == "country" %}
+  <c-country-select :field="field" />
+{% elif field.component == "date" %}
+  <c-date-field :field="field" />
+{% elif field.component == "checkbox" %}
+  <c-checkbox :field="field" />
+{% elif field.component == "yes-no" %}
+  <c-field-layout :field="field" :input-id="field.id_for_label" inline>
+    <c-yes-no-toggle :field="field" value="{{ field.value|stringformat:"s"|lower }}" hide-errors />
+  </c-field-layout>
+{% elif field.component == "file" %}
+  <c-file-upload :field="field" />
+{% elif field.component == "file-plain" %}
+  <c-file-upload :field="field" plain accept="{{ field.field.widget.attrs.accept|default:"" }}" />
+{% else %}
+  <c-field-layout :field="field" :input-id="field.id_for_label">
+    {{ field.as_widget }}
+  </c-field-layout>
+{% endif %}

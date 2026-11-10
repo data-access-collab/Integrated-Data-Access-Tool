@@ -12,7 +12,6 @@ from typing import NamedTuple
 from django import forms
 from django.core.exceptions import ValidationError
 
-from idat.core.forms.base import IdatBaseForm
 from idat.core.forms.fields import YesNoField, country_field
 from idat.dsa40_applications.sections import SECTION_META
 from idat.dsa40_form_handler.models import (
@@ -47,7 +46,7 @@ DEFAULT_CLIENT_FILE_TYPES = (".pdf", ".docx")
 SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
-class VlopseSelectionForm(IdatBaseForm):
+class VlopseSelectionForm(forms.Form):
     vlopses = forms.ModelMultipleChoiceField(
         queryset=Vlopse.objects.all(),
         widget=forms.CheckboxSelectMultiple,
@@ -64,6 +63,9 @@ class ClientFileWidget(forms.Widget):
     its metadata ({name, size, type, sha256}) as JSON in a hidden input.
     """
 
+    # in forms, <c-file-upload> (templates/forms/field.html) renders the field from the
+    # widget context; template_name is the bare widget ({{ field }} / as_widget)
+    ui_component = "file"
     template_name = "dsa40_applications/widgets/client_file.html"
 
     def __init__(
@@ -188,7 +190,7 @@ def get_question_field(question: DSAQuestion | VLOPSEQuestion) -> forms.Field:  
         case InputType.MULTI_SELECT:
             return forms.MultipleChoiceField(choices=get_question_choices(question))
         case InputType.DATE_SELECT:
-            return forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
+            return forms.DateField()
         case _:
             return forms.CharField()
 
@@ -231,17 +233,6 @@ def is_unanswered(value: object) -> bool:
     return value in (None, [], {})
 
 
-# UI library field component per question input type (QuestionBoundField.kind)
-QUESTION_KINDS = {
-    InputType.TEXT: "text",
-    InputType.ISO_3166_1: "country",
-    InputType.FILE_UPLOAD: "file",
-    InputType.SELECTION: "select",
-    InputType.MULTI_SELECT: "multi-select",
-    InputType.DATE_SELECT: "date",
-}
-
-
 class FormQuestion(NamedTuple):
     """A question for a QuestionsForm, and whether the form requires an answer."""
 
@@ -249,22 +240,7 @@ class FormQuestion(NamedTuple):
     required: bool
 
 
-class QuestionBoundField(forms.BoundField):
-    @property
-    def kind(self) -> str:
-        """Which field component renders the question (see _questions_form.html)."""
-        if isinstance(self.field, YesNoField):
-            return "yes-no"
-        if type(self.field) is forms.CharField:
-            # includes selections without options (see get_question_field)
-            return "text"
-        input_type = self.form.questions[self.name].input_type
-        return QUESTION_KINDS.get(input_type, "text")
-
-
-class QuestionsForm(IdatBaseForm):
-    bound_field_class = QuestionBoundField
-
+class QuestionsForm(forms.Form):
     def __init__(
         self,
         *args,

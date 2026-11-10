@@ -223,6 +223,29 @@ class GalleryDemoForm(forms.Form):
         return value
 
 
+class DefaultRenderingForm(forms.Form):
+    """A plain Django form with no component wiring: {{ form }} renders it with the
+    UI components (IdatFormRenderer), one per stock widget."""
+
+    full_name = forms.CharField(help_text="As in your passport.")
+    email = forms.EmailField(required=False)
+    team_size = forms.IntegerField(min_value=1)
+    summary = forms.CharField(widget=forms.Textarea, required=False)
+    role = forms.ChoiceField(
+        choices=[("pi", "Principal investigator"), ("co", "Co-PI")]
+    )
+    topics = forms.MultipleChoiceField(
+        choices=[("health", "Public health"), ("elections", "Elections")],
+        required=False,
+    )
+    start = forms.DateField(required=False)
+    consent = forms.BooleanField(label="I agree to the terms")
+    has_ethics_approval = forms.NullBooleanField(label="Ethics approval?")
+    attachment = forms.FileField(required=False)
+    # no component yet: native widget inside <c-field-layout>
+    meeting_time = forms.TimeField(required=False)
+
+
 class ComponentGalleryView(TemplateView):
     template_name = "dev/components.html"
 
@@ -259,7 +282,7 @@ class ComponentGalleryView(TemplateView):
         }
 
     @staticmethod
-    def _forms(theme: str) -> dict[str, GalleryDemoForm]:
+    def _forms(theme: str) -> dict[str, forms.Form]:
         form_errors = GalleryDemoForm(data={}, prefix=f"{theme}-err")
         form_errors.is_valid()
         return {
@@ -267,4 +290,5 @@ class ComponentGalleryView(TemplateView):
             "form_errors": form_errors,
             # Dialogs: second copy opened as a real modal next to the in-place preview.
             "modal_form": GalleryDemoForm(prefix=f"{theme}-modal"),
+            "default_form": DefaultRenderingForm(prefix=f"{theme}-default"),
         }

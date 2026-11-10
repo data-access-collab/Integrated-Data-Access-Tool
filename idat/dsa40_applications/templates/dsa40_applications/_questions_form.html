@@ -49,23 +49,7 @@
               aria-hidden="true"
             ></span>
             <div class="min-w-0 flex-1">
-              {% if field.kind == "yes-no" %}
-                <c-field-layout :field="field" :input-id="field.id_for_label" inline>
-                  <c-yes-no-toggle :field="field" value="{{ field.value|lower }}" hide-errors />
-                </c-field-layout>
-              {% elif field.kind == "select" %}
-                <c-select :field="field" placeholder="{% translate "Select an option" %}" />
-              {% elif field.kind == "multi-select" %}
-                <c-multi-select :field="field" />
-              {% elif field.kind == "country" %}
-                <c-country-select :field="field" />
-              {% elif field.kind == "date" %}
-                <c-date-field :field="field" />
-              {% elif field.kind == "file" %}
-                <c-file-upload :field="field" />
-              {% else %}
-                <c-text-field :field="field" />
-              {% endif %}
+              {{ field.as_field_group }}
             </div>
           </div>
         {% endfor %}

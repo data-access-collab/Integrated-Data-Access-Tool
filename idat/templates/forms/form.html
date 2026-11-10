@@ -1,0 +1,17 @@
+{% comment %}
+  Base form template (IdatFormRenderer.form_template_name) used by {{ form }}.
+  Includes errors not tied to a field, then each visible field via forms/field.html,
+  then the hidden fields. The <form> tag, csrf_token and buttons stay with the page.
+{% endcomment %}
+
+<div class="flex flex-col gap-lg">
+  {% if errors %}
+    <c-field-message role="alert">{{ errors|join:" " }}</c-field-message>
+  {% endif %}
+
+  {% for field, field_errors in fields %}
+    {{ field.as_field_group }}
+  {% endfor %}
+
+  {% for field in hidden_fields %}{{ field }}{% endfor %}
+</div>
