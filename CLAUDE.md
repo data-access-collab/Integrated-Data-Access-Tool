@@ -2,6 +2,9 @@
 
 Apply to all template and component work. Syncing with Figma (importing or updating a
 component or page) follows the figma-sync skill (.claude/skills/figma-sync/SKILL.md).
+Figma is read-only, always: sync is one-way, Figma → repo. Never use a Figma write tool
+(use_figma, generate_figma_design, upload_assets, Code Connect mappings, new files,
+comments …), even when asked; report Figma problems instead, the user fixes them there.
 
 ### Basics
 - Output Django templates (.html), never JSX/React/Vue.

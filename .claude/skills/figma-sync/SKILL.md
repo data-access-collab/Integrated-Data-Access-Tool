@@ -11,6 +11,13 @@ Request: $ARGUMENTS
 Figma is the source of truth: file `DjAthBSdrd2LHopYz0tGaB`, page "Design system". All
 conventions in CLAUDE.md apply. Never commit; the user reviews first.
 
+Sync is one-way, Figma → repo. Never change anything in Figma: no use_figma,
+generate_figma_design, upload_assets, add_code_connect_map / send_code_connect_mappings,
+create_new_file, comments or any other write tool, even when asked mid-sync. Use only
+read tools (get_design_context, get_screenshot, get_metadata, get_variable_defs,
+search_design_system). If Figma looks wrong, report it under Inconsistencies; the user
+fixes it in Figma.
+
 ## Modes
 - **import <link>**: build the linked component (set). For a page frame, build it from
   existing components and create new ones only for parts that repeat.
@@ -62,7 +69,7 @@ The MCP returns React + Tailwind: a visual reference only, never output JSX.
 Don't write notes files to the repo or assume one exists. End the sync with a short report
 in your reply, one line per item, "None" if empty:
 
-- **Bugs**: broken behaviour found in the code (say if fixed)
+- **Bugs**: broken behavior found in the code (say if fixed)
 - **Inconsistencies**: Figma contradicts itself or has no token/text style for a value,
   off-grid values
 - **Notes**: decisions and workarounds a reviewer should know
