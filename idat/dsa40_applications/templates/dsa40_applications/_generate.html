@@ -1,0 +1,38 @@
+{% load i18n %}
+
+<h1 class="type-headline-lg">{% translate "Your applications" %}</h1>
+
+{# TODO: Render multiple applications in their own tab #}
+
+{% for preview in application_previews %}
+  <section class="flex flex-col gap-lg rounded-lg border border-default bg-surface p-lg">
+    <h2 class="type-title-lg">
+      {% blocktranslate with name=preview.vlopse_name %}{{ name }} application{% endblocktranslate %}
+    </h2>
+
+    {% if preview.mapping_errors %}
+      <ul class="flex flex-col gap-2xs">
+        {% for question, message in preview.mapping_errors.items %}
+          <li><c-field-message>{{ question }}: {{ message }}</c-field-message></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% include "dsa40_applications/_answers.html" with answers_form=preview.form %}
+  </section>
+{% endfor %}
+
+<div class="flex flex-col gap-sm">
+  <p class="type-body-md text-secondary">{% translate "To save progress, create an account." %}</p>
+  <div class="flex justify-between gap-sm">
+    <c-button
+      variant="secondary"
+      leading-icon="arrow-left"
+      label="{% translate "Back" %}"
+      hx-get="{% url 'dsa40_applications:wizard_step' 'review' %}"
+      hx-target="#application-wizard-body"
+    />
+    {# GenerateStep.post isn't implemented yet #}
+    <c-button icon="arrow-right" label="{% translate "Submit applications" %}" disabled />
+  </div>
+</div>

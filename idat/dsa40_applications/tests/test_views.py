@@ -276,14 +276,54 @@ class WizardViewTests(TestCase):
         self.assertContains(response, "a@example.org")
         self.assertEqual(response_state(response)["answers"]["email"], "a@example.org")
 
-    def test_review_shows_each_platforms_mapped_answers(self):
+    def test_review_advances_to_generate(self):
+        # every question is stored, unanswered ones empty (QuestionsStep.update_state)
+        answers = {"email": "a@example.org", "project-title": ""}
+        state = create_state([self.mastodon.pk], answers)
+
+        response = self.client.post(
+            get_step_url("review"), headers=get_htmx_headers(state)
+        )
+
+        self.assertEqual(response["HX-Push-Url"], get_step_url("generate"))
+        self.assertIn("application_previews", response.context)
+        # answers are untouched: the review submits none
+        self.assertEqual(response_state(response)["answers"], answers)
+
+    def test_review_post_with_invalid_stored_answers_falls_back_to_questions(self):
+        state = create_state(
+            [self.mastodon.pk], {"project-title": "Feed ranking audit"}
+        )
+
+        response = self.client.post(
+            get_step_url("review"), headers=get_htmx_headers(state)
+        )
+
+        # a POST that lands on another step pushes (render_step)
+        self.assertEqual(response["HX-Push-Url"], get_step_url("enter-details"))
+
+    def test_review_without_questions_is_reachable(self):
+        # the platform maps no DSA questions: nothing to answer, nothing stored
+        configs = {"mastodon": platform_config("mastodon", {})}
+        with mock.patch(
+            "idat.dsa40_form_handler.validation.mapping.get_vlopse_configuration_for",
+            new=configs.__getitem__,
+        ):
+            response = self.client.get(
+                get_step_url("review"),
+                headers=get_htmx_headers(create_state([self.mastodon.pk], {})),
+            )
+
+        self.assertEqual(response["HX-Replace-Url"], get_step_url("review"))
+
+    def test_generate_shows_each_platforms_mapped_answers(self):
         state = create_state(
             [self.mastodon.pk, self.tiktok.pk],
             {"email": "a@example.org", "project-title": "", "role": "PI"},
         )
 
         response = self.client.get(
-            get_step_url("review"), headers=get_htmx_headers(state)
+            get_step_url("generate"), headers=get_htmx_headers(state)
         )
 
         previews = response.context["application_previews"]

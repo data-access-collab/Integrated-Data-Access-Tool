@@ -244,19 +244,54 @@ class QuestionsStep(WizardFormStep):
 
 
 class ReviewStep(WizardFormStep):
+    """Renders the DSAQuestion answers read-only to review."""
+
     step = WizardStep.REVIEW
     template_name = "dsa40_applications/_review.html"
     form_class = QuestionsForm
     # the same questions and answers as the questions step, read-only
     get_form_kwargs = QuestionsStep.get_form_kwargs
 
+    def get_answers_form(self) -> QuestionsForm:
+        """The stored answers, bound and validated."""
+        form = self.form_class(data=self.state["answers"], **self.get_form_kwargs())
+        form.is_valid()
+        return form
+
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        # validate provided answers
-        answers = self.state["answers"]
-        form = self.form_class(data=answers, **self.get_form_kwargs())
-        if not form.is_valid():
+        form = self.get_answers_form()
+        if form.errors:
             return self.go_to(QuestionsStep)
         return self.render_step(form)
+
+    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        # the page submits no answers: confirm the stored ones and move on
+        if self.get_answers_form().errors:
+            return self.go_to(QuestionsStep)
+        return self.go_to(self.next_step)
+
+    def get_form(self, data: dict | None = None) -> forms.Form:
+        # reached via go_to: show the stored answers, not an empty form
+        return self.get_answers_form()
+
+    def check_prerequisites(self) -> HttpResponse | None:
+        """Checks that at least one VLOPSE is selected and that the questions step
+        stored an answer (possibly empty) for every mapped question."""
+        if not self.state["vlopses"]:
+            return self.go_to(VlopseSelectionStep)
+        answers = self.state["answers"]
+        form_questions = get_mapped_vlopse_questions(self.state["vlopses"])
+        if any(fq.question.key not in answers for fq in form_questions):
+            return self.go_to(QuestionsStep)
+        return None
+
+
+class GenerateStep(ReviewStep):
+    """Renders one read-only form per selected VLOPSE: the stored answers mapped to
+    the VLOPSE's questions."""
+
+    step = WizardStep.GENERATE
+    template_name = "dsa40_applications/_generate.html"
 
     def get_step_context(self) -> dict[str, list[VlopseApplicationPreview]]:
         vlopse_ids = self.state["vlopses"]
@@ -275,29 +310,22 @@ class ReviewStep(WizardFormStep):
         #  -> may be handled by a different view.
         raise NotImplementedError
 
-    def check_prerequisites(self) -> HttpResponse | None:
-        """Checks that at least one VLOPSE is selected and that answers are present."""
-        if not self.state["vlopses"]:
-            return self.go_to(VlopseSelectionStep)
-        if not self.state["answers"]:
-            return self.go_to(QuestionsStep)
-        return None
-
 
 VlopseSelectionStep.next_step = QuestionsStep
 QuestionsStep.next_step = ReviewStep
+ReviewStep.next_step = GenerateStep
 
 
 STEP_VIEWS: dict[WizardStep, Callable[..., HttpResponseBase]] = {
     view.step: view.as_view()
-    for view in (VlopseSelectionStep, QuestionsStep, ReviewStep)
+    for view in (VlopseSelectionStep, QuestionsStep, ReviewStep, GenerateStep)
 }
 
 
 def route_wizard_step(request: HttpRequest, step: WizardStep) -> HttpResponseBase:
     """Route create/<step>/ to the view of that WizardStep slug: one URL pattern for
     all steps, so links are built by slug. 404 for unknown steps and steps without a
-    view yet (generate, submit)."""
+    view yet (submit)."""
     view = STEP_VIEWS.get(step)
     if view is None:
         raise Http404

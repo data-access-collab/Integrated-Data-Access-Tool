@@ -1,5 +1,8 @@
+import datetime
+
 from django import forms
 from django.test import SimpleTestCase
+from django.utils.formats import date_format
 
 from idat.core.forms.boundfield import IdatBoundField, widget_component
 from idat.core.forms.fields import YesNoField, country_field
@@ -110,3 +113,66 @@ class FormRenderingTests(SimpleTestCase):
 
         self.assertIn("<label", html)
         self.assertNotIn("type-label-lg", html)
+
+
+class DisplayValueTests(SimpleTestCase):
+    class _Form(forms.Form):
+        name = forms.CharField(required=False)
+        role = forms.ChoiceField(
+            choices=[("pi", "Principal investigator"), ("co", "Co-PI")]
+        )
+        topics = forms.MultipleChoiceField(
+            choices=[("health", "Public health"), ("elections", "Elections")]
+        )
+        country = country_field()
+        yes_no = YesNoField()
+        maybe = forms.NullBooleanField()
+        start = forms.DateField()
+        team_size = forms.IntegerField()
+
+    DATA = {
+        "name": "",
+        "role": "pi",
+        "topics": ["health", "elections"],
+        "country": "DE",
+        "yes_no": "true",
+        "maybe": "false",
+        "start": "2027-03-14",
+        "team_size": "12",
+    }
+
+    def test_validated_form_shows_labels_and_readable_values(self):
+        form = self._Form(data=self.DATA)
+        self.assertTrue(form.is_valid(), form.errors)
+
+        self.assertEqual(
+            {bf.name: bf.display_value for bf in form},
+            {
+                "name": "",
+                "role": "Principal investigator",
+                "topics": "Public health, Elections",
+                "country": "Germany",
+                "yes_no": "Yes",
+                "maybe": "No",
+                "start": date_format(datetime.date(2027, 3, 14)),
+                "team_size": "12",
+            },
+        )
+
+    def test_unvalidated_form_uses_raw_values(self):
+        form = self._Form(data=self.DATA)
+
+        self.assertEqual(form["role"].display_value, "Principal investigator")
+        self.assertEqual(form["country"].display_value, "Germany")
+
+    def test_value_without_a_choice_is_shown_as_is(self):
+        form = self._Form(data={**self.DATA, "country": "Germany"})
+
+        self.assertEqual(form["country"].display_value, "Germany")
+
+    def test_empty_answers_stay_empty(self):
+        form = self._Form(data={})
+
+        for name in ("start", "topics", "maybe"):
+            with self.subTest(name=name):
+                self.assertIn(form[name].display_value, (None, "", []))

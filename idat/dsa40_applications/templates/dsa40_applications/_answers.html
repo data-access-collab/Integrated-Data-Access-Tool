@@ -1,0 +1,31 @@
+{% comment %}
+  The answers of a QuestionsForm (`answers_form`), read-only and grouped by section.
+  Review: the DSA answers; Generate: each platform's mapped answers.
+{% endcomment %}
+
+<div class="flex flex-col gap-xl">
+  {% for section in answers_form.sections %}
+    {% if not forloop.first %}<hr class="border-default" />{% endif %}
+    <section class="flex flex-col gap-md">
+      <div class="flex items-center gap-sm">
+        <c-icon :name="section.icon" class="size-5 text-icon-default" />
+        <h3 class="type-label-lg text-primary">{{ section.label }}</h3>
+      </div>
+
+      <dl class="flex flex-col gap-md">
+        {% for field in section.fields %}
+          <div class="flex flex-col gap-xs">
+            <dt class="type-body-md text-secondary">{{ field.label }}</dt>
+            <dd class="rounded-sm bg-surface-muted p-xs type-body-md text-primary">
+              {% if field.widget_type == "clientfile" and field.value %}
+                {{ field.value.name }} ({{ field.value.size|filesizeformat }})
+              {% else %}
+                {{ field.display_value|default:"—" }}
+              {% endif %}
+            </dd>
+          </div>
+        {% endfor %}
+      </dl>
+    </section>
+  {% endfor %}
+</div>
