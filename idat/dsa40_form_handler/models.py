@@ -46,11 +46,7 @@ class VLOPSEQuestion(models.Model):
     )
     details = TextField(blank=True)
     config = JSONField(null=True, blank=True)
-    category = CharField(
-        max_length=32,
-        choices=QuestionCategory,
-        default=QuestionCategory.GENERAL,
-    )
+    category = CharField(max_length=200, blank=True)
 
     class Meta:
         verbose_name = "VLOPSE Question"

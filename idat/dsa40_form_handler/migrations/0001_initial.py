@@ -44,14 +44,7 @@ class Migration(migrations.Migration):
                 ('details', models.TextField(blank=True)),
                 ('config', models.JSONField(blank=True, null=True)),
                 ('vlopse', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='vlopse.vlopse')),
-                ('category', models.CharField(choices=[
-                    ('general', 'General'), ('contact_details', 'Contact details'), ('collaboration', 'Collaboration'),
-                    ('qualifications', 'Qualifications'), ('affiliation', 'Affiliation'),
-                    ('funding_commercial_interests', 'Funding'), ('research_project', 'Research project'),
-                    ('technical', 'Technical'), ('requested_data', 'Requested data'),
-                    ('previous_experience', 'Previous experience'), ('data_security', 'Data security'),
-                    ('legal', 'Legal')
-                ], default='general', max_length=32)),
+                ('category', models.CharField(max_length=200, blank=True)),
             ],
             options={'verbose_name': 'VLOPSE Question'},
         ),
