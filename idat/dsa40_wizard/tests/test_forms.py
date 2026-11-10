@@ -11,16 +11,16 @@ from django.test import SimpleTestCase
 from django.utils.html import escape
 
 from idat.core.forms.fields import TOP_COUNTRIES, YesNoField, country_field
-from idat.dsa40_applications.forms import (
+from idat.dsa40_form_handler.models import InputType, QuestionCategory
+from idat.dsa40_form_handler.tests.factories import DsaQuestionFactory
+from idat.dsa40_wizard.forms import (
     DEFAULT_CLIENT_FILE_TYPES,
     ClientFileField,
     FormQuestion,
     QuestionsForm,
     get_question_field,
 )
-from idat.dsa40_applications.sections import SECTION_META
-from idat.dsa40_form_handler.models import InputType, QuestionCategory
-from idat.dsa40_form_handler.tests.factories import DsaQuestionFactory
+from idat.dsa40_wizard.sections import SECTION_META
 
 
 class CountryFieldTests(SimpleTestCase):
@@ -85,7 +85,7 @@ class QuestionsFormTests(SimpleTestCase):
             key="country", input_type=InputType.ISO_3166_1
         )
 
-        with mock.patch("idat.dsa40_applications.forms.country_field") as factory:
+        with mock.patch("idat.dsa40_wizard.forms.country_field") as factory:
             form = QuestionsForm(form_questions=[FormQuestion(question, True)])
 
         factory.assert_called_once_with()
@@ -299,7 +299,7 @@ class QuestionFieldComponentTests(SimpleTestCase):
             )
             with (
                 self.subTest(input_type=input_type),
-                self.assertLogs("idat.dsa40_applications.forms", "WARNING") as logs,
+                self.assertLogs("idat.dsa40_wizard.forms", "WARNING") as logs,
             ):
                 form = QuestionsForm(form_questions=[FormQuestion(question, True)])
 

@@ -22,7 +22,7 @@ urlpatterns = [
     # Django apps
     path(
         "applications/",
-        include("idat.dsa40_applications.urls", namespace="dsa40_applications"),
+        include("idat.dsa40_wizard.urls", namespace="dsa40_wizard"),
     ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),

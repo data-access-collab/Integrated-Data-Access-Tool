@@ -89,7 +89,7 @@ So only htmx requests carry the state: a step must use `hx-post` / `hx-get`, nev
 plain `<form method="post">` or link. A plain page
 load returns the shell (`base.html`), which then requests the step through htmx.
 
-This logic lives in `state.py` (server) and `static/dsa40_applications/wizard.js`
+This logic lives in `state.py` (server) and `static/dsa40_wizard`
 (client).
 
 ### How file uploads are handled
@@ -129,7 +129,7 @@ Implementation details:
 (type against `CLIENT_FILE_TYPES`, size, SHA-256), as nothing the browser reports
 can be trusted, before storing them.
 
-The client-side logic lives in `static/dsa40_applications/wizard.js`, a static ES
+The client-side logic lives in `static/dsa40_wizard`, a static ES
 module loaded on the wizard page only. In production, it has a hashed file name, so
 other scripts can't easily import from it; the saving logic should live in this
 file too.

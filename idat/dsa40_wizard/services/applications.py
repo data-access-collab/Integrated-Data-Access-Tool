@@ -9,13 +9,13 @@ from typing import TYPE_CHECKING, Any
 
 import pycountry
 
-from idat.dsa40_applications.forms import FormQuestion, QuestionsForm, is_unanswered
 from idat.dsa40_form_handler.models import InputType, VLOPSEQuestion
 from idat.dsa40_form_handler.schema import Answer as MappingInput
 from idat.dsa40_form_handler.schema import MappedAnswer, MappingError
 from idat.dsa40_form_handler.validation.config import get_vlopse_configuration_for
 from idat.dsa40_form_handler.validation.mapping import hydrate_mapping
 from idat.dsa40_form_handler.validation.transform import AnswerTransformer
+from idat.dsa40_wizard.forms import FormQuestion, QuestionsForm, is_unanswered
 from idat.vlopse.models import Vlopse
 
 if TYPE_CHECKING:

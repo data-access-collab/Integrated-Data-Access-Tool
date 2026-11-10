@@ -5,14 +5,14 @@ from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
 
-from idat.dsa40_applications.services.applications import (
+from idat.dsa40_form_handler.models import InputType, VLOPSEQuestion
+from idat.dsa40_form_handler.tests.factories import VlopseQuestionFactory
+from idat.dsa40_form_handler.validation.config import VLOPSEConfiguration
+from idat.dsa40_wizard.services.applications import (
     build_application_preview,
     build_mapping_input,
     to_mapping_input_value,
 )
-from idat.dsa40_form_handler.models import InputType, VLOPSEQuestion
-from idat.dsa40_form_handler.tests.factories import VlopseQuestionFactory
-from idat.dsa40_form_handler.validation.config import VLOPSEConfiguration
 from idat.vlopse.models import Vlopse
 from idat.vlopse.tests.factories import VlopseFactory
 
@@ -76,7 +76,7 @@ class BuildApplicationPreviewTests(TestCase):
     def setUp(self):
         self.enterContext(
             mock.patch(
-                "idat.dsa40_applications.services.applications.get_vlopse_configuration_for",
+                "idat.dsa40_wizard.services.applications.get_vlopse_configuration_for",
                 return_value=CONFIG,
             )
         )

@@ -3,7 +3,7 @@
 
 {% block javascript %}
   {# before main.js: module scripts are deferred and run in document order #}
-  <script type="module" src="{% static 'dsa40_applications/wizard.js' %}"></script>
+  <script type="module" src="{% static 'dsa40_wizard/wizard.js' %}"></script>
   {{ block.super }}
 {% endblock javascript %}
 
@@ -19,7 +19,7 @@
         variant="ghost"
         label="{% translate 'Discard draft' %}"
         x-data
-        x-on:click="$dispatch('wizard-discard', { href: '{% url 'dsa40_applications:create' %}' })"
+        x-on:click="$dispatch('wizard-discard', { href: '{% url 'dsa40_wizard:create' %}' })"
       />
       <c-button label="{% translate 'Create account to save' %}" href="#top-bar" />
       <a class="rounded-sm type-label-lg text-link hover:underline" href="#top-bar">
@@ -32,7 +32,7 @@
 {% block main %}
   {# section: the question section shown in Enter details (sidebar and questions form) #}
   <div class="flex flex-1 flex-row" x-data="{ section: '' }">
-    {% include "dsa40_applications/_sidebar.html" %}
+    {% include "dsa40_wizard/_sidebar.html" %}
 
     <div id="application-wizard" class="min-w-0 flex-1">
       <div

@@ -1,5 +1,5 @@
 /*
- * DSA40 application wizard (idat/dsa40_applications)
+ * DSA40 application wizard (idat/dsa40_wizard)
  *
  * Served as a static ES module (imported with type="module"), only on the wizard page.
  * The server keeps no state: the encrypted wizard state travels in the

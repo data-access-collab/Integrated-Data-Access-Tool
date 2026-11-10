@@ -18,7 +18,7 @@
       </ul>
     {% endif %}
 
-    {% include "dsa40_applications/_answers.html" with answers_form=preview.form %}
+    {% include "dsa40_wizard/_answers.html" with answers_form=preview.form %}
   </section>
 {% endfor %}
 
@@ -29,7 +29,7 @@
       variant="secondary"
       leading-icon="arrow-left"
       label="{% translate "Back" %}"
-      hx-get="{% url 'dsa40_applications:wizard_step' 'review' %}"
+      hx-get="{% url 'dsa40_wizard:wizard_step' 'review' %}"
       hx-target="#application-wizard-body"
     />
     {# GenerateStep.post isn't implemented yet #}

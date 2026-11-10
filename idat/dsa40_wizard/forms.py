@@ -13,13 +13,13 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from idat.core.forms.fields import YesNoField, country_field
-from idat.dsa40_applications.sections import SECTION_META
 from idat.dsa40_form_handler.models import (
     DSAQuestion,
     InputType,
     QuestionCategory,
     VLOPSEQuestion,
 )
+from idat.dsa40_wizard.sections import SECTION_META
 from idat.vlopse.models import Vlopse
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class ClientFileWidget(forms.Widget):
     # in forms, <c-file-upload> (templates/forms/field.html) renders the field from the
     # widget context; template_name is the bare widget ({{ field }} / as_widget)
     ui_component = "file"
-    template_name = "dsa40_applications/widgets/client_file.html"
+    template_name = "dsa40_wizard/widgets/client_file.html"
 
     def __init__(
         self,

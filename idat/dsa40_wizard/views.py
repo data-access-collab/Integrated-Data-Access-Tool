@@ -15,13 +15,15 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import TemplateView
 from django_htmx.http import push_url, replace_url
 
-from idat.dsa40_applications.forms import (
+from idat.dsa40_form_handler.services.questions import QuestionService
+from idat.dsa40_form_handler.validation.mapping import QuestionMapper
+from idat.dsa40_wizard.forms import (
     FormQuestion,
     QuestionsForm,
     VlopseSelectionForm,
 )
-from idat.dsa40_applications.services.applications import build_application_previews
-from idat.dsa40_applications.state import (
+from idat.dsa40_wizard.services.applications import build_application_previews
+from idat.dsa40_wizard.state import (
     FILE_KEY_HEADER,
     MAX_AGE,
     MAX_AGE_HEADER,
@@ -33,8 +35,6 @@ from idat.dsa40_applications.state import (
     encode_file_encryption_key,
     load_wizard_state,
 )
-from idat.dsa40_form_handler.services.questions import QuestionService
-from idat.dsa40_form_handler.validation.mapping import QuestionMapper
 from idat.vlopse.models import Vlopse
 
 if typing.TYPE_CHECKING:
@@ -43,7 +43,7 @@ if typing.TYPE_CHECKING:
     from django import forms
     from django.http.request import HttpRequest
 
-    from idat.dsa40_applications.services.applications import VlopseApplicationPreview
+    from idat.dsa40_wizard.services.applications import VlopseApplicationPreview
 
 
 class WizardStep(StrEnum):
@@ -61,7 +61,7 @@ def get_wizard_urls() -> dict[str, str]:
     """Links of the sidebar's done steps (wizard.sidebar `hrefs`), keyed by slug with
     underscores (choose_vlopses …): only steps that have a view."""
     return {
-        step.replace("-", "_"): reverse("dsa40_applications:wizard_step", args=[step])
+        step.replace("-", "_"): reverse("dsa40_wizard:wizard_step", args=[step])
         for step in STEP_VIEWS
     }
 
@@ -80,10 +80,10 @@ def get_mapped_vlopse_questions(vlopse_ids: list[int]) -> list[FormQuestion]:
 class WizardFormView(TemplateView):
     """Entry view for DSA 40 application wizard"""
 
-    template_name = "dsa40_applications/base.html"
+    template_name = "dsa40_wizard/base.html"
     extra_context = {
         "load_url": reverse_lazy(
-            "dsa40_applications:wizard_step", args=[WizardStep.CHOOSE_VLOPSES]
+            "dsa40_wizard:wizard_step", args=[WizardStep.CHOOSE_VLOPSES]
         ),
         "current_step": WizardStep.CHOOSE_VLOPSES,
     }
@@ -112,7 +112,7 @@ class WizardFormStep(View):
             # step partial would replace the whole page layout.
             return render(
                 request,
-                "dsa40_applications/base.html",
+                "dsa40_wizard/base.html",
                 {
                     "load_url": request.path,
                     "current_step": self.step,
@@ -173,7 +173,7 @@ class WizardFormStep(View):
         context = {**self.get_step_context(), **(context or {})}
         response = render(
             self.request,
-            "dsa40_applications/_step.html",
+            "dsa40_wizard/_step.html",
             {
                 "step_template": self.template_name,
                 "current_step": self.step,
@@ -184,7 +184,7 @@ class WizardFormStep(View):
         )
 
         response = self.add_response_headers(response)
-        url = reverse("dsa40_applications:wizard_step", args=[self.step])
+        url = reverse("dsa40_wizard:wizard_step", args=[self.step])
         if self.request.method == "POST" and url != self.request.path:
             # moved on to another step: new browser history entry
             push_url(response, url)
@@ -204,7 +204,7 @@ class WizardFormStep(View):
 
 class VlopseSelectionStep(WizardFormStep):
     step = WizardStep.CHOOSE_VLOPSES
-    template_name = "dsa40_applications/_vlopse_selection_form.html"
+    template_name = "dsa40_wizard/_vlopse_selection_form.html"
     form_class = VlopseSelectionForm
 
     def get_form_kwargs(self) -> dict[str, Any]:
@@ -224,7 +224,7 @@ class VlopseSelectionStep(WizardFormStep):
 
 class QuestionsStep(WizardFormStep):
     step = WizardStep.ENTER_DETAILS
-    template_name = "dsa40_applications/_questions_form.html"
+    template_name = "dsa40_wizard/_questions_form.html"
     form_class = QuestionsForm
 
     def check_prerequisites(self) -> HttpResponse | None:
@@ -247,7 +247,7 @@ class ReviewStep(WizardFormStep):
     """Renders the DSAQuestion answers read-only to review."""
 
     step = WizardStep.REVIEW
-    template_name = "dsa40_applications/_review.html"
+    template_name = "dsa40_wizard/_review.html"
     form_class = QuestionsForm
     # the same questions and answers as the questions step, read-only
     get_form_kwargs = QuestionsStep.get_form_kwargs
@@ -291,7 +291,7 @@ class GenerateStep(ReviewStep):
     the VLOPSE's questions."""
 
     step = WizardStep.GENERATE
-    template_name = "dsa40_applications/_generate.html"
+    template_name = "dsa40_wizard/_generate.html"
 
     def get_step_context(self) -> dict[str, list[VlopseApplicationPreview]]:
         vlopse_ids = self.state["vlopses"]

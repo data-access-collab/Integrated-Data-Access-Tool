@@ -96,7 +96,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "idat.users",
-    "idat.dsa40_applications",
+    "idat.dsa40_wizard",
     "idat.core",
     "idat.vlopse",
     "idat.dsa40_form_handler",

@@ -6,7 +6,7 @@ from unittest import mock
 from django.core.exceptions import SuspiciousOperation
 from django.test import RequestFactory, SimpleTestCase, override_settings
 
-from idat.dsa40_applications.state import (
+from idat.dsa40_wizard.state import (
     MAX_AGE,
     STATE_HEADER,
     WizardState,

@@ -7,8 +7,14 @@ from unittest import mock
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from idat.dsa40_applications.forms import VlopseSelectionForm
-from idat.dsa40_applications.state import (
+from idat.dsa40_form_handler.models import DSAQuestion, InputType, VLOPSEQuestion
+from idat.dsa40_form_handler.tests.factories import (
+    DsaQuestionFactory,
+    VlopseQuestionFactory,
+)
+from idat.dsa40_form_handler.validation.config import VLOPSEConfiguration
+from idat.dsa40_wizard.forms import VlopseSelectionForm
+from idat.dsa40_wizard.state import (
     FILE_KEY_HEADER,
     MAX_AGE,
     MAX_AGE_HEADER,
@@ -19,13 +25,7 @@ from idat.dsa40_applications.state import (
     encode_file_encryption_key,
     load_wizard_state,
 )
-from idat.dsa40_applications.views import VlopseSelectionStep
-from idat.dsa40_form_handler.models import DSAQuestion, InputType, VLOPSEQuestion
-from idat.dsa40_form_handler.tests.factories import (
-    DsaQuestionFactory,
-    VlopseQuestionFactory,
-)
-from idat.dsa40_form_handler.validation.config import VLOPSEConfiguration
+from idat.dsa40_wizard.views import VlopseSelectionStep
 from idat.vlopse.models import Vlopse
 from idat.vlopse.tests.factories import VlopseFactory
 
@@ -60,7 +60,7 @@ PLATFORM_CONFIGS = {
 
 
 def get_step_url(step: str) -> str:
-    return reverse("dsa40_applications:wizard_step", args=[step])
+    return reverse("dsa40_wizard:wizard_step", args=[step])
 
 
 def get_htmx_headers(state: WizardState | None = None) -> dict[str, str]:
@@ -89,7 +89,7 @@ def response_state(response) -> WizardState:
     new=PLATFORM_CONFIGS.__getitem__,
 )
 @mock.patch(
-    "idat.dsa40_applications.services.applications.get_vlopse_configuration_for",
+    "idat.dsa40_wizard.services.applications.get_vlopse_configuration_for",
     new=PLATFORM_CONFIGS.__getitem__,
 )
 class WizardViewTests(TestCase):
@@ -120,7 +120,7 @@ class WizardViewTests(TestCase):
             )
 
     def test_create_page_loads_first_step(self):
-        response = self.client.get(reverse("dsa40_applications:create"))
+        response = self.client.get(reverse("dsa40_wizard:create"))
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertContains(response, f'hx-get="{get_step_url("choose-vlopses")}"')
@@ -391,7 +391,7 @@ class WizardViewTests(TestCase):
                 new=configs.__getitem__,
             ),
             mock.patch(
-                "idat.dsa40_applications.services.applications.get_vlopse_configuration_for",
+                "idat.dsa40_wizard.services.applications.get_vlopse_configuration_for",
                 new=configs.__getitem__,
             ),
         ):
