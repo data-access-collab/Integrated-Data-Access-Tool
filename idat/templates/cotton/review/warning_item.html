@@ -1,0 +1,48 @@
+{% comment %}
+  Application warning in Review.
+  Severity "blocking": required by a platform; stops generation for that platform only.
+  Severity "warning": a recommendation; never blocks.
+  ("Issue" is reserved for community issues: don't use it in this copy.)
+
+  Props:
+    severity  "blocking" (default) · "warning"
+    title     what is wrong, e.g. "Ethics approval reference is missing"
+    location  where, and who requires it, e.g. "Research project › Ethics · required by LinkedIn, Meta"
+    href      link to the field ("Go to field"); omitted when empty
+
+  The severity is announced to screen readers before the title.
+
+  Usage:
+    <c-review.warning-item severity="warning" title="…" location="…" href="{% url … %}#id_ethics" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars severity="blocking" title="" location="" href="" class="" />
+<div
+  class="flex items-start gap-sm rounded-md p-md {% if severity == "warning" %}bg-warning-subtle{% else %}bg-danger-subtle{% endif %} {{ class }}"
+  {{ attrs }}
+>
+  {% if severity == "warning" %}
+    <c-icon name="alert-triangle" class="size-5 shrink-0 text-warning" />
+  {% else %}
+    <c-icon name="alert-circle" class="size-5 shrink-0 text-danger" />
+  {% endif %}
+  <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+    <p class="type-label-lg text-primary">
+      <span
+        class="sr-only"
+      >{% if severity == "warning" %}{% translate "Warning:" %}{% else %}{% translate "Blocking:" %}{% endif %}</span>
+      {{ title }}
+    </p>
+    {% if location %}<p class="type-body-sm text-secondary">{{ location }}</p>{% endif %}
+  </div>
+  {% if href %}
+    <a
+      href="{{ href }}"
+      class="flex shrink-0 items-center gap-1 rounded-sm type-label-lg text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      {% translate "Go to field" %}<span class="sr-only">: {{ title }}</span>
+      <c-icon name="arrow-right" class="size-4" />
+    </a>
+  {% endif %}
+</div>

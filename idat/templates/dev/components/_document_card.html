@@ -1,0 +1,49 @@
+<div class="grid items-start gap-sm sm:grid-cols-2">
+  <c-document-card
+    title="Application · TikTok"
+    meta="Web form · 18 fields · 2 versions"
+    summary="Current: v2 draft · last sent: v1 to TikTok on 2 Oct"
+  >
+    <c-document-version-row
+      version="v2"
+      title="Reply to clarification"
+      meta="Edited by Jana Doe · 3 Nov 2026"
+      status="Draft · not sent"
+      download-href="#document-card"
+    />
+    <c-document-version-row
+      state="sent"
+      version="v1"
+      title="Generated application"
+      meta="Generated 1 Oct 2026 · 18 fields"
+      status="Sent to TikTok · 2 Oct"
+      download-href="#document-card"
+    />
+    <c-slot name="footer"><a class="rounded-sm type-label-lg text-link hover:underline" href="#document-card"
+      >Compare v1 and v2</a></c-slot>
+  </c-document-card>
+  <c-document-card
+    title="Application · TikTok"
+    meta="Web form · 18 fields · 2 versions"
+    summary="Current: v2 draft · last sent: v1 to TikTok on 2 Oct"
+    expanded
+  >
+    <c-document-version-row
+      version="v2"
+      title="Reply to clarification"
+      meta="Edited by Jana Doe · 3 Nov 2026"
+      status="Draft · not sent"
+      download-href="#document-card"
+    />
+    <c-document-version-row
+      state="sent"
+      version="v1"
+      title="Generated application"
+      meta="Generated 1 Oct 2026 · 18 fields"
+      status="Sent to TikTok · 2 Oct"
+      download-href="#document-card"
+    />
+    <c-slot name="footer"><a class="rounded-sm type-label-lg text-link hover:underline" href="#document-card"
+      >Compare v1 and v2</a></c-slot>
+  </c-document-card>
+</div>

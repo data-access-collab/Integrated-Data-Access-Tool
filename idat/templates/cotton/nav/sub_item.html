@@ -1,0 +1,29 @@
+{# djangofmt: file-ignore[invalid-syntax] #}
+
+{% comment %}
+  A question inside the current wizard section, listed under its <c-nav.section-item>.
+
+  Props:
+    label    question (short form)
+    current  boolean attribute: the question in view (gold dot)
+    href     link to the question, e.g. "#q-research-question"
+
+  Renders an <li>: put the items in a nested <ol> under the section item. The current item
+  gets aria-current="location".
+
+  Usage:
+    <c-nav.sub-item label="Research question" href="#research-question" current />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars label="" :current="False" href="" class="" />
+<li class="list-none {{ class }}" {{ attrs }}>
+  <{% if href %}a href="{{ href }}"{% else %}div{% endif %}
+    {% if current %}aria-current="location"{% endif %}
+    class="flex items-center gap-xs rounded-sm py-1.5 pr-sm pl-11.5
+           {% if href %}transition-colors hover:bg-nav-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus{% endif %}"
+  >
+    <span class="min-w-0 flex-1 type-body-sm {% if current %}text-on-nav{% else %}text-on-nav-muted{% endif %}">{{ label }}</span>
+    {% if current %}<span class="size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>{% endif %}
+  </{% if href %}a{% else %}div{% endif %}>
+</li>

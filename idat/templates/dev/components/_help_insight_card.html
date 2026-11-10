@@ -1,0 +1,32 @@
+<div class="grid max-w-3xl gap-md sm:grid-cols-2">
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Insight (:sample="11")</span>
+    <c-help.insight-card
+      eyebrow="Community insight"
+      :sample="11"
+      body="8 of 11 researchers who named a concrete Art. 34 risk category here were granted access."
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Platform</span>
+    <c-help.insight-card
+      tone="platform"
+      eyebrow="TikTok"
+      body="Expects a research question of at least 1,500 characters including context."
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Warning (body in the slot)</span>
+    <c-help.insight-card tone="warning" eyebrow="Common rejection reason">
+      Requests without a named Art. 34 risk category are usually declined.
+    </c-help.insight-card>
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Not enough data</span>
+    <c-help.insight-card tone="not-enough-data" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Insight with :sample="8" → not enough data</span>
+    <c-help.insight-card eyebrow="Community insight" :sample="8" body="6 of 8 researchers were granted access." />
+  </div>
+</div>

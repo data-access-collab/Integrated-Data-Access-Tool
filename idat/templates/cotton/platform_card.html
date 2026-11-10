@@ -1,0 +1,82 @@
+{% comment %}
+  VLOPSE selection card. The whole card is the hit target (a toggle button with
+  aria-pressed). Shows the extra workload up front.
+
+  Props:
+    name        platform name, e.g. "TikTok"
+    initial     letter in the logo tile; defaults to the first letter of name
+    operator    legal entity, e.g. "TikTok Technology Ltd."; omitted when empty
+    questions   number of platform-specific questions; row omitted when empty
+    response    typical response time, e.g. "4–6 weeks"; row omitted when empty
+    selected    boolean attribute: initial state (toggled in the browser)
+    input-name  form field name; while selected, a hidden input submits value
+    value       submitted value, e.g. the VLOPSE id
+
+  Usage:
+    {% for vlopse in vlopses %}
+      <c-platform-card :name="vlopse.name" :operator="vlopse.operator" questions="14"
+        response="4–6 weeks" input-name="vlopses" :value="vlopse.pk" />
+    {% endfor %}
+{% endcomment %}
+
+{% load i18n %}
+<c-vars name="" initial="" operator="" questions="" response="" :selected="False" input-name="" value="" class="" />
+<button
+  type="button"
+  x-data="{ pressed: {{ selected|yesno:'true,false' }} }"
+  x-on:click="pressed = !pressed"
+  x-bind:aria-pressed="pressed.toString()"
+  aria-pressed="{{ selected|yesno:'true,false' }}"
+  x-bind:class="{ 'border-focus bg-selected ring-1 ring-inset ring-focus': pressed, 'border-default bg-surface shadow-1': !pressed }"
+  class="
+    flex w-full cursor-pointer flex-col gap-md rounded-lg border p-lg text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus {{ class }}
+    {% if selected %}border-focus bg-selected ring-1 ring-inset ring-focus{% else %}border-default bg-surface shadow-1{% endif %}
+  "
+  {{ attrs }}
+>
+  {% if input_name %}
+    <input
+      type="hidden"
+      name="{{ input_name }}"
+      value="{{ value }}"
+      x-bind:disabled="!pressed"
+      {% if not selected %}disabled{% endif %}
+    />
+  {% endif %}
+  <span class="flex w-full items-center gap-sm">
+    <span
+      class="flex size-11 shrink-0 items-center justify-center rounded-md bg-brand type-title-lg text-on-brand"
+      aria-hidden="true"
+    >{{ initial|default:name|slice:":1" }}</span>
+    <span class="flex min-w-0 flex-1 flex-col">
+      <span class="truncate type-title-lg text-primary">{{ name }}</span>
+      {% if operator %}<span class="truncate type-body-sm text-tertiary">{{ operator }}</span>{% endif %}
+    </span>
+    <span
+      x-bind:class="{ 'border-transparent bg-brand': pressed, 'border-strong bg-surface': !pressed }"
+      class="flex size-6 shrink-0 items-center justify-center rounded-sm border-2 {% if selected %}border-transparent bg-brand{% else %}border-strong bg-surface{% endif %}"
+      aria-hidden="true"
+    >
+      <span x-show="pressed" {% if not selected %}x-cloak{% endif %} class="flex"><c-icon
+          name="check"
+          class="size-4 text-on-brand"
+        /></span>
+    </span>
+  </span>
+  {% if questions or response %}
+    <span class="flex flex-col gap-1.5">
+      {% if questions %}
+        <span class="flex items-center gap-xs type-body-sm text-secondary">
+          <c-icon name="file-text" class="size-4 shrink-0 text-icon-default" />
+          {% blocktranslate count n=questions|add:"0" %}+{{ n }} platform-specific question{% plural %}+{{ n }} platform-specific questions{% endblocktranslate %}
+        </span>
+      {% endif %}
+      {% if response %}
+        <span class="flex items-center gap-xs type-body-sm text-secondary">
+          <c-icon name="clock" class="size-4 shrink-0 text-icon-default" />
+          {% blocktranslate %}Typical response: {{ response }}{% endblocktranslate %}
+        </span>
+      {% endif %}
+    </span>
+  {% endif %}
+</button>

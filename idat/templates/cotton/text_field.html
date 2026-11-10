@@ -1,0 +1,76 @@
+{% comment %}
+  Label above input.
+  Required = small red asterisk.
+  Help icon opens the matching tip in the help panel.
+
+  Props:
+    field        Django BoundField (:field="form.x"): id, name, label, value, required,
+                 disabled, input type, widget attrs (maxlength, placeholder …),
+                 help_text and errors come from it
+    label        label text without a form
+    name         input name without a form
+    value        value without a form
+    type         input type without a form, default "text"
+    placeholder  placeholder without a form
+    id           input id without a form; defaults to name
+    required     boolean attribute, without a form
+    help-text    helper text without a form
+    help-tip     help-panel tip id; shows the help icon
+
+  Focus, error and disabled are CSS states; errors replace the helper text.
+  {{ attrs }} go on the <input> (x-model, autocomplete, disabled …); class goes on the wrapper.
+
+  Usage:
+    <c-text-field :field="form.institutional_email" help-tip="institutional-email" />
+    <c-text-field name="title" label="Project title" required help-text="Max. 120 characters." />
+{% endcomment %}
+
+<c-vars
+  field=""
+  label=""
+  name=""
+  value=""
+  type="text"
+  placeholder=""
+  id=""
+  :required="False"
+  help-text=""
+  help-tip=""
+  class=""
+/>
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name input_type=field.field.widget.input_type|default:type help=field.help_text|default:help_text %}
+  <c-field-layout
+    :field="field"
+    :input-id="input_id"
+    :label="label"
+    :required="required"
+    :help-text="help_text"
+    :help-tip="help_tip"
+    class="{{ class }}"
+  >
+    <input
+      type="{{ input_type }}"
+      {% if input_id %}id="{{ input_id }}"{% endif %}
+      {% if input_name %}name="{{ input_name }}"{% endif %}
+      value="{% if field %}{{ field.value|default_if_none:"" }}{% else %}{{ value }}{% endif %}"
+      {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+      {% for attr, attr_value in field.field.widget.attrs.items %}{{ attr }}="{{ attr_value }}" {% endfor %}
+      {% if required or field.field.required %}required{% endif %}
+      {% if field.field.disabled %}disabled{% endif %}
+      {% if field.errors %}
+        aria-invalid="true"
+        aria-describedby="{{ input_id }}-error"
+      {% elif help %}
+        aria-describedby="{{ input_id }}-help"
+      {% endif %}
+      class="
+        h-11 w-full rounded-sm border bg-surface px-sm py-xs type-body-md text-primary placeholder:text-tertiary
+        focus:border-focus focus:ring-1 focus:ring-inset focus:ring-focus
+        disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled
+        {% if field.errors %}border-danger ring-1 ring-inset ring-danger{% else %}border-strong{% endif %}
+      "
+      {{ attrs }}
+    />
+  </c-field-layout>
+{% endwith %}

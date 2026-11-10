@@ -1,0 +1,59 @@
+{% comment %}
+  One question in the help panel; the header toggles the answer.
+  A field's help icon opens the matching accordion: give it the same tip id.
+
+  Props:
+    title     question
+    slot      answer
+    expanded  boolean attribute: open on page load
+    tip       help-tip id; the accordion opens and scrolls into view when a field's help
+              icon dispatches "help-tip" with this id (see <c-field-layout> help-tip)
+
+  A full-width row with a bottom border. In a rounded container, clip it and drop the last
+  divider: class="overflow-hidden rounded-md border border-default *:last:border-b-0".
+
+  Usage:
+    <div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
+      <c-help.accordion title="How detailed should my research question be?" tip="research-question" expanded>
+        Platforms assess whether your question relates to systemic risks in the EU …
+      </c-help.accordion>
+    </div>
+{% endcomment %}
+
+<c-vars title="" :expanded="False" tip="" class="" />
+<div
+  {% if tip %}id="help-{{ tip }}"{% endif %}
+  x-data="{ open: {% if expanded %}true{% else %}false{% endif %} }"
+  {% if tip %}
+    x-on:help-tip.window="if ($event.detail.tip === '{{ tip|escapejs }}') { open = true; $nextTick(() => { $el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); $refs.trigger.focus({ preventScroll: true }) }) }"
+  {% endif %}
+  class="border-b border-default bg-surface {{ class }}"
+  {{ attrs }}
+>
+  <h3>
+    <button
+      type="button"
+      x-ref="trigger"
+      x-on:click="open = !open"
+      aria-expanded="{% if expanded %}true{% else %}false{% endif %}"
+      x-bind:aria-expanded="open"
+      {% if tip %}aria-controls="help-{{ tip }}-body"{% endif %}
+      class="flex w-full cursor-pointer items-center gap-xs px-md py-sm text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+    >
+      <span class="min-w-0 flex-1 type-title-md text-primary">{{ title }}</span>
+      <c-icon
+        name="chevron-right"
+        class="size-4.5 text-icon-default transition-transform {% if expanded %}rotate-90{% endif %}"
+        x-bind:class="{ 'rotate-90': open }"
+      />
+    </button>
+  </h3>
+  <div
+    {% if tip %}id="help-{{ tip }}-body"{% endif %}
+    {% if not expanded %}hidden{% endif %}
+    x-bind:hidden="!open"
+    class="px-md pb-md type-body-md text-secondary"
+  >
+    {{ slot }}
+  </div>
+</div>

@@ -1,0 +1,28 @@
+{% comment %}
+  Props:
+    tone   success (default) · warning · danger · info · neutral · accent
+    label  text, Label/Medium
+    dot    Figma "Show Dot"; on by default, turn off with :dot="False"
+
+  Usage:
+    <c-badge tone="success" label="{% translate 'Complete' %}" />
+    <c-badge tone="neutral" label="Draft" :dot="False" />
+{% endcomment %}
+
+<c-vars tone="success" label="" :dot="True" class="" />
+<span
+  class="
+    inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.75 type-label-md
+    {% if tone == "warning" %}bg-warning-subtle text-warning
+    {% elif tone == "danger" %}bg-danger-subtle text-danger
+    {% elif tone == "info" %}bg-info-subtle text-info
+    {% elif tone == "neutral" %}bg-surface-muted text-secondary
+    {% elif tone == "accent" %}bg-accent-subtle text-accent
+    {% else %}bg-success-subtle text-success
+    {% endif %} {{ class }}
+  "
+  {{ attrs }}
+>
+  {% if dot %}<span class="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true"></span>{% endif %}
+  {{ label }}
+</span>

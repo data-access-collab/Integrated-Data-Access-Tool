@@ -1,0 +1,36 @@
+<div class="flex flex-col gap-sm">
+  <c-affiliation-card
+    name="University of Somewhere"
+    affiliation-role="Postdoctoral researcher · Institute for Information Law (IViR)"
+    contact="j.doe@uni.eu · verified via eduGAIN"
+  >
+    <c-slot name="actions"><a class="rounded-sm type-label-lg text-link hover:underline" href="#affiliation-card"
+      >Edit</a></c-slot>
+  </c-affiliation-card>
+  <c-affiliation-card
+    kind="secondary"
+    name="Weizenbaum Institute"
+    affiliation-role="Associated researcher · Research group “Platform Data”"
+    contact="jana.doe@weizenbaum-institut.de · verified 12 Mar 2026"
+  >
+    <c-slot name="actions">
+      <button type="button" class="cursor-pointer rounded-sm type-label-lg text-link hover:underline">
+        Make primary
+      </button>
+      <button type="button" class="cursor-pointer rounded-sm type-label-lg text-danger hover:underline">Remove</button>
+    </c-slot>
+  </c-affiliation-card>
+  <c-affiliation-card
+    kind="pending"
+    name="University of Anywhere"
+    affiliation-role="Visiting fellow · from Jan 2027"
+    contact="j.doe@uni.eu · confirmation e-mail sent 2 Nov"
+  >
+    <c-slot name="actions">
+      <button type="button" class="cursor-pointer rounded-sm type-label-lg text-link hover:underline">
+        Resend e-mail
+      </button>
+      <button type="button" class="cursor-pointer rounded-sm type-label-lg text-danger hover:underline">Remove</button>
+    </c-slot>
+  </c-affiliation-card>
+</div>

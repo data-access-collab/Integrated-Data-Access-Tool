@@ -1,0 +1,46 @@
+{% comment %}
+  Research Organisation membership.
+
+  Props:
+    kind     "primary" (default) · "secondary" (verified) · "pending" (verification pending);
+             sets the badge
+    name     organisation, e.g. "University of Somewhere"
+    affiliation-role     e.g. "Postdoctoral researcher · Institute for Information Law (IViR)"
+    contact  e.g. "pirmin.hinterwald@uni.eu · verified"
+
+  Slot "actions": the actions for this kind, styled as text buttons/links:
+    primary: Edit · secondary: Make primary, Remove · pending: Resend e-mail, Remove
+    (link: "type-label-lg text-link hover:underline"; Remove: "type-label-lg text-danger hover:underline")
+
+  Usage:
+    <c-affiliation-card kind="secondary" name="Weizenbaum Institute" affiliation-role="Associated researcher"
+      contact="jana.doe@weizenbaum-institut.de · verified 12 Mar 2026">
+      <c-slot name="actions">
+        <form method="post" action="…">{% csrf_token %}<button class="type-label-lg text-link hover:underline">Make primary</button></form>
+        <form method="post" action="…">{% csrf_token %}<button class="type-label-lg text-danger hover:underline">Remove</button></form>
+      </c-slot>
+    </c-affiliation-card>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars kind="primary" name="" affiliation-role="" contact="" class="" />
+<div class="flex items-start gap-md rounded-lg border border-default bg-surface px-lg py-md {{ class }}" {{ attrs }}>
+  <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
+    <c-icon name="building" class="size-5 text-icon-default" />
+  </span>
+  <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+    <div class="flex flex-wrap items-center gap-xs">
+      <h3 class="type-title-md text-primary">{{ name }}</h3>
+      {% if kind == "pending" %}
+        <c-badge tone="warning" label="{% translate "Verification pending" %}" :dot="False" />
+      {% elif kind == "secondary" %}
+        <c-badge tone="success" label="{% translate "Verified" %}" :dot="False" />
+      {% else %}
+        <c-badge tone="accent" label="{% translate "Primary · used in applications" %}" :dot="False" />
+      {% endif %}
+    </div>
+    {% if affiliation_role %}<p class="type-body-md text-secondary">{{ affiliation_role }}</p>{% endif %}
+    {% if contact %}<p class="type-body-sm text-tertiary">{{ contact }}</p>{% endif %}
+  </div>
+  {% if actions %}<div class="flex shrink-0 items-start gap-md">{{ actions }}</div>{% endif %}
+</div>

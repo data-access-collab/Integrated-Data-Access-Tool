@@ -1,0 +1,149 @@
+{% comment %}
+  One card per selected platform in "Submit to platforms".
+  Kind follows Vlopse.modality and Vlopse.account_required:
+    "form"    web form (modality=form)
+    "account" web form + account_required=True (e.g. TikTok, Meta)
+    "email"   modality=email (e.g. Apple, Snap): generated e-mail + attachments
+  The checkbox starts case tracking.
+  E-mail platforms: "Generate e-mail" opens the system mail handler (mailto: with To,
+  Subject and the researcher's answers as body, nothing added); files can't be attached
+  via mailto, so "Download attachments (.zip)" stays.
+
+  Backend functionality still to be implemented.
+
+  Props:
+    kind           "form" (default) · "account" · "email"
+    platform       platform name, e.g. "YouTube"
+    operator       e.g. "Google Ireland Ltd. · Researcher program"
+    form-url       the platform's web form (form / account); opens in a new tab
+    copy-href      "Copy answers field by field" view (form / account); omitted when empty
+    account        name of the required account, e.g. "TikTok for Developers" (account)
+    email-to       recipient (email)
+    email-subject  subject (email)
+    email-body     the researcher's answers, used as the mailto body (email)
+    attachments    list of attachment file names (email): :attachments="files"
+    zip-href       attachments download (email); omitted when empty
+    field          tracking checkbox BoundField (:field="form.submitted"); or
+    name           tracking checkbox name without a form
+
+  Usage:
+    <c-submission-card platform="YouTube" operator="Google Ireland Ltd. · Researcher program"
+      form-url="https://…" copy-href="{% url … %}" :field="form.submitted_youtube" />
+    <c-submission-card kind="email" platform="Snapchat" email-to="…" email-subject="…"
+      :email-body="body" :attachments="files" zip-href="{% url … %}" name="submitted_snapchat" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars
+  kind="form"
+  platform=""
+  operator=""
+  form-url=""
+  copy-href=""
+  account=""
+  email-to=""
+  email-subject=""
+  email-body=""
+  attachments=""
+  zip-href=""
+  field=""
+  name=""
+  class=""
+/>
+<div class="flex flex-col gap-md rounded-lg border border-default bg-surface p-lg {{ class }}" {{ attrs }}>
+  <div class="flex flex-wrap items-center gap-sm">
+    <c-platform-chip :name="platform" />
+    <p class="min-w-0 flex-1 type-body-sm text-tertiary">{{ operator }}</p>
+    {% if kind == "email" %}
+      <c-badge tone="neutral" label="{% translate "By e-mail" %}" class="shrink-0" />
+    {% elif kind == "account" %}
+      <c-badge tone="warning" label="{% translate "Account needed" %}" class="shrink-0" />
+    {% else %}
+      <c-badge tone="info" label="{% translate "Web form" %}" class="shrink-0" />
+    {% endif %}
+  </div>
+
+  <p class="type-body-md text-secondary">
+    {% if kind == "email" %}
+      {% blocktranslate %}{{ platform }} takes applications by e-mail. “Generate e-mail” opens your own e-mail app with the recipient, subject and your answers filled in. Attach the downloaded files, check everything and send it from your institutional address.{% endblocktranslate %}
+    {% else %}
+      {% blocktranslate %}{{ platform }} takes applications through its own web form. Open it next to this page and paste each answer — they’re listed in the same order as the form.{% endblocktranslate %}
+    {% endif %}
+  </p>
+
+  {% if kind == "account" %}
+    <div class="flex items-start gap-sm rounded-md border border-warning bg-warning-subtle px-md py-sm">
+      <c-icon name="alert-triangle" class="size-4.5 shrink-0 text-warning" />
+      <p class="min-w-0 flex-1 type-body-sm text-primary">
+        {% blocktranslate %}{{ platform }} only accepts applications from a {{ account }} account. Create one or sign in first, ideally with your institutional e-mail, then open the form.{% endblocktranslate %}
+      </p>
+    </div>
+  {% endif %}
+
+  {% if kind == "email" %}
+    <dl class="flex flex-col gap-xs rounded-md bg-surface-muted p-md">
+      <div class="flex items-start gap-sm">
+        <dt class="w-18 shrink-0 type-label-md text-tertiary">{% translate "To" %}</dt>
+        <dd class="min-w-0 flex-1 break-words type-body-md text-primary">{{ email_to }}</dd>
+      </div>
+      <div class="flex items-start gap-sm">
+        <dt class="w-18 shrink-0 type-label-md text-tertiary">{% translate "Subject" %}</dt>
+        <dd class="min-w-0 flex-1 type-body-md text-primary">{{ email_subject }}</dd>
+      </div>
+      {% if attachments %}
+        <div class="flex items-center gap-sm">
+          <dt class="w-18 shrink-0 type-label-md text-tertiary">{% translate "Attached" %}</dt>
+          <dd class="flex min-w-0 flex-1 flex-wrap gap-sm">
+            {% for file_name in attachments %}
+              <span
+                class="inline-flex items-center gap-2xs rounded-sm border border-default bg-surface px-xs py-2xs type-label-md text-primary"
+              >
+                <c-icon name="file-text" class="size-3.5 shrink-0 text-icon-default" />{{ file_name }}
+              </span>
+            {% endfor %}
+          </dd>
+        </div>
+      {% endif %}
+    </dl>
+    <div class="flex flex-wrap items-center gap-sm">
+      <c-button
+        label="{% translate "Generate e-mail" %}"
+        icon="mail"
+        href="mailto:{{ email_to }}?subject={{ email_subject|urlencode }}&body={{ email_body|urlencode }}"
+      />
+      {% if zip_href %}<c-button
+          variant="ghost"
+          label="{% translate "Download attachments (.zip)" %}"
+          icon="download"
+          :href="zip_href"
+          download
+        />{% endif %}
+    </div>
+  {% else %}
+    <div class="flex flex-wrap items-center gap-sm">
+      {% if form_url %}
+        <c-button
+          variant="secondary"
+          label="{% blocktranslate %}Open {{ platform }} form{% endblocktranslate %}"
+          icon="external-link"
+          :href="form_url"
+          target="_blank"
+          rel="noopener"
+        />
+      {% endif %}
+      {% if copy_href %}<c-button
+          variant="ghost"
+          label="{% translate "Copy answers field by field" %}"
+          icon="copy"
+          :href="copy_href"
+        />{% endif %}
+    </div>
+  {% endif %}
+
+  <hr class="border-default" />
+  <c-checkbox
+    :field="field"
+    :name="name"
+    label="{% translate "I’ve submitted this application — start tracking it" %}"
+  />
+</div>

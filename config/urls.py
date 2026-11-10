@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include
-from django.urls import path
+from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
 
@@ -34,6 +33,8 @@ urlpatterns += [
 ]
 
 if settings.DEBUG:
+    from idat.core.views.dev_gallery import ComponentGalleryView
+
     # This allows the error pages to be debugged during development, just visit
     # these url in browser to see how these error pages look like.
     urlpatterns += [
@@ -53,6 +54,12 @@ if settings.DEBUG:
             kwargs={"exception": Exception("Page not Found")},
         ),
         path("500/", default_views.server_error),
+        # Component gallery: every cotton component in all variants, light and dark.
+        path(
+            "dev/components/",
+            ComponentGalleryView.as_view(),
+            name="dev-components",
+        ),
     ]
     if "debug_toolbar" in settings.INSTALLED_APPS:
         import debug_toolbar

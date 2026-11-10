@@ -1,0 +1,46 @@
+{% comment %}
+  One setting with a Switch. The title is the switch's label; the description is linked
+  with aria-describedby.
+
+  Props:
+    title        setting name, e.g. "Remind me before reply deadlines"
+    description  e.g. "E-mail 2 days before a platform's deadline."; omitted when empty
+    field        optional Django BoundField (:field="form.x"), passed to <c-switch>
+    name, id     input name / id without a form (id defaults to name)
+    value        submitted value, default "on"
+    checked      boolean attribute, without a form
+
+  {{ attrs }} go on the switch's <input> (x-model, disabled …); class goes on the row.
+
+  Usage:
+    <c-settings-row :field="form.deadline_reminders" title="Remind me before reply deadlines"
+      description="E-mail 2 days before a platform's deadline." />
+    <c-settings-row name="weekly_digest" title="Weekly digest" checked />
+{% endcomment %}
+
+<c-vars title="" description="" field="" name="" id="" value="on" :checked="False" class="" />
+{% with input_id=field.id_for_label|default:id|default:name %}
+  <div class="flex items-center gap-lg border-b border-default py-md {{ class }}">
+    <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+      <label
+        {% if input_id %}for="{{ input_id }}"{% endif %}
+        class="cursor-pointer type-label-lg text-primary"
+      >{{ title }}</label>
+      {% if description %}<p
+          {% if input_id %}id="{{ input_id }}-description"{% endif %}
+          class="type-body-sm text-secondary"
+        >
+          {{ description }}
+        </p>{% endif %}
+    </div>
+    <c-switch
+      :field="field"
+      :name="name"
+      :id="input_id"
+      :value="value"
+      :checked="checked"
+      aria-describedby="{% if description and input_id %}{{ input_id }}-description{% endif %}"
+      :attrs="attrs"
+    />
+  </div>
+{% endwith %}

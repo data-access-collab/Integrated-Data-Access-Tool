@@ -1,0 +1,71 @@
+{% comment %}
+  One task on the Tasks page.
+  Action needed = counted in the sidebar Tasks badge (one per application).
+  Upcoming = reminder from case settings, not counted. Done = recently completed.
+  The deadline is shown in the due badge, never added to the count.
+  Override the due badge label and the action button label per task.
+
+  Props:
+    state         "action-needed" (default) · "upcoming" · "done"
+    title         the task, e.g. "Reply to TikTok's clarification request"
+    context       project and case, e.g. "Political ads … · TikTok case TT-RA-2026-1187"
+    due           badge label, e.g. "Due 10 Nov · 7 days left"; omitted when empty
+    href          link to the case
+    link          link text, default "Open case"
+    action        action button label, e.g. "Write reply"; omitted when empty or done
+    action-href   where the action button goes
+
+  Renders an <li>: put the rows in a <ul>.
+
+  Usage:
+    <ul>
+      <c-task-row title="Reply to TikTok's clarification request" context="…"
+        due="Due 10 Nov · 7 days left" href="{% url … %}" action="Write reply" action-href="{% url … %}" />
+      <c-task-row state="upcoming" title="…" context="…" due="From 5 Nov" href="…" action="Ask for status" action-href="…" />
+      <c-task-row state="done" title="…" context="…" due="Done 31 Oct" href="…" />
+    </ul>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars state="action-needed" title="" context="" due="" href="" link="" action="" action-href="" class="" />
+<li class="flex list-none items-center gap-md border-b border-default bg-surface px-lg py-md {{ class }}" {{ attrs }}>
+  {% if state == "done" %}
+    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-success-subtle">
+      <c-icon name="check" class="size-4.5 text-success" label="{% translate "Done" %}" />
+    </span>
+  {% elif state == "upcoming" %}
+    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-info-subtle">
+      <c-icon name="clock" class="size-4.5 text-info" label="{% translate "Upcoming" %}" />
+    </span>
+  {% else %}
+    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-warning-subtle">
+      <c-icon name="alert-circle" class="size-4.5 text-warning" label="{% translate "Action needed" %}" />
+    </span>
+  {% endif %}
+  <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+    <p class="type-label-lg {% if state == "done" %}text-secondary{% else %}text-primary{% endif %}">{{ title }}</p>
+    {% if context %}<p class="type-body-sm text-tertiary">{{ context }}</p>{% endif %}
+  </div>
+  {% if due %}
+    <c-badge
+      tone="{% if state == "done" %}neutral{% elif state == "upcoming" %}info{% else %}warning{% endif %}"
+      :label="due"
+      class="shrink-0"
+    />
+  {% endif %}
+  <div class="flex min-h-11 w-65 shrink-0 items-center justify-end gap-sm">
+    {% if href %}
+      <a
+        href="{{ href }}"
+        class="rounded-sm type-label-lg whitespace-nowrap text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >{{ link|default:_("Open case") }}</a>
+    {% endif %}
+    {% if action and state != "done" %}
+      <c-button
+        variant="{% if state == "upcoming" %}secondary{% else %}primary{% endif %}"
+        :label="action"
+        :href="action_href"
+      />
+    {% endif %}
+  </div>
+</li>

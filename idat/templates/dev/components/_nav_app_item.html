@@ -1,0 +1,16 @@
+<div class="flex flex-col gap-xs">
+  <p class="type-body-sm text-tertiary">Default, current and with a count badge (hover not designed: bg-nav-hover).</p>
+  <nav aria-label="App {{ theme }}" class="max-w-xs rounded-lg bg-nav p-xs">
+    <ul class="flex flex-col gap-2xs">
+      <c-nav.app-item label="Home" icon="layout-grid" href="#nav-app-item" current />
+      <c-nav.app-item label="Tasks" icon="check" href="#nav-app-item" count="1" />
+      <c-nav.app-item label="Applications" icon="file-text" href="#nav-app-item" />
+      <c-nav.app-item
+        label="A very long navigation label that has to be truncated"
+        icon="bookmark"
+        href="#nav-app-item"
+        count="12"
+      />
+    </ul>
+  </nav>
+</div>

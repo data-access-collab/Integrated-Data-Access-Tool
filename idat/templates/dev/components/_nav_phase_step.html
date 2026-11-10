@@ -1,0 +1,12 @@
+<div class="flex flex-col gap-xs">
+  <p class="type-body-sm text-tertiary">Done and current phases are links (hover not designed: bg-nav-hover).</p>
+  <nav aria-label="Application phases {{ theme }}" class="max-w-xs rounded-lg bg-nav p-xs">
+    <ol class="flex flex-col gap-2xs">
+      <c-nav.phase-step state="done" number="1" label="Prepare" href="#nav-phase-step" />
+      <c-nav.phase-step state="current" number="2" label="Enter your details" href="#nav-phase-step" />
+      <c-nav.phase-step number="3" label="Review & generate" />
+      <c-nav.phase-step number="4" label="Submit" />
+      <c-nav.phase-step number="5" label="Track" />
+    </ol>
+  </nav>
+</div>

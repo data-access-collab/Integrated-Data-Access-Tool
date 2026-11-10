@@ -1,0 +1,114 @@
+{% comment %}
+  Platform-specific question (PlatformScopedGroup). Used when platforms ask a question
+  differently (e.g. data request, platform-technical sections). Tabs show which platform
+  entry is being edited and which are answered; shared answers never show platform context.
+
+  Props:
+    platforms    list of {"name", "field", optional "initial"}: one entry per platform, each
+                 with the BoundField of that platform's answer (:platforms="form.x_platforms")
+    title        the question, e.g. "Which data do you need from each platform?"
+    description  optional explanation under the title
+    required     badge text, e.g. "Required by all 3"; omitted when empty
+    help-tip     help-panel tip id; shows the help icon
+
+  All answers are submitted; only the active tab's panel is visible. A tab shows a check
+  once its answer is non-empty (updated while typing). Arrow keys move between tabs.
+
+  Usage:
+    <c-platform-answer-group :platforms="form.data_request_platforms"
+      title="Which data do you need from each platform?" required="Required by all 3"
+      description="Platforms ask this differently, so you answer once per platform." />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars platforms="" title="" description="" required="" help-tip="" class="" />
+{% with total=platforms|length %}
+  {% blocktranslate asvar answered_template %}{count} of {{ total }} platforms answered{% endblocktranslate %}
+  <div
+    role="group"
+    x-data="{ active: 0, answered: [{% for p in platforms %}{% if p.field.value %}true{% else %}false{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}] }"
+    x-id="['answer-group']"
+    x-bind:aria-labelledby="$id('answer-group', 'title')"
+    class="flex flex-col gap-sm rounded-lg border border-default bg-surface px-lg py-5 {{ class }}"
+    {{ attrs }}
+  >
+    <div class="flex flex-wrap items-center gap-xs">
+      <h3 x-bind:id="$id('answer-group', 'title')" class="type-title-md text-primary">{{ title }}</h3>
+      {% if required %}<c-badge tone="danger" :label="required" :dot="False" />{% endif %}
+      {% if help_tip %}
+        <button
+          type="button"
+          class="cursor-pointer rounded-full text-icon-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          aria-label="{% translate "Help" %}: {{ title }}"
+          x-on:click="$dispatch('help-tip', { tip: '{{ help_tip|escapejs }}' })"
+        >
+          <c-icon name="help-circle" class="size-4" />
+        </button>
+      {% endif %}
+    </div>
+    {% if description %}<p class="type-body-sm text-secondary">{{ description }}</p>{% endif %}
+
+    <div
+      role="tablist"
+      class="flex gap-2xs overflow-x-auto border-b border-default"
+      x-on:keydown.right.prevent="active = (active + 1) % {{ total }}; $nextTick(() => $el.children[active].focus())"
+      x-on:keydown.left.prevent="active = (active + {{ total }} - 1) % {{ total }}; $nextTick(() => $el.children[active].focus())"
+    >
+      {% for p in platforms %}
+        <button
+          type="button"
+          role="tab"
+          x-bind:id="$id('answer-group', 'tab-{{ forloop.counter0 }}')"
+          x-bind:aria-controls="$id('answer-group', 'panel-{{ forloop.counter0 }}')"
+          aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+          x-bind:aria-selected="(active === {{ forloop.counter0 }}).toString()"
+          {% if not forloop.first %}tabindex="-1"{% endif %}
+          x-bind:tabindex="active === {{ forloop.counter0 }} ? 0 : -1"
+          x-on:click="active = {{ forloop.counter0 }}"
+          x-bind:class="{ 'border-accent bg-accent-subtle': active === {{ forloop.counter0 }}, 'border-transparent hover:bg-surface-muted': active !== {{ forloop.counter0 }} }"
+          class="
+            flex shrink-0 cursor-pointer items-center gap-xs rounded-t-sm border-b-3 px-sm pt-xs pb-2.5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus
+            {% if forloop.first %}border-accent bg-accent-subtle{% else %}border-transparent{% endif %}
+          "
+        >
+          <c-platform-chip :name="p.name" :initial="p.initial" />
+          <span x-show="answered[{{ forloop.counter0 }}]" {% if not p.field.value %}x-cloak{% endif %} class="flex">
+            <c-icon name="check" class="size-4 text-success" label="{% translate "answered" %}" />
+          </span>
+          <span
+            x-show="!answered[{{ forloop.counter0 }}]"
+            {% if p.field.value %}x-cloak{% endif %}
+            x-bind:class="{ 'text-accent': active === {{ forloop.counter0 }}, 'text-tertiary': active !== {{ forloop.counter0 }} }"
+            class="flex {% if forloop.first %}text-accent{% else %}text-tertiary{% endif %}"
+          >
+            <c-icon name="circle" class="size-4" label="{% translate "not answered" %}" />
+          </span>
+        </button>
+      {% endfor %}
+    </div>
+
+    {% for p in platforms %}
+      <div
+        role="tabpanel"
+        x-bind:id="$id('answer-group', 'panel-{{ forloop.counter0 }}')"
+        x-bind:aria-labelledby="$id('answer-group', 'tab-{{ forloop.counter0 }}')"
+        {% if not forloop.first %}hidden{% endif %}
+        x-bind:hidden="active !== {{ forloop.counter0 }}"
+        x-on:input="answered[{{ forloop.counter0 }}] = $event.target.value.trim() !== ''"
+        class="flex flex-col gap-xs border-l-3 border-accent pl-md"
+      >
+        <p class="type-overline text-accent">
+          {% blocktranslate with name=p.name %}Answering for {{ name }} · only used in {{ name }}’s application{% endblocktranslate %}
+        </p>
+        <c-textarea :field="p.field">
+          <c-slot name="helper">
+            {{ p.field.help_text }}
+            <span
+              x-text="'{{ answered_template|escapejs }}'.replace('{count}', answered.filter(Boolean).length)"
+            ></span>
+          </c-slot>
+        </c-textarea>
+      </div>
+    {% endfor %}
+  </div>
+{% endwith %}

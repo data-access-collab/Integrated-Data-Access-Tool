@@ -1,0 +1,41 @@
+<div class="flex max-w-md flex-col gap-lg">
+  <p class="type-body-sm text-tertiary">
+    Pick an option: the text turns from placeholder to primary. Tab into a field to see the focus state.
+  </p>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Default · placeholder (bound field)</span>
+    <c-select :field="form.organisation_type" placeholder="Select organisation type" help-tip="organisation-type" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Selected (initial value, optional)</span>
+    <c-select :field="form.funding_source" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Error (not designed in Figma)</span>
+    <c-select
+      :field="form_errors.organisation_type"
+      placeholder="Select organisation type"
+      help-tip="organisation-type"
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Disabled (plain props)</span>
+    <c-select
+      name="sel_disabled_{{ theme }}"
+      label="Organisation type"
+      placeholder="Select organisation type"
+      disabled
+      :options="[('university', 'University'), ('ngo', 'Non-profit / NGO')]"
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Disabled · selected (plain props)</span>
+    <c-select
+      name="sel_disabled_value_{{ theme }}"
+      label="Organisation type"
+      value="ngo"
+      disabled
+      :options="[('university', 'University'), ('ngo', 'Non-profit / NGO')]"
+    />
+  </div>
+</div>

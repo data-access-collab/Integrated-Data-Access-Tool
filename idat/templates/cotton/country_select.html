@@ -1,0 +1,177 @@
+{% comment %}
+  Maps InputType.ISO_3166_1 (pycountry).
+  Searchable combobox: type to filter by name, shows the alpha-2 code.
+
+  Props:
+    field        Django BoundField (:field="form.x", ChoiceField of (alpha-2, name), optgroups
+                 allowed): choices, value, id, name, label, required, help_text and errors
+    options      list of (code, name) pairs without a form: :options="countries"
+    value        selected alpha-2 code without a form
+    placeholder  shown while nothing is selected; default: the blank choice's label,
+                 else "Select a country"
+    label        label text without a form
+    name         input name without a form
+    id           id of the button without a form; defaults to name
+    required     boolean, without a form (shows the asterisk)
+    help-text    helper text without a form
+    help-tip     help-panel tip id; shows the help icon
+
+  Keyboard: Enter / Space / ↓ opens; type to filter; ↑ ↓ move; Enter picks; Escape closes.
+  Submits the alpha-2 code from a hidden input. Needs Alpine (countrySelect in assets/js).
+  {{ attrs }} go on the button; class goes on the wrapper.
+
+  Usage:
+    <c-country-select :field="form.country" help-tip="country" />
+    <c-country-select name="country" label="Country" :options="countries" value="DE" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars
+  field=""
+  options=""
+  value=""
+  placeholder=""
+  label=""
+  name=""
+  id=""
+  :required="False"
+  help-text=""
+  help-tip=""
+  class=""
+/>
+{% translate "Select a country" as default_placeholder %}
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name label_text=field.label|default:label help=field.help_text|default:help_text current=field.value|default:value|default_if_none:"" %}
+  {% with data_id=input_id|add:"-choices" %}
+    <c-field-layout
+      :field="field"
+      :input-id="input_id"
+      :label="label"
+      :required="required"
+      :help-text="help_text"
+      :help-tip="help_tip"
+      class="{{ class }}"
+      x-data="countrySelect('{{ data_id|escapejs }}', '{{ current|escapejs }}')"
+      x-on:keydown.escape="close(true)"
+      x-on:click.outside="close()"
+    >
+      {# subwidgets flatten optgroups and callable choices the same way Django's Select does. #}
+      <script type="application/json" id="{{ data_id }}">
+        [{% if field %}{% for option in field.subwidgets %}["{{ option.data.value|stringformat:"s"|escapejs }}", "{{ option.choice_label|escapejs }}"]{% if not forloop.last %},{% endif %}{% endfor %}{% else %}{% for option_value, option_label in options %}["{{ option_value|escapejs }}", "{{ option_label|escapejs }}"]{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}]
+      </script>
+      <div class="relative">
+        <input
+          type="hidden"
+          x-ref="value"
+          {% if input_name %}name="{{ input_name }}"{% endif %}
+          value="{{ current }}"
+          x-bind:value="value"
+        />
+
+        {# Closed: shows the selection #}
+        <button
+          type="button"
+          x-ref="button"
+          {% if input_id %}id="{{ input_id }}"{% endif %}
+          x-show="!open"
+          x-on:click="openList()"
+          x-on:keydown.down.prevent="openList()"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          {% if field.errors %}
+            aria-invalid="true"
+            aria-describedby="{{ input_id }}-error"
+          {% elif help %}
+            aria-describedby="{{ input_id }}-help"
+          {% endif %}
+          class="
+            flex h-11 w-full cursor-pointer items-center gap-xs rounded-sm border bg-surface px-sm py-xs text-left
+            focus-visible:border-focus focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus focus-visible:outline-none
+            disabled:cursor-not-allowed disabled:bg-disabled
+            {% if field.errors %}border-danger ring-1 ring-inset ring-danger{% else %}border-strong{% endif %}
+          "
+          {{ attrs }}
+        >
+          <span
+            {% if not current %}hidden{% endif %}
+            x-bind:hidden="!selectedOption"
+            class="rounded-sm bg-surface-muted px-1.5 py-0.5 type-label-md text-secondary group-has-disabled:text-disabled"
+            x-text="value"
+          >{{ current }}</span>
+          <span
+            x-bind:class="selectedOption ? 'text-primary' : 'text-tertiary'"
+            class="min-w-0 flex-1 truncate type-body-md group-has-disabled:text-disabled {% if current %}text-primary{% else %}text-tertiary{% endif %}"
+            x-text="selectedOption ? selectedOption.label : (placeholder || '{{ placeholder|default:default_placeholder|escapejs }}')"
+          >{% if field %}{% for option in field.subwidgets %}{% if option.data.selected and option.data.value %}{{ option.choice_label }}{% endif %}{% endfor %}{% endif %}</span>
+          <c-icon name="chevron-down" class="size-5 text-icon-default group-has-disabled:text-disabled" />
+        </button>
+
+        {# Open: search box (combobox) above the list #}
+        <div
+          x-show="open"
+          x-cloak
+          class="flex h-11 items-center gap-xs rounded-sm border border-focus bg-surface px-sm py-xs ring-1 ring-focus ring-inset"
+        >
+          <c-icon name="search" class="size-4.5 text-icon-default" />
+          <input
+            type="text"
+            x-ref="search"
+            role="combobox"
+            aria-label="{{ label_text }}"
+            aria-autocomplete="list"
+            aria-expanded="true"
+            aria-controls="{{ data_id }}-listbox"
+            x-bind:aria-activedescendant="activeId"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="{% translate "Search" %}"
+            x-model="query"
+            x-on:input="active = 0"
+            x-on:keydown.down.prevent="move(1)"
+            x-on:keydown.up.prevent="move(-1)"
+            x-on:keydown.enter.prevent="pick(filtered[active])"
+            x-on:keydown.tab="close()"
+            class="min-w-0 flex-1 border-0 bg-transparent p-0 type-body-md text-primary placeholder:text-tertiary focus:ring-0"
+          />
+          <button
+            type="button"
+            x-show="query"
+            x-on:click="query = ''; active = 0; $refs.search.focus()"
+            aria-label="{% translate "Clear search" %}"
+            class="flex cursor-pointer rounded-sm text-icon-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <c-icon name="x" class="size-4.5" />
+          </button>
+        </div>
+
+        <ul
+          id="{{ data_id }}-listbox"
+          role="listbox"
+          aria-label="{{ label_text }}"
+          x-show="open"
+          x-cloak
+          class="absolute inset-x-0 top-full z-10 mt-xs flex max-h-80 flex-col gap-2xs overflow-y-auto rounded-md border border-default bg-surface p-xs shadow-2"
+        >
+          <template x-for="(option, index) in filtered" x-bind:key="option.value">
+            <li
+              role="option"
+              x-bind:id="optionId(option)"
+              x-bind:aria-selected="option.value === value ? 'true' : 'false'"
+              x-on:click="pick(option)"
+              x-on:mousemove="active = index"
+              x-bind:class="{ 'bg-surface-muted': index === active, 'bg-selected': option.value === value && index !== active }"
+              class="flex cursor-pointer items-center gap-sm rounded-sm p-xs"
+            >
+              <span class="w-5.5 shrink-0 type-label-md text-tertiary" x-text="option.value"></span>
+              <span class="min-w-0 flex-1 type-body-md text-primary" x-text="option.label"></span>
+              <c-icon name="check" class="size-4 text-accent" x-show="option.value === value" />
+            </li>
+          </template>
+          <li x-show="!filtered.length" class="p-xs type-body-md text-tertiary">
+            {% translate "No matching country" %}
+          </li>
+        </ul>
+      </div>
+    </c-field-layout>
+  {% endwith %}
+{% endwith %}

@@ -1,0 +1,18 @@
+{% comment %}
+  Benefit + effort indicator: rough length and time saved.
+
+  Props:
+    label  e.g. "≈ 45 min for 3 platforms · saves ~5 h"
+
+  Usage:
+    <c-time-estimate label="≈ 45 min for 3 platforms · saves ~5 h" />
+{% endcomment %}
+
+<c-vars label="" class="" />
+<span
+  class="inline-flex items-center gap-xs whitespace-nowrap rounded-full bg-success-subtle py-1.5 pl-sm pr-3.5 type-label-md text-success {{ class }}"
+  {{ attrs }}
+>
+  <c-icon name="clock" class="size-4" />
+  {{ label }}
+</span>

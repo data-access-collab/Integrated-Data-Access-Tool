@@ -1,0 +1,152 @@
+{% comment %}
+  Maps InputType.DATE_SELECT (forms.DateField).
+  Typed entry DD / MM / YYYY plus a calendar popover (calendar button or Alt + ↓).
+
+  Props:
+    field        Django BoundField (:field="form.x", DateField): id, name, value, label,
+                 required, disabled, help_text and errors come from it
+    label        label text without a form
+    name         input name without a form
+    value        date (or "YYYY-MM-DD") without a form
+    id           input id without a form; defaults to name
+    required     boolean attribute, without a form
+    help-text    helper text; defaults to the "DD / MM / YYYY" format hint
+    help-tip     help-panel tip id; shows the help icon
+
+  Submits ISO "YYYY-MM-DD" from a hidden input; text that doesn't parse is submitted as typed,
+  so Django's "Enter a valid date." error applies. Needs Alpine (dateField in assets/js).
+  {{ attrs }} go on the visible text input; class goes on the wrapper.
+
+  Usage:
+    <c-date-field :field="form.planned_start" help-tip="planned-start" />
+    <c-date-field name="start" label="Planned start of data access" value="2027-03-14" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars field="" label="" name="" value="" id="" :required="False" help-text="" help-tip="" class="" />
+{% translate "DD / MM / YYYY" as format_hint %}
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name help=field.help_text|default:help_text|default:format_hint raw=field.value|default:value|default_if_none:"" %}
+  {% with iso=raw|date:"Y-m-d"|default:raw display=raw|date:"d / m / Y"|default:raw %}
+    <c-field-layout
+      :field="field"
+      :input-id="input_id"
+      :label="label"
+      :required="required"
+      :help-text="help"
+      :help-tip="help_tip"
+      class="{{ class }}"
+      x-data="dateField('{{ iso|escapejs }}')"
+      x-on:keydown.escape="close(true)"
+      x-on:click.outside="close()"
+    >
+      <div class="relative">
+        <input
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          x-ref="input"
+          {% if input_id %}id="{{ input_id }}"{% endif %}
+          value="{{ display }}"
+          x-model="text"
+          x-on:input="typed()"
+          x-on:keydown.alt.down.prevent="toggle()"
+          {% if required or field.field.required %}required{% endif %}
+          {% if field.field.disabled %}disabled{% endif %}
+          {% if field.errors %}
+            aria-invalid="true"
+            aria-describedby="{{ input_id }}-error"
+          {% elif help %}
+            aria-describedby="{{ input_id }}-help"
+          {% endif %}
+          {% if not field.errors %}
+            x-bind:class="{ 'border-strong': !open, 'border-focus ring-1 ring-inset ring-focus': open }"
+          {% endif %}
+          class="
+            h-11 w-full rounded-sm border bg-surface py-xs pl-sm pr-10 type-body-md text-primary
+            focus:border-focus focus:ring-1 focus:ring-inset focus:ring-focus
+            disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled
+            {% if field.errors %}border-danger ring-1 ring-inset ring-danger{% else %}border-strong{% endif %}
+          "
+          {{ attrs }}
+        />
+        <input
+          type="hidden"
+          {% if input_name %}name="{{ input_name }}"{% endif %}
+          value="{{ iso }}"
+          x-bind:value="submitted"
+        />
+        <button
+          type="button"
+          x-ref="toggle"
+          x-on:click="toggle()"
+          x-bind:disabled="$refs.input.disabled"
+          aria-haspopup="dialog"
+          aria-controls="{{ input_id }}-calendar"
+          aria-expanded="false"
+          x-bind:aria-expanded="open"
+          aria-label="{% translate "Choose date" %}"
+          class="absolute top-1/2 right-sm flex -translate-y-1/2 cursor-pointer rounded-sm text-icon-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:text-disabled"
+        >
+          <c-icon name="calendar" class="size-5" />
+        </button>
+
+        <div
+          id="{{ input_id }}-calendar"
+          role="dialog"
+          aria-label="{% translate "Choose date" %}"
+          x-ref="calendar"
+          x-show="open"
+          x-cloak
+          class="absolute inset-x-0 top-full z-10 mt-xs flex flex-col gap-2xs rounded-md border border-default bg-surface p-xs shadow-2"
+        >
+          <div class="flex items-center p-2xs">
+            <button
+              type="button"
+              x-on:click="shiftMonth(-1)"
+              aria-label="{% translate "Previous month" %}"
+              class="flex cursor-pointer rounded-sm text-icon-default hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <c-icon name="chevron-left" class="size-4.5" />
+            </button>
+            <p class="flex-1 text-center type-label-lg text-primary" aria-live="polite" x-text="monthLabel"></p>
+            <button
+              type="button"
+              x-on:click="shiftMonth(1)"
+              aria-label="{% translate "Next month" %}"
+              class="flex cursor-pointer rounded-sm text-icon-default hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <c-icon name="chevron-right" class="size-4.5" />
+            </button>
+          </div>
+          <div class="grid grid-cols-7 gap-0.5">
+            <template x-for="weekday in weekdays">
+              <span
+                class="flex h-8 items-center justify-center type-label-md text-tertiary"
+                aria-hidden="true"
+                x-text="weekday"
+              ></span>
+            </template>
+            <template x-for="(cell, index) in days" x-bind:key="monthLabel + index">
+              <div class="h-8">
+                <template x-if="cell">
+                  <button
+                    type="button"
+                    data-day
+                    x-on:click="choose(cell)"
+                    x-bind:aria-label="cell.label"
+                    x-bind:aria-pressed="isSelected(cell) ? 'true' : 'false'"
+                    x-bind:class="isSelected(cell) ? 'bg-accent text-on-accent' : 'text-primary hover:bg-surface-muted'"
+                    class="flex size-full cursor-pointer items-center justify-center rounded-sm type-body-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                    x-text="cell.day"
+                  >
+                  </button>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </c-field-layout>
+  {% endwith %}
+{% endwith %}

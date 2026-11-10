@@ -1,0 +1,56 @@
+{# djangofmt: file-ignore[invalid-syntax] #}
+
+{% comment %}
+  Wizard section row.
+  Blocking = a required answer is missing for at least one platform (stops generation for
+  that platform). Warning = recommendation; never blocks.
+
+  Props:
+    state  "incomplete" (default) · "complete" · "current" · "blocking" · "warning"
+    label  section name
+    count  answered / total, e.g. "3/9"
+    icon   section icon name, e.g. "flask"; omitted when empty
+    href   makes the row a link
+    slot   optional <c-nav.sub-item> elements, listed under the row
+
+  Renders an <li>: put the items in an <ol> inside a <nav>. The current item gets
+  aria-current="step". The status icon has a screen-reader label.
+
+  Usage:
+    <c-nav.section-item state="current" icon="flask" label="Research project" count="3/9" href="…">
+      <c-nav.sub-item label="Research question" href="#research-question" current />
+    </c-nav.section-item>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars state="incomplete" label="" count="" icon="" href="" class="" />
+<li class="flex list-none flex-col gap-2xs {{ class }}" {{ attrs }}>
+  <{% if href %}a href="{{ href }}"{% else %}div{% endif %}
+    {% if state == "current" %}aria-current="step"{% endif %}
+    class="flex items-center gap-sm rounded-sm py-2.5 pr-sm
+           {% if state == "current" %}border-l-3 border-accent bg-nav-hover pl-3.25{% else %}pl-md{% endif %}
+           {% if href %}transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus {% if state != "current" %}hover:bg-nav-hover{% endif %}{% endif %}"
+  >
+    {% if icon %}<c-icon :name="icon" class="size-4.5 {% if state == "current" %}text-on-nav{% else %}text-icon-on-nav{% endif %}" />{% endif %}
+    <span class="min-w-0 flex-1 {% if state == "current" %}type-label-lg text-on-nav{% else %}type-body-md text-on-nav-muted{% endif %}">{{ label }}</span>
+    {% if count %}
+      <span class="shrink-0 type-body-sm
+                   {% if state == "blocking" %}text-danger-on-nav
+                   {% elif state == "warning" %}text-warning-on-nav
+                   {% else %}text-on-nav-muted
+                   {% endif %}">{{ count }}</span>
+    {% endif %}
+    {% if state == "complete" %}
+      <c-icon name="check" class="size-4 text-success-on-nav" label="{% translate "Complete" %}" />
+    {% elif state == "current" %}
+      <c-icon name="chevron-right" class="size-4 text-warning-on-nav" />
+    {% elif state == "blocking" %}
+      <c-icon name="alert-circle" class="size-4 text-danger-on-nav" label="{% translate "Required answer missing" %}" />
+    {% elif state == "warning" %}
+      <c-icon name="alert-triangle" class="size-4 text-warning-on-nav" label="{% translate "Recommendation" %}" />
+    {% else %}
+      <c-icon name="circle" class="size-4 text-icon-on-nav" label="{% translate "Incomplete" %}" />
+    {% endif %}
+  </{% if href %}a{% else %}div{% endif %}>
+  {% if slot %}<ol class="flex flex-col gap-2xs">{{ slot }}</ol>{% endif %}
+</li>

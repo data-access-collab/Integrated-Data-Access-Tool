@@ -1,0 +1,22 @@
+<div class="flex max-w-md flex-col gap-lg">
+  <p class="type-body-sm text-tertiary">
+    Click the box to open the list, tick options, remove chips with ×. Escape or a click outside closes it.
+  </p>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Default · 2 selected (bound field)</span>
+    <c-multi-select :field="form.risk_categories" help-tip="risk-categories" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Empty (plain props)</span>
+    <c-multi-select
+      name="ms_empty_{{ theme }}"
+      label="Further systemic-risk categories (Art. 34(1))"
+      help-text="Optional · pick any that apply"
+      :options="[('illegal_content', 'Dissemination of illegal content'), ('fundamental_rights', 'Fundamental rights'), ('civic_discourse', 'Civic discourse & elections')]"
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Error (not designed in Figma)</span>
+    <c-multi-select :field="form_errors.risk_categories" />
+  </div>
+</div>

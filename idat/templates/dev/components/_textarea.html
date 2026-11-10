@@ -1,0 +1,35 @@
+<div class="flex max-w-md flex-col gap-lg">
+  <p class="type-body-sm text-tertiary">
+    Type to update the counter. Click or Tab into a field to see the focus state.
+  </p>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Default · counter (bound field, max_length 1500)</span>
+    <c-textarea :field="form.research_question" help-tip="research-question" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Error</span>
+    <c-textarea :field="form_errors.research_question" help-tip="research-question" />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Warning (plain props)</span>
+    <c-textarea
+      name="ta_warning_{{ theme }}"
+      label="Describe your research question"
+      required
+      help-tip="research-question"
+      maxlength="1500"
+      value="How do systemic risks related to recommender systems manifest in …"
+      warning="Shorter than TikTok usually accepts — aim for 1,500+ characters including context. You can still continue."
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Disabled · no counter</span>
+    <c-textarea
+      name="ta_disabled_{{ theme }}"
+      label="Notes"
+      value="Read-only notes."
+      help-text="Shown to reviewers only."
+      disabled
+    />
+  </div>
+</div>

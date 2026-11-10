@@ -1,0 +1,38 @@
+{# djangofmt: file-ignore[invalid-syntax] #}
+
+{% comment %}
+  Item in the notifications panel (bell).
+
+  Props:
+    title   e.g. "TikTok asked for clarification"
+    body    e.g. "Political ads transparency · reply by 10 Nov"; omitted when empty
+    time    e.g. "3 days ago"
+    unread  boolean attribute: tinted background + gold dot ("Unread" for screen readers)
+    href    makes the item a link
+
+  Renders an <li>: put the items in a <ul>.
+
+  Usage:
+    <ul class="flex flex-col gap-2xs">
+      <c-notification-item title="TikTok asked for clarification" body="…" time="3 days ago" href="…" unread />
+    </ul>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars title="" body="" time="" :unread="False" href="" class="" />
+<li class="list-none {{ class }}" {{ attrs }}>
+  <{% if href %}a href="{{ href }}"{% else %}div{% endif %}
+    class="flex items-start gap-sm rounded-md px-md py-sm {% if unread %}bg-selected{% else %}bg-surface{% endif %}
+           {% if href %}focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus{% endif %}"
+  >
+    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-warning-subtle">
+      <c-icon name="bell" class="size-4 text-warning" />
+    </span>
+    <span class="flex min-w-0 flex-1 flex-col gap-2xs">
+      <span class="type-label-lg text-primary">{% if unread %}<span class="sr-only">{% translate "Unread:" %} </span>{% endif %}{{ title }}</span>
+      {% if body %}<span class="type-body-sm text-secondary">{{ body }}</span>{% endif %}
+      {% if time %}<span class="type-body-sm text-tertiary">{{ time }}</span>{% endif %}
+    </span>
+    {% if unread %}<span class="size-2 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>{% endif %}
+  </{% if href %}a{% else %}div{% endif %}>
+</li>

@@ -1,0 +1,24 @@
+{% comment %}
+  One gallery section: renders the demo template twice, light and dark.
+  Each copy gets its own `form` / `form_errors` / `modal_form` (different prefixes) and `theme` ("light" /
+  "dark"), so ids and radio names stay unique: name="x_{{ theme }}".
+  node (Figma node id) is optional. wide=True stacks light and dark for components designed wider than half the page.
+  {% include "dev/_section.html" with slug="logo" title="Logo / DSA40 Mark" node="59:1127" tag="c-logo.dsa40-mark" demo="dev/components/_logo.html" %}
+{% endcomment %}
+<section id="{{ slug }}" class="flex scroll-mt-lg flex-col gap-sm">
+  <header class="flex flex-wrap items-baseline gap-x-sm gap-y-2xs">
+    <h2 class="type-headline-sm text-primary">{{ title }}</h2>
+    <code class="type-body-sm text-secondary">&lt;{{ tag }}&gt;</code>
+    {% if node %}<span class="type-body-sm text-tertiary">Figma {{ node }}</span>{% endif %}
+  </header>
+  <div class="grid gap-md {% if not wide %}xl:grid-cols-2{% endif %}">
+    <div class="rounded-lg border border-default bg-canvas p-lg text-primary">
+      <p class="mb-sm type-overline text-tertiary">Light</p>
+      {% include demo with theme="light" form=forms.light.form form_errors=forms.light.form_errors modal_form=forms.light.modal_form %}
+    </div>
+    <div class="dark rounded-lg border border-default bg-canvas p-lg text-primary">
+      <p class="mb-sm type-overline text-tertiary">Dark</p>
+      {% include demo with theme="dark" form=forms.dark.form form_errors=forms.dark.form_errors modal_form=forms.dark.modal_form %}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,46 @@
+{% comment %}
+  Confirm withdrawal of one platform application (to_status = Withdrawn).
+  The researcher withdraws on the platform's portal or by e-mail themselves; this only
+  records it. Answers and documents stay in the case.
+
+  Props:
+    platform  platform or operator name used in the copy, e.g. "Meta"
+    form      Django form with the fields reason (optional select) and share_reason
+              (:form="withdraw_form")
+    action    form target (POST)
+    id        dialog id, default "withdraw-application"
+    open      boolean attribute: render open in place (gallery)
+
+  Open it with $dispatch('open-dialog', { id: 'withdraw-application' }).
+  "Keep application" and × close it without changes.
+
+  Usage:
+    <c-dialog.withdraw-application platform="Meta" :form="withdraw_form" action="{% url … %}" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars platform="" form="" action="" id="withdraw-application" :open="False" class="" />
+<c-dialog
+  :id="id"
+  :action="action"
+  :open="open"
+  :class="class"
+  :attrs="attrs"
+  title="{% blocktranslate %}Withdraw your application from {{ platform }}?{% endblocktranslate %}"
+  description="{% blocktranslate %}Withdraw via {{ platform }}’s portal or by e-mail yourself — we record the withdrawal and its date in your case. Your answers and documents stay in the case and can be reused for a new application.{% endblocktranslate %}"
+>
+  <c-select :field="form.reason" />
+  <c-checkbox :field="form.share_reason" />
+  <c-slot name="footer">
+    <c-button
+      variant="secondary"
+      label="{% translate "Keep application" %}"
+      x-on:click="$el.closest('dialog').close()"
+    />
+    <c-button
+      variant="danger"
+      label="{% blocktranslate %}Withdraw from {{ platform }}{% endblocktranslate %}"
+      type="submit"
+    />
+  </c-slot>
+</c-dialog>

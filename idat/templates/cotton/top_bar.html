@@ -1,0 +1,96 @@
+{% comment %}
+  Public: ghost "Why are we doing this?" (long-term rewards).
+  App: case context + persistent save status + explicit "Save & exit" (save anytime).
+  App (anonymous): same context, but nothing is saved until an account exists.
+
+  Props:
+    context       "public" (default) · "app" · "anonymous"
+    home-href     logo link, default "/"
+    case-meta     app/anonymous: e.g. "Application · TikTok, Instagram, YouTube"
+    case-title    app/anonymous: e.g. "Recommender systems & youth mental health"
+    save-status   app/anonymous: e.g. "All changes saved · 2 min ago" /
+                  "Not saved · kept in this tab for 6 h" (announced politely when it changes)
+    initials      app: avatar initials; omitted when empty
+    account-href  app: link around the avatar
+
+  Slots:
+    nav      public: text links, e.g. "How it works", "Community"
+             (<a class="type-label-lg text-secondary hover:text-primary" …>)
+    actions  buttons on the right, per context:
+             public: ghost "Why are we doing this?" + secondary "Sign in"
+             app: secondary "Save & exit" (icon save)
+             anonymous: ghost "Discard draft" + primary "Create account to save" + "Sign in" link
+
+  Usage:
+    <c-top-bar context="app" case-meta="Application · TikTok, Instagram, YouTube"
+      case-title="Recommender systems & youth mental health"
+      save-status="All changes saved · 2 min ago" initials="JD" account-href="{% url … %}">
+      <c-slot name="actions"><c-button variant="secondary" label="Save & exit" icon="save" type="submit" /></c-slot>
+    </c-top-bar>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars
+  context="public"
+  home-href="/"
+  case-meta=""
+  case-title=""
+  save-status=""
+  initials=""
+  account-href=""
+  class=""
+/>
+<header class="flex h-17 items-center gap-lg border-b border-default bg-surface px-xl {{ class }}" {{ attrs }}>
+  <a
+    href="{{ home_href }}"
+    class="flex min-w-0 shrink-0 items-center gap-2.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+  >
+    <c-logo.dsa40-mark label="" />
+    <span class="flex min-w-0 flex-col">
+      <span class="type-title-md text-primary">IDAT</span>
+      <span
+        class="truncate type-body-sm text-tertiary"
+      >{% translate "Integrated Data Access Tool · DSA40 Data Access Collaboratory" %}</span>
+    </span>
+  </a>
+
+  {% if context == "app" or context == "anonymous" %}
+    <span class="h-7 shrink-0 border-l border-default" aria-hidden="true"></span>
+    <div class="flex min-w-0 flex-col">
+      {% if case_meta %}<p class="truncate type-body-sm text-tertiary">{{ case_meta }}</p>{% endif %}
+      <p class="truncate type-label-lg text-primary">{{ case_title }}</p>
+    </div>
+    <div class="flex-1"></div>
+    {% if save_status %}
+      <p class="flex shrink-0 items-center gap-1.5 type-body-sm text-tertiary" aria-live="polite">
+        {% if context == "anonymous" %}
+          <c-icon name="clock" class="size-4 shrink-0 text-warning" />
+        {% else %}
+          <c-icon name="check" class="size-4 shrink-0 text-success" />
+        {% endif %}
+        {{ save_status }}
+      </p>
+    {% endif %}
+  {% else %}
+    <div class="flex-1"></div>
+    {% if nav %}<nav aria-label="{% translate "Main" %}" class="flex shrink-0 items-center gap-lg">
+        {{ nav }}
+      </nav>{% endif %}
+  {% endif %}
+
+  {% if actions %}<div class="flex shrink-0 items-center gap-lg">{{ actions }}</div>{% endif %}
+
+  {% if context == "app" and initials %}
+    {% if account_href %}
+      <a
+        href="{{ account_href }}"
+        class="shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        aria-label="{% translate "Your account" %}"
+      >
+        <c-avatar :initials="initials" class="size-9" aria-hidden="true" />
+      </a>
+    {% else %}
+      <c-avatar :initials="initials" class="size-9" />
+    {% endif %}
+  {% endif %}
+</header>

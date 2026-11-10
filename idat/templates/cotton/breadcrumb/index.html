@@ -1,0 +1,24 @@
+{% comment %}
+  Props:
+    label  accessible name of the nav, default "Breadcrumb"
+    slot   <c-breadcrumb.item> elements, outermost first; mark the last one current
+
+  Usage:
+    <c-breadcrumb>
+      <c-breadcrumb.item href="{% url 'home' %}">Enter details</c-breadcrumb.item>
+      <c-breadcrumb.item>Research project</c-breadcrumb.item>
+      <c-breadcrumb.item current>Research question</c-breadcrumb.item>
+    </c-breadcrumb>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars label="" class="" />
+<nav
+  aria-label="{% if label %}{{ label }}{% else %}{% translate "Breadcrumb" %}{% endif %}"
+  class="{{ class }}"
+  {{ attrs }}
+>
+  <ol class="flex flex-wrap items-center gap-xs">
+    {{ slot }}
+  </ol>
+</nav>

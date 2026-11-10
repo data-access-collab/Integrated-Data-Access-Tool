@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% comment %}
+  DEBUG-only component gallery (/dev/components/), registered in config/urls.py.
+  Every cotton component gets a section showing all variants and states, light and dark.
+  Add a demo in dev/components/_<slug>.html and a line in the sections list below.
+{% endcomment %}
+
+{% block title %}Component gallery{% endblock title %}
+
+{% block javascript %}
+  {# Gallery stand-in for clientFile, which the DSA40 wizard provides (encrypts into IndexedDB). #}
+  {# Same state names, so <c-file-upload> renders every state; it only checks type and size. #}
+  {# Registered before the deferred main.js calls Alpine.start(). #}
+  <script>
+    document.addEventListener("alpine:init", () => {
+      window.Alpine.data("clientFile", () => ({
+        metadata: null,
+        missing: false,
+        busy: false,
+        pending: "",
+        error: "",
+        get sizeLabel() {
+          const size = this.metadata?.size ?? 0;
+          if (size < 1024) return `${size} bytes`;
+          if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+          return `${(size / 1024 / 1024).toFixed(1)} MB`;
+        },
+        init() {
+          const value = this.$refs.metadataInput.value;
+          this.metadata = value ? JSON.parse(value) : null;
+        },
+        select(event) {
+          const file = event.target.files[0];
+          event.target.value = "";
+          if (!file) return;
+          const types = JSON.parse(this.$root.dataset.types || "{}");
+          const maxSize = Number(this.$root.dataset.maxSize);
+          const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase() : "";
+          this.error = !(extension in types)
+            ? `Only these file types are allowed: ${Object.keys(types).join(", ")}.`
+            : file.size > maxSize
+              ? `The file must not be larger than ${Math.round(maxSize / 1024 / 1024)} MB.`
+              : file.size === 0 ? "The file is empty." : "";
+          if (this.error) return;
+          this.metadata = { name: file.name, size: file.size, type: types[extension] };
+          this.missing = false;
+          this.$refs.metadataInput.value = JSON.stringify(this.metadata);
+        },
+        async remove() {
+          this.metadata = null;
+          this.missing = false;
+          this.$refs.metadataInput.value = "";
+        },
+      }));
+    });
+  </script>
+  {{ block.super }}
+{% endblock javascript %}
+
+{% block body %}
+  <div class="flex min-h-screen">
+    <nav
+      aria-label="Components"
+      class="sticky top-0 hidden h-screen w-60 shrink-0 overflow-y-auto border-r border-default bg-surface p-md lg:block"
+    >
+      <p class="mb-sm type-overline text-tertiary">Components</p>
+      <ol class="flex flex-col gap-2xs type-body-md">
+        <li><a class="text-link hover:underline" href="#logo">Logo / DSA40 Mark</a></li>
+        <li><a class="text-link hover:underline" href="#icons">Icons</a></li>
+        <li><a class="text-link hover:underline" href="#badge">Badge</a></li>
+        <li><a class="text-link hover:underline" href="#avatar">Avatar</a></li>
+        <li><a class="text-link hover:underline" href="#platform-chip">Platform Chip</a></li>
+        <li><a class="text-link hover:underline" href="#button">Button</a></li>
+        <li><a class="text-link hover:underline" href="#checkbox">Checkbox</a></li>
+        <li><a class="text-link hover:underline" href="#switch">Switch</a></li>
+        <li><a class="text-link hover:underline" href="#field-message">Field Message</a></li>
+        <li><a class="text-link hover:underline" href="#yes-no-toggle">Yes-No Toggle</a></li>
+        <li><a class="text-link hover:underline" href="#time-estimate">Time Estimate</a></li>
+        <li><a class="text-link hover:underline" href="#breadcrumb">Breadcrumb</a></li>
+        <li class="mt-sm type-overline text-tertiary">Form fields</li>
+        <li><a class="text-link hover:underline" href="#text-field">Text Field</a></li>
+        <li><a class="text-link hover:underline" href="#textarea">Textarea</a></li>
+        <li><a class="text-link hover:underline" href="#select">Select</a></li>
+        <li><a class="text-link hover:underline" href="#date-field">Date Field</a></li>
+        <li><a class="text-link hover:underline" href="#multi-select">Multi-select</a></li>
+        <li><a class="text-link hover:underline" href="#country-select">Country Select</a></li>
+        <li><a class="text-link hover:underline" href="#file-upload">File Upload</a></li>
+        <li class="mt-sm type-overline text-tertiary">Navigation &amp; help</li>
+        <li><a class="text-link hover:underline" href="#nav-phase-step">Nav / Phase Step</a></li>
+        <li><a class="text-link hover:underline" href="#nav-section-item">Nav / Section Item</a></li>
+        <li><a class="text-link hover:underline" href="#nav-sub-item">Nav / Sub Item</a></li>
+        <li><a class="text-link hover:underline" href="#nav-app-item">Nav / App Item</a></li>
+        <li><a class="text-link hover:underline" href="#lifecycle-step">Lifecycle Step</a></li>
+        <li><a class="text-link hover:underline" href="#overview-tab">Overview Tab</a></li>
+        <li><a class="text-link hover:underline" href="#help-accordion">Help / Accordion</a></li>
+        <li><a class="text-link hover:underline" href="#help-insight-card">Help / Insight Card</a></li>
+        <li><a class="text-link hover:underline" href="#forms-section-header">Form / Section Header</a></li>
+        <li class="mt-sm type-overline text-tertiary">Status, cards &amp; rows</li>
+        <li><a class="text-link hover:underline" href="#platform-status-chip">Platform Status Chip</a></li>
+        <li><a class="text-link hover:underline" href="#case-status">Case Status</a></li>
+        <li><a class="text-link hover:underline" href="#platform-card">Platform Card</a></li>
+        <li><a class="text-link hover:underline" href="#platform-row">Platform Row</a></li>
+        <li><a class="text-link hover:underline" href="#benefit-tile">Benefit Tile</a></li>
+        <li><a class="text-link hover:underline" href="#review-warning-item">Review / Warning Item</a></li>
+        <li><a class="text-link hover:underline" href="#task-row">Task Row</a></li>
+        <li><a class="text-link hover:underline" href="#overview-row">Overview Row</a></li>
+        <li><a class="text-link hover:underline" href="#timeline-event">Timeline Event</a></li>
+        <li><a class="text-link hover:underline" href="#document-version-row">Document Version Row</a></li>
+        <li><a class="text-link hover:underline" href="#document-row">Document Row</a></li>
+        <li><a class="text-link hover:underline" href="#document-card">Document Card</a></li>
+        <li><a class="text-link hover:underline" href="#notification-item">Notification Item</a></li>
+        <li><a class="text-link hover:underline" href="#settings-row">Settings Row</a></li>
+        <li><a class="text-link hover:underline" href="#empty-state">Empty State</a></li>
+        <li class="mt-sm type-overline text-tertiary">Community, profile &amp; submission</li>
+        <li><a class="text-link hover:underline" href="#vote-button">Vote Button</a></li>
+        <li><a class="text-link hover:underline" href="#comment">Comment</a></li>
+        <li><a class="text-link hover:underline" href="#community-issue-card">Community Issue Card</a></li>
+        <li><a class="text-link hover:underline" href="#affiliation-card">Affiliation Card</a></li>
+        <li><a class="text-link hover:underline" href="#person-row">Person Row</a></li>
+        <li><a class="text-link hover:underline" href="#platform-answer-group">Platform Answer Group</a></li>
+        <li><a class="text-link hover:underline" href="#submission-card">Submission Card</a></li>
+        <li class="mt-sm type-overline text-tertiary">Patterns</li>
+        <li><a class="text-link hover:underline" href="#top-bar">Top Bar</a></li>
+        <li><a class="text-link hover:underline" href="#app-sidebar">App Sidebar</a></li>
+        <li><a class="text-link hover:underline" href="#wizard-sidebar">Wizard Sidebar</a></li>
+        <li><a class="text-link hover:underline" href="#dialog-log-platform-reply">Dialog / Log platform reply</a></li>
+        <li>
+          <a class="text-link hover:underline" href="#dialog-withdraw-application">Dialog / Withdraw application</a>
+        </li>
+      </ol>
+    </nav>
+
+    <main class="flex min-w-0 flex-1 flex-col gap-2xl p-xl">
+      <header class="flex flex-col gap-2xs">
+        <h1 class="type-headline-lg text-primary">Component gallery</h1>
+        <p class="type-body-md text-secondary">
+          <a href="https://www.figma.com/design/DjAthBSdrd2LHopYz0tGaB" class="text-link underline">Figma file</a>
+          · page "Design system" · conventions: docs/ui-library.md
+        </p>
+      </header>
+
+      {# Tier 1 · Foundations #}
+      {% include "dev/_section.html" with slug="logo" title="Logo / DSA40 Mark" node="59:1127" tag="c-logo.dsa40-mark" demo="dev/components/_logo.html" %}
+      {% include "dev/_section.html" with slug="icons" title="Icons" tag="c-icon" demo="dev/components/_icons.html" %}
+      {% include "dev/_section.html" with slug="badge" title="Badge" node="4:306" tag="c-badge" demo="dev/components/_badge.html" %}
+      {% include "dev/_section.html" with slug="avatar" title="Avatar" node="41:788" tag="c-avatar" demo="dev/components/_avatar.html" %}
+      {% include "dev/_section.html" with slug="platform-chip" title="Platform Chip" node="5:235" tag="c-platform-chip" demo="dev/components/_platform_chip.html" %}
+      {% include "dev/_section.html" with slug="button" title="Button" node="4:100" tag="c-button" demo="dev/components/_button.html" %}
+      {% include "dev/_section.html" with slug="checkbox" title="Checkbox" node="4:287" tag="c-checkbox" demo="dev/components/_checkbox.html" %}
+      {% include "dev/_section.html" with slug="switch" title="Switch" node="41:795" tag="c-switch" demo="dev/components/_switch.html" %}
+      {% include "dev/_section.html" with slug="field-message" title="Field Message" node="41:820" tag="c-field-message" demo="dev/components/_field_message.html" %}
+      {% include "dev/_section.html" with slug="yes-no-toggle" title="Yes-No Toggle" node="4:277" tag="c-yes-no-toggle" demo="dev/components/_yes_no_toggle.html" %}
+      {% include "dev/_section.html" with slug="time-estimate" title="Time Estimate" node="6:236" tag="c-time-estimate" demo="dev/components/_time_estimate.html" %}
+      {% include "dev/_section.html" with slug="breadcrumb" title="Breadcrumb" node="5:225" tag="c-breadcrumb" demo="dev/components/_breadcrumb.html" %}
+
+      {# Tier 2 · Form fields #}
+      {% include "dev/_section.html" with slug="text-field" title="Text Field" node="4:158" tag="c-text-field" demo="dev/components/_text_field.html" %}
+      {% include "dev/_section.html" with slug="textarea" title="Textarea" node="4:206" tag="c-textarea" demo="dev/components/_textarea.html" %}
+      {% include "dev/_section.html" with slug="select" title="Select" node="4:255" tag="c-select" demo="dev/components/_select.html" %}
+      {% include "dev/_section.html" with slug="date-field" title="Date Field" node="24:585" tag="c-date-field" demo="dev/components/_date_field.html" %}
+      {% include "dev/_section.html" with slug="multi-select" title="Multi-select" node="24:677" tag="c-multi-select" demo="dev/components/_multi_select.html" %}
+      {% include "dev/_section.html" with slug="country-select" title="Country Select" node="24:733" tag="c-country-select" demo="dev/components/_country_select.html" %}
+      {% include "dev/_section.html" with slug="file-upload" title="File Upload" node="23:587" tag="c-file-upload" demo="dev/components/_file_upload.html" %}
+
+      {# Tier 3 · Navigation & help #}
+      {% include "dev/_section.html" with slug="nav-phase-step" title="Nav / Phase Step" node="5:128" tag="c-nav.phase-step" demo="dev/components/_nav_phase_step.html" %}
+      {% include "dev/_section.html" with slug="nav-section-item" title="Nav / Section Item" node="5:175" tag="c-nav.section-item" demo="dev/components/_nav_section_item.html" %}
+      {% include "dev/_section.html" with slug="nav-sub-item" title="Nav / Sub Item" node="5:181" tag="c-nav.sub-item" demo="dev/components/_nav_sub_item.html" %}
+      {% include "dev/_section.html" with slug="nav-app-item" title="Nav / App Item" node="31:616" tag="c-nav.app-item" demo="dev/components/_nav_app_item.html" %}
+      {% include "dev/_section.html" with slug="lifecycle-step" title="Lifecycle Step" node="31:630" tag="c-lifecycle-step" demo="dev/components/_lifecycle_step.html" %}
+      {% include "dev/_section.html" with slug="overview-tab" title="Overview Tab" node="36:680" tag="c-overview-tab" demo="dev/components/_overview_tab.html" %}
+      {% include "dev/_section.html" with slug="help-accordion" title="Help / Accordion" node="5:196" tag="c-help.accordion" demo="dev/components/_help_accordion.html" %}
+      {% include "dev/_section.html" with slug="help-insight-card" title="Help / Insight Card" node="5:224" tag="c-help.insight-card" demo="dev/components/_help_insight_card.html" %}
+      {% include "dev/_section.html" with slug="forms-section-header" title="Form / Section Header" node="5:239" tag="c-forms.section-header" demo="dev/components/_forms_section_header.html" %}
+
+      {# Tier 4 · Status, cards & rows #}
+      {% include "dev/_section.html" with slug="platform-status-chip" title="Platform Status Chip" node="36:720" tag="c-platform-status-chip" demo="dev/components/_platform_status_chip.html" %}
+      {% include "dev/_section.html" with slug="case-status" title="Case Status" node="41:856" tag="c-case-status" demo="dev/components/_case_status.html" %}
+      {% include "dev/_section.html" with slug="platform-card" title="Platform Card" node="6:221" tag="c-platform-card" demo="dev/components/_platform_card.html" %}
+      {% include "dev/_section.html" with slug="platform-row" title="Platform Row" node="88:1230" tag="c-platform-row" demo="dev/components/_platform_row.html" %}
+      {% include "dev/_section.html" with slug="benefit-tile" title="Benefit Tile" node="6:222" tag="c-benefit-tile" demo="dev/components/_benefit_tile.html" %}
+      {% include "dev/_section.html" with slug="review-warning-item" title="Review / Warning Item" node="6:298" tag="c-review.warning-item" demo="dev/components/_review_warning_item.html" %}
+      {% include "dev/_section.html" with slug="task-row" title="Task Row" node="74:1259" tag="c-task-row" wide=True demo="dev/components/_task_row.html" %}
+      {% include "dev/_section.html" with slug="overview-row" title="Overview Row" node="34:654" tag="c-overview-row" wide=True demo="dev/components/_overview_row.html" %}
+      {% include "dev/_section.html" with slug="timeline-event" title="Timeline Event" node="41:928" tag="c-timeline-event" demo="dev/components/_timeline_event.html" %}
+      {% include "dev/_section.html" with slug="document-version-row" title="Document Version Row" node="41:977" tag="c-document-version-row" demo="dev/components/_document_version_row.html" %}
+      {% include "dev/_section.html" with slug="document-row" title="Document Row" node="100:1210" tag="c-document-row" demo="dev/components/_document_row.html" %}
+      {% include "dev/_section.html" with slug="document-card" title="Document Card" node="41:1042" tag="c-document-card" wide=True demo="dev/components/_document_card.html" %}
+      {% include "dev/_section.html" with slug="notification-item" title="Notification Item" node="41:1332" tag="c-notification-item" demo="dev/components/_notification_item.html" %}
+      {% include "dev/_section.html" with slug="settings-row" title="Settings Row" node="41:1467" tag="c-settings-row" demo="dev/components/_settings_row.html" %}
+      {% include "dev/_section.html" with slug="empty-state" title="Empty State" node="41:1357" tag="c-empty-state" demo="dev/components/_empty_state.html" %}
+
+      {# Community, profile & submission #}
+      {% include "dev/_section.html" with slug="vote-button" title="Vote Button" node="41:1229" tag="c-vote-button" demo="dev/components/_vote_button.html" %}
+      {% include "dev/_section.html" with slug="comment" title="Comment" node="41:1304" tag="c-comment" demo="dev/components/_comment.html" %}
+      {% include "dev/_section.html" with slug="community-issue-card" title="Community Issue Card" node="41:1295" tag="c-community-issue-card" demo="dev/components/_community_issue_card.html" %}
+      {% include "dev/_section.html" with slug="affiliation-card" title="Affiliation Card" node="41:1417" tag="c-affiliation-card" demo="dev/components/_affiliation_card.html" %}
+      {% include "dev/_section.html" with slug="person-row" title="Person Row" node="41:1460" tag="c-person-row" demo="dev/components/_person_row.html" %}
+      {% include "dev/_section.html" with slug="platform-answer-group" title="Platform Answer Group" node="57:1155" tag="c-platform-answer-group" wide=True demo="dev/components/_platform_answer_group.html" %}
+      {% include "dev/_section.html" with slug="submission-card" title="Submission Card" node="26:698" tag="c-submission-card" wide=True demo="dev/components/_submission_card.html" %}
+
+      {# Patterns #}
+      {% include "dev/_section.html" with slug="top-bar" title="Top Bar" node="7:278" tag="c-top-bar" wide=True demo="dev/components/_top_bar.html" %}
+      {% include "dev/_section.html" with slug="app-sidebar" title="App Sidebar" node="68:1228" tag="c-app-sidebar" wide=True demo="dev/components/_app_sidebar.html" %}
+      {% include "dev/_section.html" with slug="wizard-sidebar" title="Wizard Sidebar" node="7:464" tag="c-wizard-sidebar" wide=True demo="dev/components/_wizard_sidebar.html" %}
+      {% include "dev/_section.html" with slug="dialog-log-platform-reply" title="Dialog / Log platform reply" node="41:1169" tag="c-dialog.log-platform-reply" demo="dev/components/_dialog_log_platform_reply.html" %}
+      {% include "dev/_section.html" with slug="dialog-withdraw-application" title="Dialog / Withdraw application" node="41:1212" tag="c-dialog.withdraw-application" demo="dev/components/_dialog_withdraw_application.html" %}
+    </main>
+  </div>
+{% endblock body %}

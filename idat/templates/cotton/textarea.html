@@ -1,0 +1,97 @@
+{% comment %}
+  Error = blocking validation (required by a platform).
+  Warning = recommendation (e.g. shorter than a platform usually accepts); never blocks.
+  Maximums are shown as "n / max".
+
+  Props:
+    field        Django BoundField (:field="form.x"): id, name, label, value, required,
+                 disabled, max_length, widget attrs, help_text and errors come from it
+    label        label text without a form
+    name         textarea name without a form
+    value        value without a form
+    maxlength    maximum length without a form; shows the "n / max" counter
+    placeholder  placeholder without a form
+    id           textarea id without a form; defaults to name
+    required     boolean attribute, without a form
+    help-text    helper text without a form
+    help-tip     help-panel tip id; shows the help icon
+    warning      recommendation message, e.g. "Shorter than TikTok usually accepts — aim for 1,500+ characters."
+
+  Slot "helper": replaces the help text (e.g. help text plus a live status line).
+
+  Focus, error, warning and disabled are styled states; errors and warnings replace the helper.
+  {{ attrs }} go on the <textarea> (x-model, rows, disabled …); class goes on the wrapper.
+
+  Usage:
+    <c-textarea :field="form.research_question" help-tip="research-question" />
+    <c-textarea :field="form.research_question" :warning="tiktok_length_warning" />
+{% endcomment %}
+
+{# djlint:off H025 #}
+<c-vars
+  field=""
+  label=""
+  name=""
+  value=""
+  maxlength=""
+  placeholder=""
+  id=""
+  :required="False"
+  help-text=""
+  help-tip=""
+  warning=""
+  class=""
+/>
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name max=field.field.max_length|default:maxlength help=field.help_text|default:help_text %}
+  {% with current_value=field.value|default:value %}
+    <c-field-layout
+      :field="field"
+      :input-id="input_id"
+      :label="label"
+      :required="required"
+      :help-text="help_text"
+      :help-tip="help_tip"
+      :warning="warning"
+      class="{{ class }}"
+      x-data="{ count: {{ current_value|length }} }"
+    >
+      <textarea
+        {% if input_id %}id="{{ input_id }}"{% endif %}
+        {% if input_name %}name="{{ input_name }}"{% endif %}
+        {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+        {% for attr, attr_value in field.field.widget.attrs.items %}
+          {% if attr != "cols" and attr != "rows" %}{{ attr }}="{{ attr_value }}" {% endif %}
+        {% endfor %}
+        {% if max and not field %}maxlength="{{ max }}"{% endif %}
+        {% if required or field.field.required %}required{% endif %}
+        {% if field.field.disabled %}disabled{% endif %}
+        {% if field.errors %}
+          aria-invalid="true"
+          aria-describedby="{{ input_id }}-error"
+        {% elif warning %}
+          aria-describedby="{{ input_id }}-warning"
+        {% elif help or helper %}
+          aria-describedby="{{ input_id }}-help"
+        {% endif %}
+        x-on:input="count = $el.value.length"
+        class="
+          block min-h-32 w-full resize-y rounded-sm border bg-surface px-sm py-sm type-body-md text-primary placeholder:text-tertiary
+          focus:border-focus focus:ring-1 focus:ring-inset focus:ring-focus
+          disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled
+          {% if field.errors %}border-danger ring-1 ring-inset ring-danger
+          {% elif warning %}border-warning ring-1 ring-inset ring-warning
+          {% else %}border-strong
+          {% endif %}
+        "
+        {{ attrs }}
+      >{{ current_value }}</textarea>
+      {% if max %}
+        <c-slot name="counter"><span
+            x-text="count.toLocaleString() + ' / ' + ({{ max }}).toLocaleString()"
+          >{{ current_value|length }} / {{ max }}</span></c-slot>
+      {% endif %}
+      {% if helper %}<c-slot name="helper">{{ helper }}</c-slot>{% endif %}
+    </c-field-layout>
+  {% endwith %}
+{% endwith %}

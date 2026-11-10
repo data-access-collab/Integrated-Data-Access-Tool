@@ -1,0 +1,50 @@
+{% comment %}
+  Row of the applications overview table.
+  Columns: Application (title + platform chips) · Status · Last activity · Next step.
+  Column widths 190 / 220 / 130 px match the table header.
+
+  Props:
+    title     application title
+    activity  last activity, e.g. "You edited section 4 of 9"
+    when      relative time, e.g. "2 hours ago"
+    next      next-step link text, e.g. "Continue"; omitted when empty
+    href      where the next step goes
+
+  Slots:
+    platforms  <c-platform-status-chip> per platform application
+    status     the status badge (<c-badge> or <c-case-status>)
+
+  Usage:
+    <c-overview-row title="Recommender systems & youth mental health"
+      activity="You edited section 4 of 9" when="2 hours ago" next="Continue" href="{% url … %}">
+      <c-slot name="platforms">
+        <c-platform-status-chip name="TikTok" status="in-review" />
+        <c-platform-status-chip name="Meta" />
+      </c-slot>
+      <c-slot name="status"><c-badge tone="info" label="Complete" /></c-slot>
+    </c-overview-row>
+{% endcomment %}
+
+<c-vars title="" activity="" when="" next="" href="" class="" />
+<div class="flex items-center gap-5 border-b border-default bg-surface px-lg py-3.5 {{ class }}" {{ attrs }}>
+  <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+    <p class="truncate type-label-lg text-primary">{{ title }}</p>
+    {% if platforms %}<div class="flex flex-wrap gap-1.5">{{ platforms }}</div>{% endif %}
+  </div>
+  <div class="flex w-47.5 shrink-0">{{ status }}</div>
+  <div class="flex w-55 shrink-0 flex-col gap-0.5">
+    <p class="type-body-sm text-primary">{{ activity }}</p>
+    {% if when %}<p class="type-body-sm text-tertiary">{{ when }}</p>{% endif %}
+  </div>
+  <div class="flex w-32.5 shrink-0 justify-end">
+    {% if next %}
+      <a
+        href="{{ href }}"
+        class="flex items-center gap-1 rounded-sm type-label-lg whitespace-nowrap text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        {{ next }}<span class="sr-only">: {{ title }}</span>
+        <c-icon name="chevron-right" class="size-4" />
+      </a>
+    {% endif %}
+  </div>
+</div>

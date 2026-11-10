@@ -1,0 +1,31 @@
+<div class="flex flex-wrap gap-md">
+  <div class="h-208">
+    <c-wizard-sidebar phase="enter-details">
+      <c-nav.section-item state="complete" icon="user" label="About you" count="5/5" href="#wizard-sidebar" />
+      <c-nav.section-item state="complete" icon="building" label="Organisation" count="7/7" href="#wizard-sidebar" />
+      <c-nav.section-item state="current" icon="flask" label="Research project" count="4/9" href="#wizard-sidebar">
+        <c-nav.sub-item label="Title & summary" href="#wizard-sidebar" />
+        <c-nav.sub-item label="Research question" href="#wizard-sidebar" current />
+        <c-nav.sub-item label="Methods & data" href="#wizard-sidebar" />
+        <c-nav.sub-item label="Systemic risks" href="#wizard-sidebar" />
+        <c-nav.sub-item label="Timeline & publication" href="#wizard-sidebar" />
+      </c-nav.section-item>
+      <c-nav.section-item icon="database" label="Data request" count="0/8" href="#wizard-sidebar" />
+      <c-nav.section-item icon="shield" label="Security & TOMs" count="0/6" href="#wizard-sidebar" />
+      <c-nav.section-item
+        state="blocking"
+        icon="users"
+        label="Team & funding"
+        count="1 blocking"
+        href="#wizard-sidebar"
+      />
+      <c-nav.section-item icon="layout-grid" label="Platform-specific" count="0/5" href="#wizard-sidebar" />
+    </c-wizard-sidebar>
+  </div>
+  <div class="h-208">
+    <c-wizard-sidebar phase="generate" :hrefs="wizard_hrefs" />
+  </div>
+  <div class="h-208">
+    <c-wizard-sidebar phase="choose-platforms" />
+  </div>
+</div>

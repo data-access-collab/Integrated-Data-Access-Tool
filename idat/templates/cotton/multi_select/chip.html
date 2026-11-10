@@ -1,0 +1,29 @@
+{% comment %}
+  One selected value of <c-multi-select>; the × removes it. Used only inside <c-multi-select>,
+  which provides the Alpine state (selected, $refs.toggle).
+
+  Props:
+    value     option value
+    label     option label
+    selected  "1" when selected on page load (avoids a flash before Alpine starts)
+{% endcomment %}
+
+{% load i18n %}
+<c-vars value="" label="" selected="" />
+{% with js_value=value|stringformat:"s"|escapejs %}
+  <li
+    {% if not selected %}hidden{% endif %}
+    x-bind:hidden="!selected.includes('{{ js_value }}')"
+    class="pointer-events-auto flex items-center gap-1 rounded-full bg-accent-subtle py-2xs pr-xs pl-sm type-label-md text-primary"
+  >
+    {{ label }}
+    <button
+      type="button"
+      aria-label="{% translate "Remove" %}: {{ label }}"
+      x-on:click="selected = selected.filter(v => v !== '{{ js_value }}'); $refs.toggle.focus()"
+      class="flex cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      <c-icon name="x" class="size-3.5" />
+    </button>
+  </li>
+{% endwith %}

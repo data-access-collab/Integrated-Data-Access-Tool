@@ -1,0 +1,207 @@
+{% comment %}
+  Encrypted upload (default): the file never leaves the browser before saving. It is
+  checked (type, max. size, not empty), hashed, AES-GCM encrypted and kept in IndexedDB;
+  only its metadata is submitted.
+  States: Empty, Encrypting, Stored, Missing (metadata exists but the file is not in this
+  browser, e.g. other tab or device), Error (client-side validation).
+
+  Props:
+    field     Django BoundField (:field="form.x"): name, id, label, required, help_text and
+              errors; from a widget that renders value / types / accept / max_size (the
+              DSA40 wizard's ClientFileWidget) also the metadata, accepted types and max. size
+    label     label text without a form
+    name      name of the submitted metadata input without a form
+    id        id of the file input without a form; defaults to name
+    value     metadata JSON ({name, size, type, sha256}) without a form
+    accept    accepted extensions without a form, e.g. ".pdf,.docx"
+    types     JSON {extension: mime type} without a form
+    max-size  max. size in bytes without a form
+    hint      second line in the dropzone; default from the field: "PDF or DOCX · max. 10 MB"
+    required  boolean, without a form (shows the asterisk)
+    help-tip  help-panel tip id; shows the help icon
+    plain     boolean: a normal file input (Django FileField) submitted with the form
+              instead of the encrypted ClientFile flow, e.g. a platform reply in the case
+              tracker. The form needs enctype="multipart/form-data". Type (accept) and
+              max-size are checked in the browser; pass hint for the second dropzone line.
+              No Encrypting / Missing states and no encryption helper.
+
+  The encrypted mode needs a clientFile Alpine component on the page (the DSA40 wizard
+  provides it; the gallery has a stand-in). Plain uploads use plainFile from main.js.
+  Drop a file on the dropzone or click it.
+  {{ attrs }} go on the file input; class goes on the wrapper.
+
+  Usage:
+    <c-file-upload :field="form.dpia" help-tip="dpia" />
+    <c-file-upload :field="form.reply_file" plain accept=".pdf,.eml,.msg" max-size="10485760"
+      hint="PDF, EML or MSG · max. 10 MB" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars
+  field=""
+  label=""
+  name=""
+  id=""
+  value=""
+  accept=""
+  types=""
+  max-size=""
+  hint=""
+  :required="False"
+  help-tip=""
+  :plain="False"
+  class=""
+/>
+{# A ClientFileWidget-style widget context holds value (metadata JSON), types, accept, max_size; props are the fallback. #}
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with widget=field.subwidgets.0.data input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name %}
+  {% with metadata=widget.value|default:value file_types=widget.types|default:types file_accept=widget.accept|default:accept file_max_size=widget.max_size|default:max_size %}
+    <c-field-layout
+      :field="field"
+      :input-id="input_id"
+      :label="label"
+      :required="required"
+      :help-tip="help_tip"
+      class="{{ class }}"
+      x-data="{% if plain %}plainFile{% else %}clientFile{% endif %}"
+      data-question="{{ input_name }}"
+      data-max-size="{{ file_max_size }}"
+      data-types="{{ file_types }}"
+      data-accept="{{ file_accept }}"
+    >
+      {% if not plain %}<input
+          type="hidden"
+          {% if input_name %}name="{{ input_name }}"{% endif %}
+          value="{{ metadata }}"
+          x-ref="metadataInput"
+        />{% endif %}
+
+      {# Empty / Error: the file input covers the dropzone, so a dropped file lands on it natively. #}
+      <div
+        {% if metadata %}hidden{% endif %}
+        x-bind:hidden="metadata || busy"
+        class="
+          relative flex items-center gap-sm rounded-md border-2 border-dashed bg-surface-muted p-md
+          has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus
+          {% if field.errors %}border-danger{% else %}border-strong{% endif %}
+        "
+        {% if not field.errors %}x-bind:class="{ 'border-danger': error, 'border-strong': !error }"{% endif %}
+      >
+        <input
+          type="file"
+          x-ref="input"
+          {% if input_id %}id="{{ input_id }}"{% endif %}
+          {% if plain and input_name %}name="{{ input_name }}"{% endif %}
+          {% if file_accept %}accept="{{ file_accept }}"{% endif %}
+          x-on:change="select($event)"
+          x-bind:disabled="busy"
+          {% if field.errors %}
+            aria-invalid="true"
+            aria-describedby="{{ input_id }}-error"
+          {% else %}
+            aria-describedby="{{ input_id }}-help"
+          {% endif %}
+          class="absolute inset-0 size-full cursor-pointer opacity-0"
+          {{ attrs }}
+        />
+        <span class="flex size-10 shrink-0 items-center justify-center rounded-sm bg-accent-subtle">
+          <c-icon name="upload" class="size-5 text-accent" />
+        </span>
+        <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span class="type-label-lg text-primary">{% translate "Drop a file here or browse" %}</span>
+          <span class="type-body-sm text-tertiary">
+            {% if hint %}
+              {{ hint }}
+            {% else %}
+              {% for extension in field.field.types %}
+                {{ extension|slice:"1:"|upper }}
+                {% if forloop.revcounter == 2 %}
+                  {% translate "or" %}
+                {% elif not forloop.last %},
+                {% endif %}
+              {% endfor %}
+              {% if file_max_size %}{% widthratio file_max_size 1048576 1 as max_mb %} ·
+                {% blocktranslate %}max. {{ max_mb }} MB{% endblocktranslate %}{% endif %}
+            {% endif %}
+          </span>
+        </span>
+      </div>
+
+      {# Encrypting / Stored / Missing #}
+      <div
+        hidden
+        x-bind:hidden="!(metadata || busy)"
+        x-bind:class="missing && !busy ? 'border-warning bg-warning-subtle' : 'border-default bg-surface'"
+        class="flex items-center gap-sm rounded-md border p-md"
+      >
+        <span
+          x-bind:class="busy ? 'bg-surface-muted' : missing ? 'bg-surface' : 'bg-success-subtle'"
+          class="flex size-10 shrink-0 items-center justify-center rounded-sm"
+        >
+          <c-icon name="file-text" class="size-5 text-icon-default" x-bind:hidden="!busy" />
+          <c-icon name="check" class="size-5 text-success" x-bind:hidden="busy || missing" />
+          <c-icon name="alert-triangle" class="size-5 text-warning" x-bind:hidden="busy || !missing" />
+        </span>
+        <span class="flex min-w-0 flex-1 flex-col gap-0.5" aria-live="polite">
+          <span class="truncate type-label-lg text-primary" x-text="busy ? pending : metadata?.name"></span>
+          <span hidden x-bind:hidden="!busy" class="type-body-sm text-secondary">{% translate "Encrypting…" %}</span>
+          {# Encryption reports no progress: the bar is indeterminate. #}
+          <span
+            hidden
+            x-bind:hidden="!busy"
+            class="mt-1 h-1 w-50 max-w-full overflow-hidden rounded-full bg-surface-muted"
+          >
+            <span class="block h-full w-2/3 animate-pulse rounded-full bg-accent"></span>
+          </span>
+          <span hidden x-bind:hidden="busy || missing" class="type-body-sm text-secondary">
+            <span x-text="sizeLabel"></span>{% if not plain %} · {% translate "encrypted in this browser" %}{% endif %}
+          </span>
+          <span
+            hidden
+            x-bind:hidden="busy || !missing"
+            class="type-body-sm text-primary"
+          >{% translate "Not stored in this browser — please select it again" %}</span>
+        </span>
+        <button
+          type="button"
+          hidden
+          x-bind:hidden="busy || missing"
+          x-on:click="remove().then(() => $nextTick(() => $refs.input.focus()))"
+          class="shrink-0 cursor-pointer rounded-sm type-label-lg text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          {% translate "Remove" %}
+        </button>
+        <button
+          type="button"
+          hidden
+          x-bind:hidden="busy || !missing"
+          x-on:click="$refs.input.click()"
+          class="shrink-0 cursor-pointer rounded-sm type-label-lg text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          {% translate "Select again" %}
+        </button>
+      </div>
+
+      <c-slot name="helper">
+        <span hidden x-bind:hidden="!error" class="flex items-start gap-1.5 text-danger" aria-live="polite">
+          <c-icon name="alert-circle" class="mt-0.5 size-3.5" />
+          <span x-text="error"></span>
+        </span>
+        {% if plain %}
+          {% with help=field.help_text %}{% if help %}<span
+                x-bind:hidden="error"
+              >{{ help }}</span>{% endif %}{% endwith %}
+        {% else %}
+          <span x-bind:hidden="error || (missing && !busy)" class="flex items-start gap-1.5">
+            <c-icon name="shield" class="mt-0.5 size-3.5 text-icon-default" />
+            {% translate "Stays encrypted in this browser until you save. It never reaches the server before." %}
+          </span>
+        {% endif %}
+        <span hidden x-bind:hidden="error || !missing || busy" class="flex items-start gap-1.5">
+          <c-icon name="info" class="mt-0.5 size-3.5 text-icon-default" />
+          {% translate "Files stay only in the browser and tab where you added them." %}
+        </span>
+      </c-slot>
+    </c-field-layout>
+  {% endwith %}
+{% endwith %}

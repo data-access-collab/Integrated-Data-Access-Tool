@@ -1,0 +1,48 @@
+{% comment %}
+  Props:
+    field    Django BoundField (:field="form.x"): name, id, label, checked, required,
+             help_text and errors come from it
+    label    label text without a form; or pass rich content (links) as the slot
+    name     input name without a form
+    value    submitted value, default "on"
+    checked  boolean attribute, without a form
+    id       input id without a form (optional: the <label> wraps the input)
+
+  {{ attrs }} go on the <input> (x-model, disabled, aria-*); class goes on the wrapper.
+  Checked state is the native checkbox, styled through peer-checked:.
+
+  Usage:
+    <c-checkbox :field="form.accept_terms" />
+    <c-checkbox name="newsletter" label="Send me updates" checked />
+    <c-checkbox :field="form.accept_terms">I accept the <a class="text-link underline" href="…">terms</a></c-checkbox>
+{% endcomment %}
+
+<c-vars field="" label="" name="" value="on" :checked="False" id="" class="" />
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:id input_name=field.html_name|default:name label_text=field.label|default:label %}
+  <div class="flex flex-col gap-2xs {{ class }}">
+    <label
+      {% if input_id %}for="{{ input_id }}"{% endif %}
+      class="flex cursor-pointer items-start gap-2.5 type-body-md text-primary"
+    >
+      <c-checkbox.control
+        :id="input_id"
+        :name="input_name"
+        :value="value"
+        checked="{% if checked or field.value %}1{% endif %}"
+        required="{% if field.field.required %}1{% endif %}"
+        invalid="{% if field.errors %}1{% endif %}"
+        describedby="{% if field.help_text %}{{ input_id }}-help{% endif %}{% if field.help_text and field.errors %} {% endif %}{% if field.errors %}{{ input_id }}-error{% endif %}"
+        :attrs="attrs"
+      />
+      <span>{% if label_text %}{{ label_text }}{% else %}{{ slot }}{% endif %}</span>
+    </label>
+    {% if field.help_text %}<p id="{{ input_id }}-help" class="pl-7.5 type-body-sm text-tertiary">
+        {{ field.help_text }}
+      </p>{% endif %}
+    {% if field.errors %}<c-field-message
+        id="{{ input_id }}-error"
+        class="pl-7.5"
+      >{{ field.errors|join:" " }}</c-field-message>{% endif %}
+  </div>
+{% endwith %}

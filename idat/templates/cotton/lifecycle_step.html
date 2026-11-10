@@ -1,0 +1,51 @@
+{% comment %}
+  One step of an application's lifecycle (Draft → Generated → Submitted → Platform reply →
+  Decision). Used in the Home progress banner as a compact stepper.
+
+  Props:
+    state  "done" · "current" · "upcoming" (default)
+    label  step name
+
+  Renders an <li>: put the steps in an <ol>. The current step gets aria-current="step";
+  done steps say "done" to screen readers.
+
+  Usage:
+    <ol class="flex flex-wrap items-center gap-md">
+      <c-lifecycle-step state="done" label="Draft" />
+      <c-lifecycle-step state="current" label="Submitted" />
+      <c-lifecycle-step label="Decision" />
+    </ol>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars state="upcoming" label="" class="" />
+<li
+  class="flex list-none items-center gap-xs {{ class }}"
+  {% if state == "current" %}aria-current="step"{% endif %}
+  {{ attrs }}
+>
+  {% if state == "done" %}
+    <span class="flex size-5 shrink-0 items-center justify-center rounded-full bg-success">
+      <c-icon name="check" class="size-3 text-on-nav" />
+    </span>
+  {% elif state == "current" %}
+    <span
+      class="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-warning bg-accent-subtle"
+    >
+      <span class="size-2 rounded-full bg-warning"></span>
+    </span>
+  {% else %}
+    <span class="size-5 shrink-0 rounded-full border-2 border-strong"></span>
+  {% endif %}
+  <span
+    class="
+      whitespace-nowrap
+      {% if state == "done" %}type-label-md text-secondary
+      {% elif state == "current" %}type-label-md text-primary
+      {% else %}type-body-sm text-tertiary
+      {% endif %}
+    "
+  >
+    {{ label }}{% if state == "done" %}<span class="sr-only"> ({% translate "done" %})</span>{% endif %}
+  </span>
+</li>

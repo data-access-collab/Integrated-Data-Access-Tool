@@ -1,0 +1,34 @@
+<div class="flex flex-col gap-md">
+  <c-top-bar>
+    <c-slot name="nav">
+      <a class="rounded-sm type-label-lg text-secondary hover:text-primary" href="#top-bar">How it works</a>
+      <a class="rounded-sm type-label-lg text-secondary hover:text-primary" href="#top-bar">Community</a>
+    </c-slot>
+    <c-slot name="actions">
+      <c-button variant="ghost" label="Why are we doing this?" />
+      <c-button variant="secondary" label="Sign in" href="#top-bar" />
+    </c-slot>
+  </c-top-bar>
+  <c-top-bar
+    context="app"
+    case-meta="Application · TikTok, Instagram, YouTube"
+    case-title="Recommender systems & youth mental health"
+    save-status="All changes saved · 2 min ago"
+    initials="JD"
+    account-href="#top-bar"
+  >
+    <c-slot name="actions"><c-button variant="secondary" label="Save & exit" icon="save" /></c-slot>
+  </c-top-bar>
+  <c-top-bar
+    context="anonymous"
+    case-meta="Application · TikTok, Instagram, YouTube"
+    case-title="Recommender systems & youth mental health"
+    save-status="Not saved · kept in this tab for 6 h"
+  >
+    <c-slot name="actions">
+      <c-button variant="ghost" label="Discard draft" />
+      <c-button label="Create account to save" href="#top-bar" />
+      <a class="rounded-sm type-label-lg text-link hover:underline" href="#top-bar">Sign in</a>
+    </c-slot>
+  </c-top-bar>
+</div>

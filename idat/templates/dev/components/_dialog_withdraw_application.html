@@ -1,0 +1,23 @@
+<div x-data class="flex flex-col items-start gap-md">
+  <c-button
+    variant="secondary"
+    label="Open as modal"
+    leading-icon="external-link"
+    x-on:click="$dispatch('open-dialog', { id: 'withdraw-{{ theme }}' })"
+  />
+  {# In-place preview: open, not modal. #}
+  <c-dialog.withdraw-application
+    id="withdraw-preview-{{ theme }}"
+    platform="Meta"
+    :form="form"
+    action="#dialog-withdraw-application"
+    open
+    class="static mx-0"
+  />
+  <c-dialog.withdraw-application
+    id="withdraw-{{ theme }}"
+    platform="Meta"
+    :form="modal_form"
+    action="#dialog-withdraw-application"
+  />
+</div>

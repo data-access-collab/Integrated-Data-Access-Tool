@@ -1,0 +1,29 @@
+{% comment %}
+  Heading of a wizard form section: icon tile, title, description and a status badge.
+
+  Props:
+    title         section title (rendered as <h2>)
+    description   one-line explanation; omitted when empty
+    icon          section icon name, e.g. "flask"; omitted when empty
+    status        badge label, e.g. "Complete"; omitted when empty
+    status-tone   badge tone: "neutral" (default) · "success" · "warning" · "danger" · "info" · "accent"
+
+  Usage:
+    <c-forms.section-header icon="flask" title="Research question"
+      description="What do you want to find out, and how does it relate to systemic risks?"
+      status="Complete" />
+{% endcomment %}
+
+<c-vars title="" description="" icon="" status="" status-tone="neutral" class="" />
+<header class="flex items-center gap-md {{ class }}" {{ attrs }}>
+  {% if icon %}
+    <span class="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent-subtle">
+      <c-icon :name="icon" class="size-5.5 text-accent" />
+    </span>
+  {% endif %}
+  <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+    <h2 class="type-headline-sm text-primary">{{ title }}</h2>
+    {% if description %}<p class="type-body-md text-secondary">{{ description }}</p>{% endif %}
+  </div>
+  {% if status %}<c-badge :tone="status_tone" :label="status" class="shrink-0" />{% endif %}
+</header>

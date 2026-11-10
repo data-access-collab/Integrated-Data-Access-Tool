@@ -1,0 +1,27 @@
+<div class="flex flex-col gap-md">
+  <p class="type-body-sm text-tertiary">Click to select, Tab + arrow keys to move between Yes and No.</p>
+  <div class="flex flex-wrap items-start gap-lg">
+    <div class="flex flex-col items-start gap-xs">
+      <span class="type-overline text-tertiary">Unset</span>
+      <c-yes-no-toggle name="yn_unset_{{ theme }}" label="Example question" />
+    </div>
+    <div class="flex flex-col items-start gap-xs">
+      <span class="type-overline text-tertiary">Yes</span>
+      <c-yes-no-toggle name="yn_yes_{{ theme }}" label="Example question" value="yes" />
+    </div>
+    <div class="flex flex-col items-start gap-xs">
+      <span class="type-overline text-tertiary">No</span>
+      <c-yes-no-toggle name="yn_no_{{ theme }}" label="Example question" value="no" />
+    </div>
+  </div>
+  <div class="flex flex-wrap items-start gap-lg">
+    <div class="flex flex-col items-start gap-xs">
+      <span class="type-overline text-tertiary">Bound field · initial No</span>
+      <c-yes-no-toggle :field="form.is_affiliated" />
+    </div>
+    <div class="flex flex-col items-start gap-xs">
+      <span class="type-overline text-tertiary">Bound field · error</span>
+      <c-yes-no-toggle :field="form_errors.has_ethics_approval" />
+    </div>
+  </div>
+</div>

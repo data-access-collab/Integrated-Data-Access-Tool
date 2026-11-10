@@ -1,0 +1,46 @@
+{% comment %}
+  Binary setting toggle (settings pages). For form answers use Yes-No Toggle or Checkbox.
+
+  Props:
+    field    optional Django BoundField (:field="form.x"): name, id, checked, required
+    label    accessible name (aria-label); omit when the caller links a visible label
+             via aria-labelledby
+    name     input name without a form
+    value    submitted value, default "on"
+    checked  boolean attribute, without a form
+    id       input id without a form
+
+  {{ attrs }} go on the <input> (x-model, disabled, aria-*); class goes on the wrapper.
+  On/off is the native checkbox (role="switch"), styled through peer-checked:.
+
+  Usage:
+    <c-switch name="email_updates" label="Email updates" checked />
+    <c-switch :field="form.email_updates" aria-labelledby="email-updates-label" />
+{% endcomment %}
+
+<c-vars field="" label="" name="" value="on" :checked="False" id="" class="" />
+{# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
+{% with input_id=field.id_for_label|default:id input_name=field.html_name|default:name %}
+  <span class="relative inline-flex h-6 w-10 shrink-0 {{ class }}">
+    <input
+      type="checkbox"
+      role="switch"
+      class="peer absolute inset-0 m-0 size-full cursor-pointer opacity-0"
+      {% if input_id %}id="{{ input_id }}"{% endif %}
+      {% if input_name %}name="{{ input_name }}"{% endif %}
+      value="{{ value }}"
+      {% if label %}aria-label="{{ label }}"{% endif %}
+      {% if checked or field.value %}checked{% endif %}
+      {% if field.field.required %}required{% endif %}
+      {{ attrs }}
+    />
+    <span
+      class="pointer-events-none size-full rounded-full border-12 border-strong transition-colors peer-checked:border-transparent peer-checked:bg-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus"
+      aria-hidden="true"
+    ></span>
+    <span
+      class="pointer-events-none absolute top-0.5 left-0.5 size-5 rounded-full bg-surface transition-transform peer-checked:translate-x-4"
+      aria-hidden="true"
+    ></span>
+  </span>
+{% endwith %}

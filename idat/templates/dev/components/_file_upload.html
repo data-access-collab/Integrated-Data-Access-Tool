@@ -1,0 +1,97 @@
+{# The encrypted mode's clientFile here is the gallery stand-in (dev/components.html): #}
+{# it checks type and size but encrypts and stores nothing. Encrypting, Missing and the type error are forced. #}
+<div class="flex max-w-xl flex-col gap-lg">
+  <p class="type-body-sm text-tertiary">
+    Empty: click or drop a file (a .txt shows the type error). Stored: Remove clears it.
+  </p>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Empty</span>
+    <c-file-upload
+      :label="client_file.label"
+      name="dpia_empty_{{ theme }}"
+      required
+      help-tip="dpia"
+      :types="client_file.types"
+      :accept="client_file.accept"
+      :max-size="client_file.max_size"
+      :hint="client_file.hint"
+    />
+  </div>
+  <div
+    class="flex flex-col gap-xs"
+    x-data
+    x-init="$nextTick(() => Object.assign(Alpine.$data($el.querySelector('[data-question]')), { busy: true, pending: 'data-protection-impact-assessment.pdf' }))"
+  >
+    <span class="type-overline text-tertiary">Encrypting (forced)</span>
+    <c-file-upload
+      :label="client_file.label"
+      name="dpia_encrypting_{{ theme }}"
+      required
+      help-tip="dpia"
+      :types="client_file.types"
+      :accept="client_file.accept"
+      :max-size="client_file.max_size"
+      :hint="client_file.hint"
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Stored (initial metadata)</span>
+    <c-file-upload
+      :label="client_file.label"
+      name="dpia_stored_{{ theme }}"
+      required
+      help-tip="dpia"
+      :value="client_file.stored"
+      :types="client_file.types"
+      :accept="client_file.accept"
+      :max-size="client_file.max_size"
+      :hint="client_file.hint"
+    />
+  </div>
+  <div
+    class="flex flex-col gap-xs"
+    x-data
+    x-init="$nextTick(() => Alpine.$data($el.querySelector('[data-question]')).missing = true)"
+  >
+    <span class="type-overline text-tertiary">Missing (forced)</span>
+    <c-file-upload
+      :label="client_file.label"
+      name="dpia_missing_{{ theme }}"
+      required
+      help-tip="dpia"
+      :value="client_file.stored"
+      :types="client_file.types"
+      :accept="client_file.accept"
+      :max-size="client_file.max_size"
+      :hint="client_file.hint"
+    />
+  </div>
+  <div
+    class="flex flex-col gap-xs"
+    x-data
+    x-init="$nextTick(() => Alpine.$data($el.querySelector('[data-question]')).error = 'Only these file types are allowed: .pdf, .docx.')"
+  >
+    <span class="type-overline text-tertiary">Error · client-side (forced)</span>
+    <c-file-upload
+      :label="client_file.label"
+      name="dpia_type_error_{{ theme }}"
+      required
+      help-tip="dpia"
+      :types="client_file.types"
+      :accept="client_file.accept"
+      :max-size="client_file.max_size"
+      :hint="client_file.hint"
+    />
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Error · server-side (not designed in Figma)</span>
+    <c-file-upload
+      :field="form_errors.dpia"
+      help-tip="dpia"
+      :types="client_file.types"
+      :accept="client_file.accept"
+      :max-size="client_file.max_size"
+      :hint="client_file.hint"
+    />
+  </div>
+</div>
