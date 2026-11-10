@@ -24,6 +24,7 @@ from idat.vlopse.models import Vlopse
 
 logger = logging.getLogger(__name__)
 
+# Only enforced in the browser
 CLIENT_FILE_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 
 # file types the client file field knows: extension -> content type; fields
@@ -63,8 +64,8 @@ class ClientFileWidget(forms.Widget):
     its metadata ({name, size, type, sha256}) as JSON in a hidden input.
     """
 
-    # in forms, <c-file-upload> (templates/forms/field.html) renders the field from the
-    # widget context; template_name is the bare widget ({{ field }} / as_widget)
+    # In forms, <c-file-upload> renders this widget. template_name is only used
+    # for bare {{ field }}. Keep in sync with clientFile in wizard.js
     ui_component = "file"
     template_name = "dsa40_wizard/widgets/client_file.html"
 
@@ -273,11 +274,11 @@ class QuestionsForm(forms.Form):
         Categories without questions are left out. Within a section, fields keep
         the order of form_questions.
 
-        DSA questions (Enter details) and VLOPSE questions (per-platform forms
-        = applications) are grouped by their own category.
+        Applies to DSAQuestions (Enter Details & Review) and VLOPSEQuestions
+        (previews in Generate).
         """
         # TODO: Order fields within a section explicitly (e.g. first name before
-        #  email). Currently, they just follow form_questions, which follow the $
+        #  email). Currently, they just follow form_questions, which follow the
         #  question mapper, so we should consider an `order` field on DSAQuestion
         #  (and VlopseQuestion).
         fields: dict[str, list[forms.BoundField]] = defaultdict(list)

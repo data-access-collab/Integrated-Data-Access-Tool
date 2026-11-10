@@ -16,8 +16,8 @@ from idat.dsa40_form_handler.validation.config import VLOPSEConfiguration
 from idat.dsa40_wizard.forms import VlopseSelectionForm
 from idat.dsa40_wizard.state import (
     FILE_KEY_HEADER,
-    MAX_AGE,
-    MAX_AGE_HEADER,
+    MAX_STATE_AGE,
+    MAX_STATE_AGE_HEADER,
     STATE_HEADER,
     WIZARD_ID_HEADER,
     WizardState,
@@ -356,7 +356,7 @@ class WizardViewTests(TestCase):
         self.assertEqual(
             response[FILE_KEY_HEADER], encode_file_encryption_key("draft-1")
         )
-        self.assertEqual(response[MAX_AGE_HEADER], str(MAX_AGE))
+        self.assertEqual(response[MAX_STATE_AGE_HEADER], str(MAX_STATE_AGE))
 
     def test_file_answer_is_stored_as_metadata_and_shown_in_review(self):
         DsaQuestionFactory.create(

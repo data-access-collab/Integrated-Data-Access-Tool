@@ -1,5 +1,5 @@
-"""What each VLOPSE's application contains: the stored wizard answers mapped to
-the platform's questions. Shown in the review step, the basis for generating."""
+"""Preview what each VLOPSE's application contains: the stored wizard answers mapped to
+the platform's questions. Shown in the generate step."""
 
 from __future__ import annotations
 
@@ -24,7 +24,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class VlopseApplicationPreview:
-    """A VLOPSE application in the review step: its answers in a read-only form.
+    """A VLOPSE application preview in the generate step: its answers in a
+    read-only form.
 
     `mapping_errors` maps question text to message for answers the platform's
     mapping could not use (e.g. an unknown country). Unanswered questions are not
@@ -118,7 +119,9 @@ def build_application_previews(
     state_answers: dict[str, Any],
     input_types: dict[str, str],
 ) -> list[VlopseApplicationPreview]:
-    """One preview per selected VLOPSE, in selection order; unknown ids are skipped."""
+    """One preview per selected VLOPSE, in state["vlopses"] order;
+    unknown ids are skipped.
+    """
     mapping_input = build_mapping_input(state_answers, input_types)
     vlopses = Vlopse.objects.in_bulk(vlopse_ids)
     return [

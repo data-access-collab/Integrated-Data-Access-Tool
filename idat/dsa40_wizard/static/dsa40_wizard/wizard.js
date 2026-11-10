@@ -19,6 +19,12 @@ let wizardId = null;
 let fileKey = null; // Promise<CryptoKey>
 let maxAgeMs = 0;
 
+// mirrored in dsa40_wizard.state
+const STATE_HEADER = "X-Wizard-State";
+const WIZARD_ID_HEADER = "X-Wizard-Id";
+const FILE_KEY_HEADER = "X-Wizard-File-Key";
+const MAX_STATE_AGE_HEADER = "X-Wizard-Max-Age";
+
 /* IndexedDB */
 
 function openDb() {
@@ -53,7 +59,7 @@ const deleteStoredFile = (question) => withStore("readwrite", (store) => store.d
 /**
  * Refresh the last-seen time of the current draft's files and delete files of
  * drafts not seen for longer than the token TTL: their token has expired, so
- * their key can't be derived anymore.
+ * the server won't hand out their key anymore.
  */
 function touchStoredFiles() {
   const now = Date.now();
@@ -164,26 +170,26 @@ async function discardDraft() {
 function registerListeners() {
   document.body.addEventListener("htmx:configRequest", (e) => {
     const token = sessionStorage.getItem(STATE_KEY);
-    if (token) e.detail.headers["X-Wizard-State"] = token;
+    if (token) e.detail.headers[STATE_HEADER] = token;
   });
 
   // before the swap, so file widgets in the new content find the key
   document.body.addEventListener("htmx:beforeSwap", (e) => {
     const xhr = e.detail.xhr;
-    const id = xhr.getResponseHeader("X-Wizard-Id");
-    const key = xhr.getResponseHeader("X-Wizard-File-Key");
+    const id = xhr.getResponseHeader(WIZARD_ID_HEADER);
+    const key = xhr.getResponseHeader(FILE_KEY_HEADER);
     if (!id || !key) return;
     if (id !== wizardId) {
       wizardId = id;
       fileKey = importKey(key);
     }
-    maxAgeMs = Number(xhr.getResponseHeader("X-Wizard-Max-Age")) * 1000;
+    maxAgeMs = Number(xhr.getResponseHeader(MAX_STATE_AGE_HEADER)) * 1000;
     // on every step response, as the server re-issues the token on each
     touchStoredFiles().catch(console.error);
   });
 
   document.body.addEventListener("htmx:afterRequest", (e) => {
-    const token = e.detail.xhr.getResponseHeader("X-Wizard-State");
+    const token = e.detail.xhr.getResponseHeader(STATE_HEADER);
     if (token) sessionStorage.setItem(STATE_KEY, token);
   });
 

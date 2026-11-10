@@ -7,7 +7,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.test import RequestFactory, SimpleTestCase, override_settings
 
 from idat.dsa40_wizard.state import (
-    MAX_AGE,
+    MAX_STATE_AGE,
     STATE_HEADER,
     WizardState,
     dump_wizard_state,
@@ -58,7 +58,7 @@ class WizardStateTests(SimpleTestCase):
         self.assertNotEqual(first["wizard_id"], second["wizard_id"])
 
     def test_expired_state_token_yields_new_empty_state(self):
-        issued_at = time.time() - MAX_AGE - 60
+        issued_at = time.time() - MAX_STATE_AGE - 60
         with mock.patch("cryptography.fernet.time.time", return_value=issued_at):
             token = dump_wizard_state(
                 WizardState(wizard_id="draft-1", vlopses=[1], answers={})

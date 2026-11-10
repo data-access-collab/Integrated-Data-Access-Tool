@@ -7,7 +7,7 @@ from typing import Any
 from django.core.exceptions import SuspiciousOperation
 from django.http import Http404, HttpResponse, HttpResponseBase
 from django.shortcuts import render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
@@ -25,8 +25,8 @@ from idat.dsa40_wizard.forms import (
 from idat.dsa40_wizard.services.preview import build_application_previews
 from idat.dsa40_wizard.state import (
     FILE_KEY_HEADER,
-    MAX_AGE,
-    MAX_AGE_HEADER,
+    MAX_STATE_AGE,
+    MAX_STATE_AGE_HEADER,
     STATE_HEADER,
     WIZARD_ID_HEADER,
     WizardState,
@@ -59,7 +59,8 @@ class WizardStep(StrEnum):
 
 def get_wizard_urls() -> dict[str, str]:
     """Links of the sidebar's done steps (wizard.sidebar `hrefs`), keyed by slug with
-    underscores (choose_vlopses …): only steps that have a view."""
+    underscores (choose_vlopses …): only steps that have a view.
+    """
     return {
         step.replace("-", "_"): reverse("dsa40_wizard:wizard_step", args=[step])
         for step in STEP_VIEWS
@@ -68,7 +69,8 @@ def get_wizard_urls() -> dict[str, str]:
 
 def get_mapped_vlopse_questions(vlopse_ids: list[int]) -> list[FormQuestion]:
     """The DSA questions the selected VLOPSEs map to, each required if at least one
-    of them requires it."""
+    of them requires it.
+    """
     vlopses = Vlopse.objects.filter(id__in=vlopse_ids).values_list("name", flat=True)
     mapper = QuestionMapper.from_vlopse_names(list(vlopses), QuestionService())
     return [
@@ -77,21 +79,32 @@ def get_mapped_vlopse_questions(vlopse_ids: list[int]) -> list[FormQuestion]:
     ]
 
 
+def get_shell_context(load_url: str, current_step: WizardStep) -> dict[str, Any]:
+    """Context of the wizard shell (dsa40_wizard/base.html). Both WizardFormView and
+    the plain page loads of WizardFormStep render the shell: add shell values here.
+    """
+    return {
+        "load_url": load_url,
+        "current_step": current_step,
+        "wizard_urls": get_wizard_urls(),
+        "state_ttl": int(MAX_STATE_AGE / 60 / 60),
+    }
+
+
 class WizardFormView(TemplateView):
     """Entry view for DSA 40 application wizard"""
 
     template_name = "dsa40_wizard/base.html"
-    extra_context = {
-        "load_url": reverse_lazy(
-            "dsa40_wizard:wizard_step", args=[WizardStep.CHOOSE_VLOPSES]
-        ),
-        "current_step": WizardStep.CHOOSE_VLOPSES,
-    }
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
-        return super().get_context_data(wizard_urls=get_wizard_urls(), **kwargs)
+        shell = get_shell_context(
+            reverse("dsa40_wizard:wizard_step", args=[WizardStep.CHOOSE_VLOPSES]),
+            WizardStep.CHOOSE_VLOPSES,
+        )
+        return super().get_context_data(**shell, **kwargs)
 
 
+# responses carry the state token and file key: never cache
 @method_decorator(never_cache, name="dispatch")
 # same URL, shell or step partial depending on HX-Request: keep caches apart
 @method_decorator(vary_on_headers("HX-Request"), name="dispatch")
@@ -113,17 +126,13 @@ class WizardFormStep(View):
             return render(
                 request,
                 "dsa40_wizard/base.html",
-                {
-                    "load_url": request.path,
-                    "current_step": self.step,
-                    "wizard_urls": get_wizard_urls(),
-                },
+                get_shell_context(request.path, self.step),
             )
 
         try:
             self.state = load_wizard_state(request)
         except SuspiciousOperation:
-            # Likely an expired state - TODO: maybe detect accurately and log
+            # Tampered token or rotated secret: start over
             self.state = empty_wizard_state()
             return self.go_to(VlopseSelectionStep)
 
@@ -152,7 +161,9 @@ class WizardFormStep(View):
         raise NotImplementedError
 
     def check_prerequisites(self) -> HttpResponse | None:
-        """Returns redirect target if checks fail, None otherwise."""
+        """Returns the response of the step to show if checks fail via self.go_to(),
+        None otherwise.
+        """
         return None
 
     def get_step_context(self) -> dict[str, Any]:
@@ -160,7 +171,9 @@ class WizardFormStep(View):
         return {}
 
     def go_to(self, step_cls: type[WizardFormStep] | None) -> HttpResponse:
-        """Render another step unbound, carrying the current state."""
+        """Render another step with the current state, without its dispatch;
+        check_prerequisites still applies.
+        """
         # TODO: Handle None (or drop it from possibilities)
         nxt = step_cls()
         nxt.setup(self.request)
@@ -195,10 +208,12 @@ class WizardFormStep(View):
         return response
 
     def add_response_headers(self, response: HttpResponse) -> HttpResponse:
+        """Re-issue the wizard state token (sliding expiry) and send this draft's ID,
+        file key and TTL."""
         response[STATE_HEADER] = dump_wizard_state(self.state)
         response[WIZARD_ID_HEADER] = self.state["wizard_id"]
         response[FILE_KEY_HEADER] = encode_file_encryption_key(self.state["wizard_id"])
-        response[MAX_AGE_HEADER] = str(MAX_AGE)
+        response[MAX_STATE_AGE_HEADER] = str(MAX_STATE_AGE)
         return response
 
 
@@ -287,8 +302,8 @@ class ReviewStep(WizardFormStep):
 
 
 class GenerateStep(ReviewStep):
-    """Renders one read-only form per selected VLOPSE: the stored answers mapped to
-    the VLOPSE's questions."""
+    """Renders one read-only application preview per selected VLOPSE: the stored
+    answers mapped to the VLOPSE's questions."""
 
     step = WizardStep.GENERATE
     template_name = "dsa40_wizard/_generate.html"
@@ -307,7 +322,8 @@ class GenerateStep(ReviewStep):
 
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         # TODO: Allow application creation if logged in
-        #  -> may be handled by a different view.
+        # TODO: Validate uploaded files against their content (type, size, SHA-256)
+        #  before storing;
         raise NotImplementedError
 
 

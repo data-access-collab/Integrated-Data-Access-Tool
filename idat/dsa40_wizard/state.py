@@ -17,20 +17,27 @@ from django.core.serializers.json import DjangoJSONEncoder
 if typing.TYPE_CHECKING:
     from django.http.request import HttpRequest
 
-MAX_AGE = 60 * 60 * 6  # token expires after 6h
+MAX_STATE_AGE = (
+    60 * 60 * 6
+)  # sliding token TTL in seconds; also the TTL of browser-stored files.
+
+# Mirrored in static/dsa40_wizard/wizard.js - if you change
+# the values here, also change them in wizard.js
 STATE_HEADER = "X-Wizard-State"
 WIZARD_ID_HEADER = "X-Wizard-Id"
 FILE_KEY_HEADER = "X-Wizard-File-Key"
-MAX_AGE_HEADER = "X-Wizard-Max-Age"
+MAX_STATE_AGE_HEADER = "X-Wizard-Max-Age"
 
-STATE_TOKEN_KEY_INFO = b"dsa40-wizard-token"
-FILE_KEY_INFO = b"dsa40-wizard-file:"
+# Encryption domain separation.
+# Don't change - invalidates all existing tokens and client-side stored files
+_STATE_TOKEN_KEY_INFO = b"dsa40-wizard-token"
+_FILE_KEY_INFO = b"dsa40-wizard-file:"
 
 
 class WizardState(TypedDict):
     wizard_id: str  # random id of this draft, used to derive its file key
-    vlopses: list[int]  # list of vlopse IDs
-    answers: dict[str, Any]  # DSAQuestion ID, answer
+    vlopses: list[int]  # list of VLOPSE IDs
+    answers: dict[str, Any]  # {question key: JSON-serialized cleaned value}
 
 
 def new_wizard_id() -> str:
@@ -58,17 +65,22 @@ def _derive_key(secret: str, info: bytes) -> bytes:
 
 
 def _state_token_cipher() -> Fernet:
-    key = _derive_key(settings.WIZARD_SECRET, STATE_TOKEN_KEY_INFO)
+    key = _derive_key(settings.WIZARD_SECRET, _STATE_TOKEN_KEY_INFO)
     return Fernet(base64.urlsafe_b64encode(key))
 
 
 def load_wizard_state(request: HttpRequest) -> WizardState:
+    """Load the state from the request.
+
+    Missing or expired token → new empty state.
+    Tampered token, or one encrypted with another secret → raises SuspiciousOperation.
+    """
     token = request.headers.get(STATE_HEADER)
     if not token:
         return empty_wizard_state()
     cipher = _state_token_cipher()
     try:
-        data = cipher.decrypt(token.encode(), ttl=MAX_AGE)
+        data = cipher.decrypt(token.encode(), ttl=MAX_STATE_AGE)
     except InvalidToken:
         # Fernet raises the same error for expired and tampered tokens, so
         # retry without TTL to tell them apart
@@ -89,8 +101,11 @@ def dump_wizard_state(state: WizardState) -> str:
 
 
 def file_encryption_key(wizard_id: str) -> bytes:
-    """AES-256 key the browser uses to encrypt this draft's files."""
-    return _derive_key(settings.WIZARD_SECRET, FILE_KEY_INFO + wizard_id.encode())
+    """AES-256 key the browser uses to encrypt this draft's files.
+
+    Note: Only hand out for a verified token (Wizard State) to honor file expiry.
+    """
+    return _derive_key(settings.WIZARD_SECRET, _FILE_KEY_INFO + wizard_id.encode())
 
 
 def encode_file_encryption_key(wizard_id: str) -> str:
