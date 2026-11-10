@@ -18,14 +18,18 @@ from idat.dsa40_wizard.state import (
     FILE_KEY_HEADER,
     MAX_STATE_AGE,
     MAX_STATE_AGE_HEADER,
-    STATE_HEADER,
+    STATE_POST_FIELD,
+    STATE_REQUEST_HEADER,
     WIZARD_ID_HEADER,
     WizardState,
     dump_wizard_state,
     encode_file_encryption_key,
     load_wizard_state,
 )
-from idat.dsa40_wizard.views import VlopseSelectionStep
+from idat.dsa40_wizard.views import (
+    ReviewStep,
+    VlopseSelectionStep,
+)
 from idat.vlopse.models import Vlopse
 from idat.vlopse.tests.factories import VlopseFactory
 
@@ -63,11 +67,19 @@ def get_step_url(step: str) -> str:
     return reverse("dsa40_wizard:wizard_step", args=[step])
 
 
-def get_htmx_headers(state: WizardState | None = None) -> dict[str, str]:
-    headers = {"HX-Request": "true"}
+def get_submit_url(step: str) -> str:
+    return reverse("dsa40_wizard:wizard_submit", args=[step])
+
+
+HTMX_HEADERS = {"HX-Request": "true"}
+
+
+def step_data(state: WizardState | None = None, data: dict | None = None) -> dict:
+    """POST data of a wizard request: the form data plus the state token."""
+    data = dict(data or {})
     if state is not None:
-        headers[STATE_HEADER] = dump_wizard_state(state)
-    return headers
+        data[STATE_POST_FIELD] = dump_wizard_state(state)
+    return data
 
 
 def create_state(vlopses: list[int], answers: dict | None = None) -> WizardState:
@@ -75,7 +87,9 @@ def create_state(vlopses: list[int], answers: dict | None = None) -> WizardState
 
 
 def response_state(response) -> WizardState:
-    request = RequestFactory().get("/", headers={STATE_HEADER: response[STATE_HEADER]})
+    request = RequestFactory().post(
+        "/", {STATE_POST_FIELD: response[STATE_REQUEST_HEADER]}
+    )
     return load_wizard_state(request)
 
 
@@ -89,7 +103,7 @@ def response_state(response) -> WizardState:
     new=PLATFORM_CONFIGS.__getitem__,
 )
 @mock.patch(
-    "idat.dsa40_wizard.services.preview.py.get_vlopse_configuration_for",
+    "idat.dsa40_wizard.services.preview.get_vlopse_configuration_for",
     new=PLATFORM_CONFIGS.__getitem__,
 )
 class WizardViewTests(TestCase):
@@ -123,14 +137,14 @@ class WizardViewTests(TestCase):
         response = self.client.get(reverse("dsa40_wizard:create"))
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertContains(response, f'hx-get="{get_step_url("choose-vlopses")}"')
+        self.assertContains(response, f'hx-post="{get_step_url("choose-vlopses")}"')
 
     def test_non_htmx_step_request_returns_shell_that_refetches_step_via_htmx(self):
         response = self.client.get(get_step_url("enter-details"))
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertContains(response, f'hx-get="{get_step_url("enter-details")}"')
-        self.assertNotIn(STATE_HEADER, response)
+        self.assertContains(response, f'hx-post="{get_step_url("enter-details")}"')
+        self.assertNotIn(STATE_REQUEST_HEADER, response)
 
     def test_shell_sidebar_shows_the_requested_step_as_current(self):
         response = self.client.get(get_step_url("enter-details"))
@@ -141,8 +155,10 @@ class WizardViewTests(TestCase):
     def test_step_response_sends_sidebar_out_of_band(self):
         state = create_state([self.mastodon.pk], {})
 
-        response = self.client.get(
-            get_step_url("enter-details"), headers=get_htmx_headers(state)
+        response = self.client.post(
+            get_step_url("enter-details"),
+            data=step_data(state),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response.context["current_step"], "enter-details")
@@ -152,39 +168,47 @@ class WizardViewTests(TestCase):
         self.assertContains(response, 'id="section-general"', count=1)
 
     def test_history_restore_request_returns_shell_not_step_partial(self):
-        headers = {**get_htmx_headers(), "HX-History-Restore-Request": "true"}
+        headers = {**HTMX_HEADERS, "HX-History-Restore-Request": "true"}
 
         response = self.client.get(get_step_url("choose-vlopses"), headers=headers)
 
-        self.assertContains(response, f'hx-get="{get_step_url("choose-vlopses")}"')
-        self.assertNotIn(STATE_HEADER, response)
+        self.assertContains(response, f'hx-post="{get_step_url("choose-vlopses")}"')
+        self.assertNotIn(STATE_REQUEST_HEADER, response)
 
     def test_step_response_varies_on_hx_request(self):
-        response = self.client.get(
-            get_step_url("choose-vlopses"), headers=get_htmx_headers()
+        response = self.client.post(
+            get_step_url("choose-vlopses"),
+            data=step_data(),
+            headers=HTMX_HEADERS,
         )
 
         self.assertIn("HX-Request", response["Vary"])
 
     def test_loading_a_step_replaces_the_url_instead_of_pushing(self):
-        response = self.client.get(
-            get_step_url("choose-vlopses"), headers=get_htmx_headers()
+        response = self.client.post(
+            get_step_url("choose-vlopses"),
+            data=step_data(),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
         self.assertNotIn("HX-Push-Url", response)
 
     def test_unknown_step_returns_404(self):
-        response = self.client.get(
-            get_step_url("no-such-step"), headers=get_htmx_headers()
+        response = self.client.post(
+            get_step_url("no-such-step"),
+            data=step_data(),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-    def test_tampered_state_header_restarts_wizard_with_empty_state(self):
-        headers = {"HX-Request": "true", STATE_HEADER: "not-an-encrypted-token"}
-
-        response = self.client.get(get_step_url("review"), headers=headers)
+    def test_tampered_state_token_restarts_wizard_with_empty_state(self):
+        response = self.client.post(
+            get_step_url("review"),
+            data={STATE_POST_FIELD: "not-an-encrypted-token"},
+            headers=HTMX_HEADERS,
+        )
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
@@ -196,8 +220,10 @@ class WizardViewTests(TestCase):
     def test_vlopse_step_preselects_previously_chosen_vlopses(self):
         state = create_state([self.mastodon.pk], {})
 
-        response = self.client.get(
-            get_step_url("choose-vlopses"), headers=get_htmx_headers(state)
+        response = self.client.post(
+            get_step_url("choose-vlopses"),
+            data=step_data(state),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(
@@ -206,7 +232,9 @@ class WizardViewTests(TestCase):
 
     def test_vlopse_step_rejects_empty_selection(self):
         response = self.client.post(
-            get_step_url("choose-vlopses"), data={}, headers=get_htmx_headers()
+            get_submit_url("choose-vlopses"),
+            data=step_data(None, {}),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
@@ -216,9 +244,9 @@ class WizardViewTests(TestCase):
 
     def test_vlopse_step_advances_to_questions_and_stores_selection(self):
         response = self.client.post(
-            get_step_url("choose-vlopses"),
-            data={"vlopses": [self.mastodon.pk]},
-            headers=get_htmx_headers(),
+            get_submit_url("choose-vlopses"),
+            data=step_data(None, {"vlopses": [self.mastodon.pk]}),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response["HX-Push-Url"], get_step_url("enter-details"))
@@ -233,9 +261,9 @@ class WizardViewTests(TestCase):
         )
 
         response = self.client.post(
-            get_step_url("choose-vlopses"),
-            data={"vlopses": [self.mastodon.pk]},
-            headers=get_htmx_headers(state),
+            get_submit_url("choose-vlopses"),
+            data=step_data(state, {"vlopses": [self.mastodon.pk]}),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(
@@ -243,8 +271,10 @@ class WizardViewTests(TestCase):
         )
 
     def test_questions_step_without_vlopses_falls_back_to_selection(self):
-        response = self.client.get(
-            get_step_url("enter-details"), headers=get_htmx_headers()
+        response = self.client.post(
+            get_step_url("enter-details"),
+            data=step_data(),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
@@ -254,9 +284,9 @@ class WizardViewTests(TestCase):
         state = create_state([self.mastodon.pk], {})
 
         response = self.client.post(
-            get_step_url("enter-details"),
-            data={"project-title": "Feed ranking audit"},
-            headers=get_htmx_headers(state),
+            get_submit_url("enter-details"),
+            data=step_data(state, {"project-title": "Feed ranking audit"}),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response["HX-Replace-Url"], get_step_url("enter-details"))
@@ -267,9 +297,9 @@ class WizardViewTests(TestCase):
         state = create_state([self.mastodon.pk], {})
 
         response = self.client.post(
-            get_step_url("enter-details"),
-            data={"email": "a@example.org"},
-            headers=get_htmx_headers(state),
+            get_submit_url("enter-details"),
+            data=step_data(state, {"email": "a@example.org"}),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response["HX-Push-Url"], get_step_url("review"))
@@ -282,7 +312,9 @@ class WizardViewTests(TestCase):
         state = create_state([self.mastodon.pk], answers)
 
         response = self.client.post(
-            get_step_url("review"), headers=get_htmx_headers(state)
+            get_submit_url("review"),
+            data=step_data(state),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response["HX-Push-Url"], get_step_url("generate"))
@@ -296,7 +328,9 @@ class WizardViewTests(TestCase):
         )
 
         response = self.client.post(
-            get_step_url("review"), headers=get_htmx_headers(state)
+            get_submit_url("review"),
+            data=step_data(state),
+            headers=HTMX_HEADERS,
         )
 
         # a POST that lands on another step pushes (render_step)
@@ -309,9 +343,10 @@ class WizardViewTests(TestCase):
             "idat.dsa40_form_handler.validation.mapping.get_vlopse_configuration_for",
             new=configs.__getitem__,
         ):
-            response = self.client.get(
+            response = self.client.post(
                 get_step_url("review"),
-                headers=get_htmx_headers(create_state([self.mastodon.pk], {})),
+                data=step_data(create_state([self.mastodon.pk], {})),
+                headers=HTMX_HEADERS,
             )
 
         self.assertEqual(response["HX-Replace-Url"], get_step_url("review"))
@@ -322,8 +357,10 @@ class WizardViewTests(TestCase):
             {"email": "a@example.org", "project-title": "", "role": "PI"},
         )
 
-        response = self.client.get(
-            get_step_url("generate"), headers=get_htmx_headers(state)
+        response = self.client.post(
+            get_step_url("generate"),
+            data=step_data(state),
+            headers=HTMX_HEADERS,
         )
 
         previews = response.context["application_previews"]
@@ -340,16 +377,20 @@ class WizardViewTests(TestCase):
             [self.mastodon.pk], {"project-title": "Feed ranking audit"}
         )
 
-        response = self.client.get(
-            get_step_url("review"), headers=get_htmx_headers(state)
+        response = self.client.post(
+            get_step_url("review"),
+            data=step_data(state),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response["HX-Replace-Url"], get_step_url("enter-details"))
         self.assertContains(response, "Institutional e-mail")
 
     def test_step_response_carries_wizard_id_file_key_and_max_age(self):
-        response = self.client.get(
-            get_step_url("choose-vlopses"), headers=get_htmx_headers(create_state([]))
+        response = self.client.post(
+            get_step_url("choose-vlopses"),
+            data=step_data(create_state([])),
+            headers=HTMX_HEADERS,
         )
 
         self.assertEqual(response[WIZARD_ID_HEADER], "draft-1")
@@ -391,16 +432,45 @@ class WizardViewTests(TestCase):
                 new=configs.__getitem__,
             ),
             mock.patch(
-                "idat.dsa40_wizard.services.preview.py.get_vlopse_configuration_for",
+                "idat.dsa40_wizard.services.preview.get_vlopse_configuration_for",
                 new=configs.__getitem__,
             ),
         ):
             response = self.client.post(
-                get_step_url("enter-details"),
-                data={"email": "a@example.org", "cv": json.dumps(meta)},
-                headers=get_htmx_headers(create_state([self.mastodon.pk])),
+                get_submit_url("enter-details"),
+                data=step_data(
+                    create_state([self.mastodon.pk]),
+                    {"email": "a@example.org", "cv": json.dumps(meta)},
+                ),
+                headers=HTMX_HEADERS,
             )
 
         self.assertEqual(response["HX-Push-Url"], get_step_url("review"))
         self.assertContains(response, "cv.pdf (2.0\xa0KB)")
         self.assertEqual(response_state(response)["answers"]["cv"], meta)
+
+    def test_htmx_get_to_a_step_is_not_allowed(self):
+        # the token travels in the POST body only, never in a URL
+        response = self.client.get(get_step_url("choose-vlopses"), headers=HTMX_HEADERS)
+
+        self.assertEqual(response.status_code, HTTPStatus.METHOD_NOT_ALLOWED)
+
+    def test_post_to_the_plain_step_url_only_shows_the_step(self):
+        # e.g. "Back" from Generate: must not confirm the review and move on
+        answers = {"email": "a@example.org", "project-title": ""}
+        state = create_state([self.mastodon.pk], answers)
+
+        response = self.client.post(
+            get_step_url("review"), data=step_data(state), headers=HTMX_HEADERS
+        )
+
+        self.assertEqual(response["HX-Replace-Url"], get_step_url("review"))
+        self.assertNotIn("HX-Push-Url", response)
+        self.assertTemplateUsed(response, ReviewStep.template_name)
+
+    def test_shell_for_a_submit_url_loads_the_plain_step_url(self):
+        # a plain page load of .../submit/ must not submit once the shell loads
+        response = self.client.get(get_submit_url("review"))
+
+        self.assertContains(response, f'hx-post="{get_step_url("review")}"')
+        self.assertNotContains(response, f'hx-post="{get_submit_url("review")}"')

@@ -26,8 +26,8 @@ It consists of these steps (URL slug in brackets):
 ### How the steps work
 
 - Each step is a `WizardFormStep` view in `views.py` (form, template, prerequisites,
-  `next_step`). All steps share one URL pattern, `create/<step>/`, routed by
-  `STEP_VIEWS`.
+  `next_step`). All steps share two URL patterns, routed by `STEP_VIEWS`:
+  `create/<step>/` shows a step, `create/<step>/submit/` (the step forms) submits it.
 - Steps are htmx partials swapped into `#application-wizard-body`. A plain page load
   (reload, typed URL, history restore) returns the shell (`base.html`), which then
   requests the step with the state token (see below).
@@ -38,8 +38,7 @@ It consists of these steps (URL slug in brackets):
 
 Before a draft is saved, answers aren’t stored on the server.
 Instead, a `WizardState` (draft ID, selected VLOPSEs, answers) travels as an encrypted
-token (Fernet, key derived from `DJANGO_WIZARD_SECRET`) in the `X-Wizard-State`
-header.
+token (Fernet, key derived from `DJANGO_WIZARD_SECRET`) between browser and server.
 The token expires 6 hours after the last step (sliding); changing the secret
 invalidates all open drafts.
 
@@ -60,19 +59,22 @@ draft in the browser as an encrypted, authenticated token instead gives:
 3. **Confidentiality, as a side effect.** The answers aren't readable in browser
    storage.
 
-**How the token is attached to requests:** The forms hold only
-the CSRF token and the fields; `wizard.js` adds the state to every htmx request:
+**How the token is attached to requests:** The forms hold only the CSRF token and the
+fields; `wizard.js` adds the state to every htmx request:
 
 - `htmx:configRequest` reads the token from sessionStorage and sends it as the
-  `X-Wizard-State` request header (form posts and `hx-get` links alike).
-- Every step response carries a re-issued token (`add_response_headers`, also on
-  GET, which makes the expiry sliding); `htmx:afterRequest` stores it in
-  sessionStorage.
+  `wizard_state` POST parameter (decided against sending it as a request header because
+  the token grows with the answers, and servers and proxies limit header size).
+- Every step response carries a re-issued token in the `X-Wizard-State` response
+  header (`add_response_headers`, which makes the expiry sliding);
+  `htmx:afterRequest` stores it in sessionStorage.
 - The first step request has no token yet: the server starts an empty state with a
   new draft ID (`load_wizard_state`), whose token comes back with that response.
 
-So only htmx requests carry the state: a step must use `hx-post` / `hx-get`, never a
-plain `<form method="post">` or link.
+So every wizard request is an htmx **POST** (`hx-post`, never `hx-get`, a plain
+`<form method="post">` or a link); an htmx GET is rejected. As the method no longer
+tells them apart, the URL does: step forms post to `wizard_submit`, everything else
+(shell load, Back) to `wizard_step`, which only shows the step.
 
 This logic lives in `state.py` (server) and `static/dsa40_wizard`
 (client).

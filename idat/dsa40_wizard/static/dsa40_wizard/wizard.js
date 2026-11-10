@@ -2,8 +2,9 @@
  * DSA40 application wizard (idat/dsa40_wizard)
  *
  * Served as a static ES module (imported with type="module"), only on the wizard page.
- * The server keeps no state: the encrypted wizard state travels in the
- * X-Wizard-State header and is kept in the tab-bound sessionStorage.
+ * The server keeps no state: the encrypted wizard state is kept in the tab-bound
+ * sessionStorage, sent as the wizard_state POST parameter and re-issued in the
+ * X-Wizard-State response header.
  * Files never leave the browser. They are encrypted with a per-draft key the
  * server sends with every step (X-Wizard-File-Key, kept in memory only) and
  * stored in IndexedDB; only their metadata is submitted.
@@ -20,7 +21,8 @@ let fileKey = null; // Promise<CryptoKey>
 let maxAgeMs = 0;
 
 // mirrored in dsa40_wizard.state
-const STATE_HEADER = "X-Wizard-State";
+const STATE_POST_FIELD = "wizard_state";
+const STATE_REQUEST_HEADER = "X-Wizard-State";
 const WIZARD_ID_HEADER = "X-Wizard-Id";
 const FILE_KEY_HEADER = "X-Wizard-File-Key";
 const MAX_STATE_AGE_HEADER = "X-Wizard-Max-Age";
@@ -160,7 +162,8 @@ async function discardDraft() {
 
 /**
  * Listen on document.body for:
- * - htmx:configRequest: send the state token (X-Wizard-State) with every request
+ * - htmx:configRequest: send the state token as a POST parameter (never on GET, so
+ *   it can't end up in a URL)
  * - htmx:beforeSwap: take the draft id, file key and TTL from step responses and
  *   refresh/expire stored files
  * - htmx:afterRequest: keep the re-issued state token in sessionStorage
@@ -170,7 +173,7 @@ async function discardDraft() {
 function registerListeners() {
   document.body.addEventListener("htmx:configRequest", (e) => {
     const token = sessionStorage.getItem(STATE_KEY);
-    if (token) e.detail.headers[STATE_HEADER] = token;
+    if (token && e.detail.verb !== "get") e.detail.parameters[STATE_POST_FIELD] = token;
   });
 
   // before the swap, so file widgets in the new content find the key
@@ -189,7 +192,7 @@ function registerListeners() {
   });
 
   document.body.addEventListener("htmx:afterRequest", (e) => {
-    const token = e.detail.xhr.getResponseHeader(STATE_HEADER);
+    const token = e.detail.xhr.getResponseHeader(STATE_REQUEST_HEADER);
     if (token) sessionStorage.setItem(STATE_KEY, token);
   });
 

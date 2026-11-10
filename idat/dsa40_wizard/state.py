@@ -23,7 +23,9 @@ MAX_STATE_AGE = (
 
 # Mirrored in static/dsa40_wizard/wizard.js - if you change
 # the values here, also change them in wizard.js
-STATE_HEADER = "X-Wizard-State"
+# The token goes to the server as a POST parameter and comes back in a response header.
+STATE_POST_FIELD = "wizard_state"
+STATE_REQUEST_HEADER = "X-Wizard-State"
 WIZARD_ID_HEADER = "X-Wizard-Id"
 FILE_KEY_HEADER = "X-Wizard-File-Key"
 MAX_STATE_AGE_HEADER = "X-Wizard-Max-Age"
@@ -70,12 +72,12 @@ def _state_token_cipher() -> Fernet:
 
 
 def load_wizard_state(request: HttpRequest) -> WizardState:
-    """Load the state from the request.
+    """Load the state from the request's POST parameter.
 
     Missing or expired token → new empty state.
     Tampered token, or one encrypted with another secret → raises SuspiciousOperation.
     """
-    token = request.headers.get(STATE_HEADER)
+    token = request.POST.get(STATE_POST_FIELD)
     if not token:
         return empty_wizard_state()
     cipher = _state_token_cipher()

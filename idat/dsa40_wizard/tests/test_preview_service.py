@@ -76,7 +76,7 @@ class BuildApplicationPreviewTests(TestCase):
     def setUp(self):
         self.enterContext(
             mock.patch(
-                "idat.dsa40_wizard.services.applications.get_vlopse_configuration_for",
+                "idat.dsa40_wizard.services.preview.get_vlopse_configuration_for",
                 return_value=CONFIG,
             )
         )

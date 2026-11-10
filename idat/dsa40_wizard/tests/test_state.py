@@ -8,7 +8,7 @@ from django.test import RequestFactory, SimpleTestCase, override_settings
 
 from idat.dsa40_wizard.state import (
     MAX_STATE_AGE,
-    STATE_HEADER,
+    STATE_POST_FIELD,
     WizardState,
     dump_wizard_state,
     file_encryption_key,
@@ -17,7 +17,7 @@ from idat.dsa40_wizard.state import (
 
 
 def request_with_state_token(token: str):
-    return RequestFactory().get("/", headers={STATE_HEADER: token})
+    return RequestFactory().post("/", {STATE_POST_FIELD: token})
 
 
 class WizardStateTests(SimpleTestCase):
@@ -46,7 +46,7 @@ class WizardStateTests(SimpleTestCase):
         self.assertNotIn("example.org", token)
         self.assertNotIn("draft-1", token)
 
-    def test_missing_state_header_yields_empty_state(self):
+    def test_missing_state_token_yields_empty_state(self):
         loaded = load_wizard_state(RequestFactory().get("/"))
 
         self.assertIsEmptyState(loaded)

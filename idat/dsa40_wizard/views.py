@@ -5,7 +5,12 @@ from enum import StrEnum
 from typing import Any
 
 from django.core.exceptions import SuspiciousOperation
-from django.http import Http404, HttpResponse, HttpResponseBase
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBase,
+    HttpResponseNotAllowed,
+)
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -27,7 +32,7 @@ from idat.dsa40_wizard.state import (
     FILE_KEY_HEADER,
     MAX_STATE_AGE,
     MAX_STATE_AGE_HEADER,
-    STATE_HEADER,
+    STATE_REQUEST_HEADER,
     WIZARD_ID_HEADER,
     WizardState,
     dump_wizard_state,
@@ -46,6 +51,13 @@ if typing.TYPE_CHECKING:
     from idat.dsa40_wizard.services.preview import VlopseApplicationPreview
 
 
+def is_submit(request: HttpRequest) -> bool:
+    """Whether the request came through a step's submit URL (create/<step>/submit/,
+    used by the step forms) rather than its plain URL (shows the step)."""
+    match = request.resolver_match
+    return bool(match and match.view_name == "dsa40_wizard:wizard_submit")
+
+
 class WizardStep(StrEnum):
     """The wizard steps in order: URL slugs and the sidebar's `current-step`.
     Keep in sync with the steps of templates/cotton/wizard/sidebar.html."""
@@ -57,14 +69,18 @@ class WizardStep(StrEnum):
     SUBMIT = "submit"
 
 
+def get_step_url(step: WizardStep) -> str:
+    return reverse("dsa40_wizard:wizard_step", args=[step])
+
+
 def get_wizard_urls() -> dict[str, str]:
     """Links of the sidebar's done steps (wizard.sidebar `hrefs`), keyed by slug with
     underscores (choose_vlopses …): only steps that have a view.
+
+    Underscores are needed because Django templates do not accept hyphenated
+    variable names.
     """
-    return {
-        step.replace("-", "_"): reverse("dsa40_wizard:wizard_step", args=[step])
-        for step in STEP_VIEWS
-    }
+    return {step.replace("-", "_"): get_step_url(step) for step in STEP_VIEWS}
 
 
 def get_mapped_vlopse_questions(vlopse_ids: list[int]) -> list[FormQuestion]:
@@ -126,8 +142,12 @@ class WizardFormStep(View):
             return render(
                 request,
                 "dsa40_wizard/base.html",
-                get_shell_context(request.path, self.step),
+                # the plain step URL, so loading the shell never submits
+                get_shell_context(get_step_url(self.step), self.step),
             )
+        if request.method != "POST":
+            # the state token travels in the POST body only
+            return HttpResponseNotAllowed(["POST"])
 
         try:
             self.state = load_wizard_state(request)
@@ -138,7 +158,11 @@ class WizardFormStep(View):
 
         if redirect_to := self.check_prerequisites():
             return redirect_to
-        return super().dispatch(request, *args, **kwargs)
+        # every step request is a POST (it carries the token): the URL, not the
+        # method, tells a form submit from showing the step
+        if is_submit(request):
+            return self.post(request, *args, **kwargs)
+        return self.get(request, *args, **kwargs)
 
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         return self.render_step(self.get_form())
@@ -197,9 +221,10 @@ class WizardFormStep(View):
         )
 
         response = self.add_response_headers(response)
-        url = reverse("dsa40_wizard:wizard_step", args=[self.step])
-        if self.request.method == "POST" and url != self.request.path:
-            # moved on to another step: new browser history entry
+        url = get_step_url(self.step)
+        requested_step = self.request.resolver_match.kwargs.get("step")
+        if is_submit(self.request) and requested_step != self.step:
+            # submitted and moved on to another step: new browser history entry
             push_url(response, url)
         else:
             # load, back/forward, redirect or validation errors: a push would add
@@ -210,7 +235,7 @@ class WizardFormStep(View):
     def add_response_headers(self, response: HttpResponse) -> HttpResponse:
         """Re-issue the wizard state token (sliding expiry) and send this draft's ID,
         file key and TTL."""
-        response[STATE_HEADER] = dump_wizard_state(self.state)
+        response[STATE_REQUEST_HEADER] = dump_wizard_state(self.state)
         response[WIZARD_ID_HEADER] = self.state["wizard_id"]
         response[FILE_KEY_HEADER] = encode_file_encryption_key(self.state["wizard_id"])
         response[MAX_STATE_AGE_HEADER] = str(MAX_STATE_AGE)
@@ -339,9 +364,9 @@ STEP_VIEWS: dict[WizardStep, Callable[..., HttpResponseBase]] = {
 
 
 def route_wizard_step(request: HttpRequest, step: WizardStep) -> HttpResponseBase:
-    """Route create/<step>/ to the view of that WizardStep slug: one URL pattern for
-    all steps, so links are built by slug. 404 for unknown steps and steps without a
-    view yet (submit)."""
+    """Route create/<step>/ (show) and create/<step>/submit/ (submit, see is_submit) to
+    the view of that WizardStep slug: one URL pattern each for all steps, so links are
+    built by slug. 404 for unknown steps and steps without a view yet (submit)."""
     view = STEP_VIEWS.get(step)
     if view is None:
         raise Http404
