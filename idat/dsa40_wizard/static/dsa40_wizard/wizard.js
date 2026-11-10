@@ -269,32 +269,42 @@ function registerListeners() {
 
 /* Alpine component for ClientFileWidget */
 
+function sizeLabel(size) {
+  if (size < 1024) return `${size} bytes`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+}
+
 /**
  * State and behaviour of one ClientFileWidget (x-data="clientFile"). It reads
  * the field's config from data-* attributes and keeps `metadata` in sync with the
- * submitted hidden input (x-ref="metadataInput"):
+ * submitted hidden input (x-ref="metadataInput"). <c-file-upload> uses the same
+ * state names with plainFile (assets/js/components/plain_file.js):
  * - metadata: {name, size, type, sha256} of the selected file, or null
  * - missing: metadata is set, but the file isn't stored in this browser
  * - busy: a selected file is being validated and encrypted
+ * - pending: name of the file being encrypted (while busy)
  * - error: user-facing validation error
+ * - sizeLabel / label: "2.0 KB" / "cv.pdf (2.0 KB)" of the stored file
  */
 function clientFile() {
   return {
     metadata: null,
     missing: false,
     busy: false,
+    pending: "",
     error: "",
 
     get question() {
       return this.$root.dataset.question;
     },
 
+    get sizeLabel() {
+      return this.metadata ? sizeLabel(this.metadata.size) : "";
+    },
+
     get label() {
-      if (!this.metadata) return "";
-      const { name, size } = this.metadata;
-      if (size < 1024) return `${name} (${size} bytes)`;
-      if (size < 1024 * 1024) return `${name} (${(size / 1024).toFixed(1)} KB)`;
-      return `${name} (${(size / 1024 / 1024).toFixed(1)} MB)`;
+      return this.metadata ? `${this.metadata.name} (${this.sizeLabel})` : "";
     },
 
     async init() {
@@ -307,6 +317,7 @@ function clientFile() {
       const file = event.target.files[0];
       if (!file) return;
       this.error = "";
+      this.pending = file.name;
       this.busy = true;
       try {
         const { buffer, metadata } = await validateFile(file, {
@@ -324,6 +335,7 @@ function clientFile() {
         this.error = err.message;
       } finally {
         this.busy = false;
+        this.pending = "";
         event.target.value = ""; // the file input is never submitted
       }
     },
