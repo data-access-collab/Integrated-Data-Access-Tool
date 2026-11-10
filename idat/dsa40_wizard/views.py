@@ -151,6 +151,10 @@ class WizardFormStep(View):
     form_class: type[forms.Form]
     state: WizardState
 
+    def form_questions(self) -> list[FormQuestion]:
+        """The DSA questions of the stored VLOPSE selection."""
+        return get_mapped_vlopse_questions(self.state["vlopses"])
+
     def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponseBase:
         if not request.htmx or request.htmx.history_restore_request:
             # plain page load (reload, typed URL) or browser back/forward: the
@@ -320,7 +324,7 @@ class QuestionsStep(WizardFormStep):
 
     def get_form_kwargs(self) -> dict[str, Any]:
         return {
-            "form_questions": get_mapped_vlopse_questions(self.state["vlopses"]),
+            "form_questions": self.form_questions(),
             "initial": self.state["answers"],
         }
 
@@ -365,8 +369,7 @@ class ReviewStep(WizardFormStep):
         if not has_vlopse_configs(self.state):
             return self.go_to(VlopseSelectionStep)
         answers = self.state["answers"]
-        form_questions = get_mapped_vlopse_questions(self.state["vlopses"])
-        if any(fq.question.key not in answers for fq in form_questions):
+        if any(fq.question.key not in answers for fq in self.form_questions()):
             return self.go_to(QuestionsStep)
         return None
 
@@ -379,14 +382,12 @@ class GenerateStep(ReviewStep):
     template_name = "dsa40_wizard/_generate.html"
 
     def get_step_context(self) -> dict[str, list[VlopseApplicationPreview]]:
-        vlopse_ids = self.state["vlopses"]
         input_types = {
-            fq.question.key: fq.question.input_type
-            for fq in get_mapped_vlopse_questions(vlopse_ids)
+            fq.question.key: fq.question.input_type for fq in self.form_questions()
         }
         return {
             "application_previews": build_application_previews(
-                vlopse_ids, self.state["answers"], input_types
+                self.state["vlopses"], self.state["answers"], input_types
             )
         }
 
