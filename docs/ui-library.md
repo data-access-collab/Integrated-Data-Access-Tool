@@ -6,6 +6,11 @@ The [Figma file](https://www.figma.com/design/DjAthBSdrd2LHopYz0tGaB), page "Des
 defines tokens, components and their behaviour. Code follows Figma;
 design changes are made in Figma first and then synced.
 
+If the Figma file or page changes, update its key (`DjAthBSdrd2LHopYz0tGaB`) and page name
+in all three places: this file, the figma-sync skill (`.claude/skills/figma-sync/SKILL.md`)
+and the gallery header (`idat/templates/dev/components.html`). The skill reads only from
+the file named there.
+
 ## Setup
 
 | Part                                                    | Where                                                                |
