@@ -7,10 +7,11 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 from idat.core.forms.fields import YesNoField, country_field
 from idat.dsa40_form_handler.models import (
@@ -19,8 +20,16 @@ from idat.dsa40_form_handler.models import (
     QuestionCategory,
     VLOPSEQuestion,
 )
+from idat.dsa40_form_handler.services.questions import QuestionService
+from idat.dsa40_form_handler.validation.mapping import (
+    MappingValidationError,
+    QuestionMapper,
+)
 from idat.dsa40_wizard.sections import SECTION_META
 from idat.vlopse.models import Vlopse
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +56,17 @@ DEFAULT_CLIENT_FILE_TYPES = (".pdf", ".docx")
 SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
+def has_mapping(vlopse: Vlopse) -> bool:
+    """Whether the VLOPSE's questions can be mapped. One without logs a warning, so
+    its configuration gets fixed."""
+    try:
+        QuestionMapper.from_vlopse_names([vlopse.name], QuestionService())
+    except MappingValidationError:
+        logger.warning("VLOPSE %s has no question mapping.", vlopse.name)
+        return False
+    return True
+
+
 class VlopseSelectionForm(forms.Form):
     vlopses = forms.ModelMultipleChoiceField(
         queryset=Vlopse.objects.all(),
@@ -54,6 +74,21 @@ class VlopseSelectionForm(forms.Form):
         required=True,
         error_messages={"required": "Please select at least one VLOPSE"},
     )
+
+    def clean_vlopses(self) -> QuerySet[Vlopse]:
+        """Reject VLOPSEs without a question mapping: their questions and
+        applications can't be built."""
+        vlopses = self.cleaned_data["vlopses"]
+        if unavailable := sorted(v.name for v in vlopses if not has_mapping(v)):
+            raise ValidationError(
+                _(
+                    "Applications for %(names)s can't be created due to missing "
+                    "question configs. Please deselect them."
+                ),
+                code="unavailable",
+                params={"names": ", ".join(unavailable)},
+            )
+        return vlopses
 
 
 class ClientFileWidget(forms.Widget):

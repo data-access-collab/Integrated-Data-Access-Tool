@@ -80,7 +80,7 @@ def get_wizard_urls() -> dict[str, str]:
     """Links of the sidebar's done steps (wizard.sidebar `hrefs`), keyed by slug with
     underscores (choose_vlopses …): only steps that have a view.
 
-    Underscores are needed because Django templates do not accept hyphenated
+    Note: Underscores are needed because Django templates do not accept hyphenated
     variable names.
     """
     return {step.replace("-", "_"): get_step_url(step) for step in STEP_VIEWS}
@@ -98,6 +98,12 @@ def get_mapped_vlopse_questions(vlopse_ids: list[int]) -> list[FormQuestion]:
     ]
 
 
+def has_vlopse_configs(state: WizardState) -> bool:
+    """Whether at least one VLOPSE is selected and a valid config (question mapping)
+    exists for each."""
+    return VlopseSelectionForm(data={"vlopses": state["vlopses"]}).is_valid()
+
+
 def get_shell_context(load_url: str, current_step: WizardStep) -> dict[str, Any]:
     """Context of the wizard shell (dsa40_wizard/base.html). Both WizardFormView and
     the plain page loads of WizardFormStep render the shell: add shell values here.
@@ -112,8 +118,7 @@ def get_shell_context(load_url: str, current_step: WizardStep) -> dict[str, Any]
 
 def draft_unavailable_response() -> HttpResponse:
     """Tell wizard.js the draft can't be loaded: it discards the draft (token, file key,
-    stored files) and goes to the draft unavailable page. No content, so htmx swaps
-    nothing; the TTL lets the browser also drop expired files."""
+    stored files) and goes to the draft unavailable page."""
     response = HttpResponse(status=HTTPStatus.NO_CONTENT)
     response[DRAFT_UNAVAILABLE_HEADER] = reverse("dsa40_wizard:draft_unavailable")
     response[MAX_STATE_AGE_HEADER] = str(MAX_STATE_AGE)
@@ -186,9 +191,17 @@ class WizardFormStep(View):
         ):
             return None
         try:
-            return load_wizard_state(self.request)
+            state = load_wizard_state(self.request)
         except WizardStateExpiredError, SuspiciousOperation:
             return None
+        if state["vlopses"]:
+            existing = set(
+                Vlopse.objects.filter(id__in=state["vlopses"]).values_list(
+                    "id", flat=True
+                )
+            )
+            state["vlopses"] = [i for i in state["vlopses"] if i in existing]
+        return state
 
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         return self.render_step(self.get_form())
@@ -276,6 +289,12 @@ class VlopseSelectionStep(WizardFormStep):
     def get_form_kwargs(self) -> dict[str, Any]:
         return {"initial": {"vlopses": self.state["vlopses"]}}
 
+    def get_form(self, data: dict | None = None) -> forms.Form:
+        if data is None and self.state["vlopses"]:
+            # bound to the stored selection, so the step shows why it is invalid
+            data = {"vlopses": self.state["vlopses"]}
+        return super().get_form(data)
+
     def update_state(self, form: forms.Form) -> None:
         """Update state in place and drop answers for deselected Vlopses."""
         vlopse_ids = [v.id for v in form.cleaned_data["vlopses"]]
@@ -294,8 +313,8 @@ class QuestionsStep(WizardFormStep):
     form_class = QuestionsForm
 
     def check_prerequisites(self) -> HttpResponse | None:
-        """Checks that at least one VLOPSE is selected."""
-        if not self.state["vlopses"]:
+        """Checks that at least one VLOPSE is selected and each has a config."""
+        if not has_vlopse_configs(self.state):
             return self.go_to(VlopseSelectionStep)
         return None
 
@@ -341,9 +360,9 @@ class ReviewStep(WizardFormStep):
         return self.get_answers_form()
 
     def check_prerequisites(self) -> HttpResponse | None:
-        """Checks that at least one VLOPSE is selected and that the questions step
-        stored an answer (possibly empty) for every mapped question."""
-        if not self.state["vlopses"]:
+        """Checks that at least one VLOPSE is selected and each has a config, and that
+        the questions step stored an answer for every mapped question."""
+        if not has_vlopse_configs(self.state):
             return self.go_to(VlopseSelectionStep)
         answers = self.state["answers"]
         form_questions = get_mapped_vlopse_questions(self.state["vlopses"])

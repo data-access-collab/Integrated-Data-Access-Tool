@@ -68,6 +68,19 @@ PLATFORM_CONFIGS = {
 CONFIG_FILE_READER = "idat.dsa40_form_handler.validation.config._load_json"
 
 
+def config_reader(configs: dict[str, VLOPSEConfiguration]):
+    """Stand-in for reading config files: `configs` by file name, no other file
+    exists."""
+
+    def read(filename: str) -> VLOPSEConfiguration:
+        try:
+            return configs[filename]
+        except KeyError as err:
+            raise FileNotFoundError(filename) from err
+
+    return read
+
+
 def get_step_url(step: str) -> str:
     return reverse("dsa40_wizard:wizard_step", args=[step])
 
@@ -99,7 +112,7 @@ def response_state(response) -> WizardState:
 
 
 # mocked to use the stable test configs defined above
-@mock.patch(CONFIG_FILE_READER, new=PLATFORM_CONFIGS.__getitem__)
+@mock.patch(CONFIG_FILE_READER, new=config_reader(PLATFORM_CONFIGS))
 class WizardViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -314,6 +327,71 @@ class WizardViewTests(TestCase):
         self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
         self.assertTemplateUsed(response, VlopseSelectionStep.template_name)
 
+    def test_vlopse_step_rejects_vlopse_without_question_mapping(self):
+        unmapped = VlopseFactory.create(name="Bluesky")
+
+        response = self.client.post(
+            get_submit_url("choose-vlopses"),
+            data=step_data(None, {"vlopses": [self.mastodon.pk, unmapped.pk]}),
+            headers=HTMX_HEADERS,
+        )
+
+        self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
+        self.assertTrue(
+            response.context["form"].has_error("vlopses", code="unavailable")
+        )
+        self.assertContains(response, "Applications for Bluesky")
+        self.assertEqual(response_state(response)["vlopses"], [])
+
+    def test_deleted_vlopses_are_dropped_from_the_selection(self):
+        deleted = VlopseFactory.create(name="Bluesky")
+        deleted_pk = deleted.pk
+        deleted.delete()
+
+        response = self.client.post(
+            get_step_url("enter-details"),
+            data=step_data(create_state([deleted_pk, self.mastodon.pk])),
+            headers=HTMX_HEADERS,
+        )
+
+        self.assertEqual(response["HX-Replace-Url"], get_step_url("enter-details"))
+        self.assertEqual(response_state(response)["vlopses"], [self.mastodon.pk])
+
+    def test_later_step_with_only_deleted_vlopses_falls_back_to_selection(self):
+        deleted = VlopseFactory.create(name="Bluesky")
+        deleted_pk = deleted.pk
+        deleted.delete()
+
+        response = self.client.post(
+            get_step_url("enter-details"),
+            data=step_data(create_state([deleted_pk])),
+            headers=HTMX_HEADERS,
+        )
+
+        self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
+        self.assertEqual(response_state(response)["vlopses"], [])
+
+    def test_later_step_with_unavailable_vlopse_falls_back_to_selection(self):
+        unmapped = VlopseFactory.create(name="Bluesky")
+        state = create_state(
+            [self.mastodon.pk, unmapped.pk], {"email": "a@example.org"}
+        )
+
+        for step in ("enter-details", "review", "generate"):
+            with self.subTest(step=step):
+                response = self.client.post(
+                    get_step_url(step), data=step_data(state), headers=HTMX_HEADERS
+                )
+
+                self.assertEqual(
+                    response["HX-Replace-Url"], get_step_url("choose-vlopses")
+                )
+                self.assertContains(response, "Applications for Bluesky")
+                self.assertEqual(
+                    response.context["form"]["vlopses"].value(),
+                    [self.mastodon.pk, unmapped.pk],
+                )
+
     def test_questions_step_rejects_missing_required_answer(self):
         state = create_state([self.mastodon.pk], {})
 
@@ -441,7 +519,7 @@ class WizardViewTests(TestCase):
         }
 
         # override mock to include the file field in the configs
-        with mock.patch(CONFIG_FILE_READER, new=configs.__getitem__):
+        with mock.patch(CONFIG_FILE_READER, new=config_reader(configs)):
             response = self.client.post(
                 get_submit_url("enter-details"),
                 data=step_data(
