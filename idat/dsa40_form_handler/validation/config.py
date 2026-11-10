@@ -25,12 +25,18 @@ def _write_json(filename: str, value: VLOPSEConfiguration) -> None:
         f.write(serialized)
 
 
+def _config_filename(platform_name: str) -> str:
+    """The config file of a VLOPSE: its name in lowercase ("TikTok" -> tiktok.json),
+    as the files are named, so the lookup also works on case-sensitive filesystems."""
+    return f"{platform_name.lower()}.json"
+
+
 def get_vlopse_configuration_for(platform_name: str) -> VLOPSEConfiguration:
-    return _load_json(f"{platform_name}.json")
+    return _load_json(_config_filename(platform_name))
 
 
 def write_vlopse_configuration_for(
     platform_name: str,
     config: VLOPSEConfiguration,
 ) -> None:
-    return _write_json(f"{platform_name}.json", config)
+    return _write_json(_config_filename(platform_name), config)
