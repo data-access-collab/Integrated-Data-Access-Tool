@@ -1,11 +1,12 @@
 import datetime
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from django.utils.formats import date_format
 
 from idat.core.forms.boundfield import IdatBoundField, widget_component
-from idat.core.forms.fields import YesNoField, country_field
+from idat.core.forms.fields import TOP_COUNTRIES, YesNoField, country_field
 
 
 class _AllFieldsForm(forms.Form):
@@ -176,3 +177,26 @@ class DisplayValueTests(SimpleTestCase):
         for name in ("start", "topics", "maybe"):
             with self.subTest(name=name):
                 self.assertIn(form[name].display_value, (None, "", []))
+
+
+class CountryFieldTests(SimpleTestCase):
+    def test_validates_codes_from_both_groups_and_rejects_placeholders(self):
+        field = country_field()
+
+        self.assertEqual(field.choices[0][0], "")
+        self.assertEqual(field.clean(TOP_COUNTRIES[0]), TOP_COUNTRIES[0])
+        self.assertEqual(field.clean("FR"), "FR")
+        for value in ("", "---"):
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                field.clean(value)
+
+
+class YesNoFieldTests(SimpleTestCase):
+    def test_keeps_yes_no_answers_from_the_toggle(self):
+        field = YesNoField()
+
+        self.assertEqual(field.clean("true"), "Yes")
+        self.assertEqual(field.clean("false"), "No")
+        self.assertEqual(field.clean("Yes"), "Yes")
+        with self.assertRaises(ValidationError):
+            field.clean("maybe")

@@ -29,6 +29,7 @@ from idat.dsa40_wizard.state import (
     load_wizard_state,
 )
 from idat.dsa40_wizard.views import (
+    QuestionsStep,
     ReviewStep,
     VlopseSelectionStep,
 )
@@ -157,10 +158,7 @@ class WizardViewTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertContains(response, f'hx-post="{get_step_url("enter-details")}"')
         self.assertNotIn(STATE_REQUEST_HEADER, response)
-
-    def test_shell_sidebar_shows_the_requested_step_as_current(self):
-        response = self.client.get(get_step_url("enter-details"))
-
+        # the shell's sidebar shows the requested step as current
         self.assertEqual(response.context["current_step"], "enter-details")
         self.assertNotContains(response, 'hx-swap-oob="true"')
 
@@ -187,13 +185,15 @@ class WizardViewTests(TestCase):
         self.assertContains(response, f'hx-post="{get_step_url("choose-vlopses")}"')
         self.assertNotIn(STATE_REQUEST_HEADER, response)
 
-    def test_step_response_varies_on_hx_request(self):
+    def test_step_response_is_never_cached_and_varies_on_hx_request(self):
         response = self.client.post(
             get_step_url("choose-vlopses"),
             data=step_data(),
             headers=HTMX_HEADERS,
         )
 
+        # the response carries the state token and the file key
+        self.assertIn("no-store", response["Cache-Control"])
         self.assertIn("HX-Request", response["Vary"])
 
     def test_loading_a_step_replaces_the_url_instead_of_pushing(self):
@@ -208,9 +208,7 @@ class WizardViewTests(TestCase):
 
     def test_unknown_step_returns_404(self):
         response = self.client.post(
-            get_step_url("no-such-step"),
-            data=step_data(),
-            headers=HTMX_HEADERS,
+            get_step_url("no-such-step"), data=step_data(), headers=HTMX_HEADERS
         )
 
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
@@ -519,18 +517,18 @@ class WizardViewTests(TestCase):
         self.assertEqual(response_state(response)["answers"], answers)
 
     def test_review_post_with_invalid_stored_answers_falls_back_to_questions(self):
-        state = create_state(
-            [self.mastodon.pk], {"project-title": "Feed ranking audit"}
-        )
+        # a background save stores the empty required e-mail as entered
+        answers = {"email": "", "project-title": "Feed ranking audit"}
+        state = create_state([self.mastodon.pk], answers)
 
         response = self.client.post(
-            get_submit_url("review"),
-            data=step_data(state),
-            headers=HTMX_HEADERS,
+            get_submit_url("review"), data=step_data(state), headers=HTMX_HEADERS
         )
 
         # a POST that lands on another step pushes (render_step)
         self.assertEqual(response["HX-Push-Url"], get_step_url("enter-details"))
+        self.assertTemplateUsed(response, QuestionsStep.template_name)
+        self.assertEqual(response_state(response)["answers"], answers)
 
     def test_generate_shows_each_platforms_mapped_answers(self):
         state = create_state(
@@ -553,19 +551,24 @@ class WizardViewTests(TestCase):
         # the unanswered optional title is empty, not a mapping error
         self.assertEqual([p.mapping_errors for p in previews], [{}, {}])
 
-    def test_review_step_with_invalid_stored_answers_falls_back_to_questions(self):
-        state = create_state(
-            [self.mastodon.pk], {"project-title": "Feed ranking audit"}
-        )
+    def test_review_step_with_missing_or_invalid_stored_answers_falls_back(self):
+        for answers in (
+            # the questions step never stored the e-mail
+            {"project-title": "Feed ranking audit"},
+            # a background save stored the empty required e-mail as entered
+            {"email": "", "project-title": "Feed ranking audit"},
+        ):
+            with self.subTest(answers=answers):
+                response = self.client.post(
+                    get_step_url("review"),
+                    data=step_data(create_state([self.mastodon.pk], answers)),
+                    headers=HTMX_HEADERS,
+                )
 
-        response = self.client.post(
-            get_step_url("review"),
-            data=step_data(state),
-            headers=HTMX_HEADERS,
-        )
-
-        self.assertEqual(response["HX-Replace-Url"], get_step_url("enter-details"))
-        self.assertContains(response, "Institutional e-mail")
+                self.assertEqual(
+                    response["HX-Replace-Url"], get_step_url("enter-details")
+                )
+                self.assertContains(response, "Institutional e-mail")
 
     def test_step_response_carries_wizard_id_file_key_and_max_age(self):
         response = self.client.post(
@@ -580,7 +583,7 @@ class WizardViewTests(TestCase):
         )
         self.assertEqual(response[MAX_STATE_AGE_HEADER], str(MAX_STATE_AGE))
 
-    def test_file_answer_is_stored_as_metadata_and_shown_in_review(self):
+    def test_file_and_date_answers_are_stored_and_file_shown_in_review(self):
         DsaQuestionFactory.create(
             key="cv", text="Curriculum Vitae", input_type=InputType.FILE_UPLOAD
         )
@@ -590,6 +593,15 @@ class WizardViewTests(TestCase):
             required=True,
             input_type=InputType.FILE_UPLOAD,
         )
+        DsaQuestionFactory.create(
+            key="start", text="Project start", input_type=InputType.DATE_SELECT
+        )
+        VlopseQuestionFactory.create(
+            key="mastodon-start",
+            vlopse=self.mastodon,
+            required=True,
+            input_type=InputType.DATE_SELECT,
+        )
         meta = {
             "name": "cv.pdf",
             "size": 2048,
@@ -598,24 +610,36 @@ class WizardViewTests(TestCase):
         }
         configs = {
             "mastodon.json": platform_config(
-                "mastodon", {"mastodon-email": "email", "mastodon-cv": "cv"}
+                "mastodon",
+                {
+                    "mastodon-email": "email",
+                    "mastodon-cv": "cv",
+                    "mastodon-start": "start",
+                },
             )
         }
 
-        # override mock to include the file field in the configs
+        # override mock to include the file and date fields in the configs
         with mock.patch(CONFIG_FILE_READER, new=config_reader(configs)):
             response = self.client.post(
                 get_submit_url("enter-details"),
                 data=step_data(
                     create_state([self.mastodon.pk]),
-                    {"email": "a@example.org", "cv": json.dumps(meta)},
+                    {
+                        "email": "a@example.org",
+                        "cv": json.dumps(meta),
+                        "start": "2026-01-31",
+                    },
                 ),
                 headers=HTMX_HEADERS,
             )
 
         self.assertEqual(response["HX-Push-Url"], get_step_url("review"))
         self.assertContains(response, "cv.pdf (2.0\xa0KB)")
-        self.assertEqual(response_state(response)["answers"]["cv"], meta)
+        answers = response_state(response)["answers"]
+        self.assertEqual(answers["cv"], meta)
+        # the cleaned date goes into the token as an ISO string
+        self.assertEqual(answers["start"], "2026-01-31")
 
     def test_htmx_get_to_a_step_is_not_allowed(self):
         # the token travels in the POST body only, never in a URL

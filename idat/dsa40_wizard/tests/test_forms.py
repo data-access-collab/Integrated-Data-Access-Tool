@@ -1,40 +1,22 @@
 from __future__ import annotations
 
 import json
-import re
-from html import unescape
-from unittest import mock
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from django.utils.html import escape
 
-from idat.core.forms.fields import TOP_COUNTRIES, YesNoField, country_field
+from idat.core.forms.fields import YesNoField
 from idat.dsa40_form_handler.models import InputType, QuestionCategory
 from idat.dsa40_form_handler.tests.factories import DsaQuestionFactory
 from idat.dsa40_wizard.forms import (
-    DEFAULT_CLIENT_FILE_TYPES,
     ClientFileField,
     FormQuestion,
     QuestionsForm,
     get_question_field,
 )
 from idat.dsa40_wizard.sections import SECTION_META
-
-
-class CountryFieldTests(SimpleTestCase):
-    def test_validates_codes_from_both_groups_and_rejects_placeholders(self):
-        field = country_field()
-
-        self.assertEqual(field.clean(TOP_COUNTRIES[0]), TOP_COUNTRIES[0])
-        self.assertEqual(field.clean("FR"), "FR")
-        for value in ("", "---"):
-            with self.subTest(value=value), self.assertRaises(ValidationError):
-                field.clean(value)
-
-    def test_defaults_to_empty_placeholder(self):
-        self.assertEqual(country_field().choices[0][0], "")
 
 
 class QuestionsFormTests(SimpleTestCase):
@@ -66,30 +48,17 @@ class QuestionsFormTests(SimpleTestCase):
 
     def test_selection_question_accepts_flat_option_list(self):
         question = DsaQuestionFactory.build(
-            key="prev-experience",
+            key="role",
             input_type=InputType.SELECTION,
-            config={"type": "selection", "options": ["Yes", "No"]},
+            config={"type": "selection", "options": ["PI", "Co-PI"]},
         )
         config = [FormQuestion(question, True)]
 
-        valid = QuestionsForm(data={"prev-experience": "No"}, form_questions=config)
-        invalid = QuestionsForm(
-            data={"prev-experience": "Maybe"}, form_questions=config
-        )
+        valid = QuestionsForm(data={"role": "Co-PI"}, form_questions=config)
+        invalid = QuestionsForm(data={"role": "Maybe"}, form_questions=config)
 
         self.assertTrue(valid.is_valid())
         self.assertFalse(invalid.is_valid())
-
-    def test_iso_3166_1_question_uses_country_field(self):
-        question = DsaQuestionFactory.build(
-            key="country", input_type=InputType.ISO_3166_1
-        )
-
-        with mock.patch("idat.dsa40_wizard.forms.country_field") as factory:
-            form = QuestionsForm(form_questions=[FormQuestion(question, True)])
-
-        factory.assert_called_once_with()
-        self.assertIs(form.fields["country"], factory.return_value)
 
 
 class ClientFileFieldTests(SimpleTestCase):
@@ -118,6 +87,11 @@ class ClientFileFieldTests(SimpleTestCase):
             self.file_meta(size=0),
             self.file_meta(name=""),
             self.file_meta(name="x" * 256),
+            self.file_meta(name=1),
+            self.file_meta(type=1),
+            self.file_meta(type="x" * 256),
+            self.file_meta(size=-1),
+            self.file_meta(sha256="A" * 64),
             self.file_meta(extra="field"),
             {"name": "cv.pdf", "size": 1024},
         ]:
@@ -145,21 +119,17 @@ class ClientFileFieldTests(SimpleTestCase):
         )
         self.assertNotIn('type="file" name=', html)
         self.assertNotIn("required", html)
+        # the default types
+        self.assertIn('accept=".pdf,.docx"', html)
 
     def test_widget_passes_the_fields_types_to_the_browser(self):
+        field = ClientFileField(types=(".png", ".txt"))
 
-        def get_form_with_field(field: forms.Field) -> forms.Form:
-            """A form with the given field as "file"."""
-            return type("FileForm", (forms.Form,), {"file": field})()
-
-        html = str(get_form_with_field(ClientFileField(types=(".png", ".txt")))["file"])
+        html = field.widget.render("file", None)
 
         self.assertIn('accept=".png,.txt"', html)
-        types = json.loads(unescape(re.search(r'data-types="([^"]*)"', html)[1]))
-        self.assertEqual(types, {".png": "image/png", ".txt": "text/plain"})
-
-    def test_default_types_are_set(self):
-        self.assertEqual(ClientFileField().types, DEFAULT_CLIENT_FILE_TYPES)
+        types = escape(json.dumps({".png": "image/png", ".txt": "text/plain"}))
+        self.assertIn(f'data-types="{types}"', html)
 
     def test_unknown_types_are_rejected(self):
         with self.assertRaisesMessage(ValueError, ".exe"):
@@ -239,13 +209,15 @@ class QuestionsFormSectionsTests(SimpleTestCase):
                 text_question("email", QuestionCategory.CONTACT),
                 text_question("phone", QuestionCategory.CONTACT),
                 text_question("name", QuestionCategory.CONTACT),
+                text_question("title", QuestionCategory.RESEARCH_PROJECT),
             ],
-            initial={"email": "a@example.org", "phone": "  "},
+            initial={"email": "a@example.org", "phone": "  ", "title": "Audit"},
         )
-        (section,) = form.sections
+        contact, project = form.sections
 
-        self.assertEqual((section.answered, section.total), (1, 3))
-        self.assertFalse(section.complete)
+        self.assertEqual((contact.answered, contact.total), (1, 3))
+        self.assertFalse(contact.complete)
+        self.assertTrue(project.complete)
 
     def test_initial_section_is_the_first_with_errors(self):
         questions = [
@@ -262,10 +234,14 @@ class QuestionsFormSectionsTests(SimpleTestCase):
 
 
 class QuestionFieldComponentTests(SimpleTestCase):
-    def test_yes_no_selection_becomes_yes_no_field(self):
+    def test_yes_no_selection_in_any_order_becomes_yes_no_field(self):
         yes_no = DsaQuestionFactory.build(
             input_type=InputType.SELECTION,
             config={"type": "selection", "options": ["Yes", "No"]},
+        )
+        no_yes = DsaQuestionFactory.build(
+            input_type=InputType.SELECTION,
+            config={"type": "selection", "options": ["No", "Yes"]},
         )
         other = DsaQuestionFactory.build(
             input_type=InputType.SELECTION,
@@ -273,24 +249,8 @@ class QuestionFieldComponentTests(SimpleTestCase):
         )
 
         self.assertIsInstance(get_question_field(yes_no), YesNoField)
-        self.assertNotIsInstance(get_question_field(other), YesNoField)
-
-    def test_yes_no_selection_is_detected_in_any_order(self):
-        no_yes = DsaQuestionFactory.build(
-            input_type=InputType.SELECTION,
-            config={"type": "selection", "options": ["No", "Yes"]},
-        )
-
         self.assertIsInstance(get_question_field(no_yes), YesNoField)
-
-    def test_yes_no_field_keeps_yes_no_answers_from_the_toggle(self):
-        field = YesNoField()
-
-        self.assertEqual(field.clean("true"), "Yes")
-        self.assertEqual(field.clean("false"), "No")
-        self.assertEqual(field.clean("Yes"), "Yes")
-        with self.assertRaises(ValidationError):
-            field.clean("maybe")
+        self.assertNotIsInstance(get_question_field(other), YesNoField)
 
     def test_selection_without_options_falls_back_to_text(self):
         for input_type in (InputType.SELECTION, InputType.MULTI_SELECT):
@@ -328,6 +288,7 @@ class QuestionFieldComponentTests(SimpleTestCase):
                 input_type=InputType.SELECTION,
                 config={"type": "selection", "options": ["Yes", "No"]},
             ),
+            DsaQuestionFactory.build(key="misc", input_type="no_such_type"),
         ]
         form = QuestionsForm(form_questions=[FormQuestion(q, True) for q in questions])
 
@@ -341,5 +302,6 @@ class QuestionFieldComponentTests(SimpleTestCase):
                 "role": "select",
                 "risks": "multi-select",
                 "ethics": "yes-no",
+                "misc": "text",
             },
         )

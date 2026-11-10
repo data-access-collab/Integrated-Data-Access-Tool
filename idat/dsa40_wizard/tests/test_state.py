@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import datetime
 import time
 from unittest import mock
 
@@ -22,20 +24,34 @@ def request_with_state_token(token: str):
 
 
 class WizardStateTests(SimpleTestCase):
-    def assertIsEmptyState(self, state: WizardState):  # noqa: N802
-        self.assertEqual(state["vlopses"], [])
-        self.assertEqual(state["answers"], {})
-        self.assertTrue(state["wizard_id"])
-
-    def test_dumped_state_loads_back_unchanged(self):
+    def test_dumped_state_loads_back_with_dates_as_iso_strings(self):
         state = WizardState(
-            wizard_id="draft-1", vlopses=[1, 2], answers={"email-inst": "a@example.org"}
+            wizard_id="draft-1",
+            vlopses=[1, 2],
+            answers={
+                "email-inst": "a@example.org",
+                "city": "Zürich",
+                "risks": ["Posts", "Comments"],
+                "start": datetime.date(2026, 1, 31),
+            },
         )
 
         dumped_state = dump_wizard_state(state)
         loaded = load_wizard_state(request_with_state_token(dumped_state))
 
-        self.assertEqual(loaded, state)
+        self.assertEqual(
+            loaded,
+            WizardState(
+                wizard_id="draft-1",
+                vlopses=[1, 2],
+                answers={
+                    "email-inst": "a@example.org",
+                    "city": "Zürich",
+                    "risks": ["Posts", "Comments"],
+                    "start": "2026-01-31",
+                },
+            ),
+        )
 
     def test_token_does_not_contain_answers_in_plain_text(self):
         state = WizardState(
@@ -47,15 +63,12 @@ class WizardStateTests(SimpleTestCase):
         self.assertNotIn("example.org", token)
         self.assertNotIn("draft-1", token)
 
-    def test_missing_state_token_yields_empty_state(self):
-        loaded = load_wizard_state(RequestFactory().get("/"))
-
-        self.assertIsEmptyState(loaded)
-
-    def test_empty_states_get_distinct_wizard_ids(self):
+    def test_missing_state_token_yields_empty_state_with_new_wizard_id(self):
         first = load_wizard_state(RequestFactory().get("/"))
         second = load_wizard_state(RequestFactory().get("/"))
 
+        self.assertEqual((first["vlopses"], first["answers"]), ([], {}))
+        self.assertTrue(first["wizard_id"])
         self.assertNotEqual(first["wizard_id"], second["wizard_id"])
 
     def test_expired_state_token_raises_expired_error(self):
@@ -72,7 +85,10 @@ class WizardStateTests(SimpleTestCase):
         token = dump_wizard_state(
             WizardState(wizard_id="draft-1", vlopses=[1], answers={})
         )
-        tampered = token[:-4] + ("AAAA" if not token.endswith("AAAA") else "BBBB")
+        # flip one bit of the token's HMAC
+        raw = bytearray(base64.urlsafe_b64decode(token))
+        raw[-1] ^= 1
+        tampered = base64.urlsafe_b64encode(raw).decode()
 
         with self.assertRaises(SuspiciousOperation):
             load_wizard_state(request_with_state_token(tampered))

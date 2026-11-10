@@ -19,7 +19,7 @@ from idat.vlopse.tests.factories import VlopseFactory
 
 class MappingInputTests(SimpleTestCase):
     def test_unanswered_is_none(self):
-        for value in (None, "", []):
+        for value in (None, "", "  ", [], {}):
             with self.subTest(value=value):
                 self.assertIsNone(to_mapping_input_value(value, InputType.TEXT))
 
@@ -74,9 +74,10 @@ class BuildApplicationPreviewTests(TestCase):
             )
 
     def setUp(self):
+        # stands in for reading mastodon.json; the lookup by name still runs
         self.enterContext(
             mock.patch(
-                "idat.dsa40_wizard.services.preview.get_vlopse_configuration_for",
+                "idat.dsa40_form_handler.validation.config._load_json",
                 return_value=CONFIG,
             )
         )
