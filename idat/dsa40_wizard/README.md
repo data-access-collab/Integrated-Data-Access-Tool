@@ -24,8 +24,8 @@ It consists of these steps (URL slug in brackets):
    need, one section (question category, see `sections.py`) at a time.
 3. *Review* (`review`): the answers, read-only. Continuing re-validates the stored
    answers; the page itself submits none.
-4. *Generate* (`generate`): one read-only application per VLOPSE, i.e. the answers
-   mapped to that platform's questions (`services/applications.py`), with any mapping
+4. *Generate* (`generate`): one read-only application preview per VLOPSE, i.e. the answers
+   mapped to that platform's questions (`services/preview.py`), with any mapping
    errors. Saving the applications (requires an account) is not implemented yet.
 5. *Submit* (`submit`): planned, not implemented yet.
 

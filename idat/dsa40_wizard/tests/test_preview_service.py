@@ -8,7 +8,7 @@ from django.test import SimpleTestCase, TestCase
 from idat.dsa40_form_handler.models import InputType, VLOPSEQuestion
 from idat.dsa40_form_handler.tests.factories import VlopseQuestionFactory
 from idat.dsa40_form_handler.validation.config import VLOPSEConfiguration
-from idat.dsa40_wizard.services.applications import (
+from idat.dsa40_wizard.services.preview import (
     build_application_preview,
     build_mapping_input,
     to_mapping_input_value,

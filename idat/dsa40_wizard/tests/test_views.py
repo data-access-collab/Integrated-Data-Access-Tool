@@ -89,7 +89,7 @@ def response_state(response) -> WizardState:
     new=PLATFORM_CONFIGS.__getitem__,
 )
 @mock.patch(
-    "idat.dsa40_wizard.services.applications.get_vlopse_configuration_for",
+    "idat.dsa40_wizard.services.preview.py.get_vlopse_configuration_for",
     new=PLATFORM_CONFIGS.__getitem__,
 )
 class WizardViewTests(TestCase):
@@ -391,7 +391,7 @@ class WizardViewTests(TestCase):
                 new=configs.__getitem__,
             ),
             mock.patch(
-                "idat.dsa40_wizard.services.applications.get_vlopse_configuration_for",
+                "idat.dsa40_wizard.services.preview.py.get_vlopse_configuration_for",
                 new=configs.__getitem__,
             ),
         ):

@@ -22,7 +22,7 @@ from idat.dsa40_wizard.forms import (
     QuestionsForm,
     VlopseSelectionForm,
 )
-from idat.dsa40_wizard.services.applications import build_application_previews
+from idat.dsa40_wizard.services.preview import build_application_previews
 from idat.dsa40_wizard.state import (
     FILE_KEY_HEADER,
     MAX_AGE,
@@ -43,7 +43,7 @@ if typing.TYPE_CHECKING:
     from django import forms
     from django.http.request import HttpRequest
 
-    from idat.dsa40_wizard.services.applications import VlopseApplicationPreview
+    from idat.dsa40_wizard.services.preview import VlopseApplicationPreview
 
 
 class WizardStep(StrEnum):
