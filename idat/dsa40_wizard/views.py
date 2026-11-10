@@ -9,6 +9,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseBase,
     HttpResponseNotAllowed,
 )
@@ -55,10 +56,16 @@ if typing.TYPE_CHECKING:
 
 
 def is_submit(request: HttpRequest) -> bool:
-    """Whether the request came through a step's submit URL (create/<step>/submit/,
-    used by the step forms) rather than its plain URL (shows the step)."""
+    """Whether the request came through a step's submit URL (create/<step>/submit/)
+    rather than its plain URL (shows the step)."""
     match = request.resolver_match
     return bool(match and match.view_name == "dsa40_wizard:wizard_submit")
+
+
+def is_save(request: HttpRequest) -> bool:
+    """Whether the request came through a step's save URL (create/<step>/save/)."""
+    match = request.resolver_match
+    return bool(match and match.view_name == "dsa40_wizard:wizard_save")
 
 
 class WizardStep(StrEnum):
@@ -150,12 +157,15 @@ class WizardFormStep(View):
     template_name: str
     form_class: type[forms.Form]
     state: WizardState
+    can_save: bool = False
 
     def form_questions(self) -> list[FormQuestion]:
         """The DSA questions of the stored VLOPSE selection."""
         return get_mapped_vlopse_questions(self.state["vlopses"])
 
     def dispatch(self, request: HttpRequest, *args, **kwargs) -> HttpResponseBase:
+        if is_save(request) and not self.can_save:
+            raise Http404
         if not request.htmx or request.htmx.history_restore_request:
             # plain page load (reload, typed URL) or browser back/forward: the
             # server can't see sessionStorage, so return the base view and let
@@ -179,10 +189,14 @@ class WizardFormStep(View):
         if redirect_to := self.check_prerequisites():
             return redirect_to
         # every step request is a POST (it carries the token): the URL, not the
-        # method, tells a form submit from showing the step
-        if is_submit(request):
-            return self.post(request, *args, **kwargs)
-        return self.get(request, *args, **kwargs)
+        # method, tells a form submit (or save) from showing the step
+        if is_save(request):
+            handler = self.save
+        elif is_submit(request):
+            handler = self.post
+        else:
+            handler = self.get
+        return handler(request, *args, **kwargs)
 
     def load_draft(self) -> WizardState | None:
         """The request's wizard state, or None if the draft can't be loaded: its token
@@ -225,6 +239,10 @@ class WizardFormStep(View):
 
     def update_state(self, form: forms.Form) -> None:
         """Update self.state in place."""
+        raise NotImplementedError
+
+    def save(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """Handle the save URL (steps with can_save only)."""
         raise NotImplementedError
 
     def check_prerequisites(self) -> HttpResponse | None:
@@ -316,6 +334,11 @@ class QuestionsStep(WizardFormStep):
     template_name = "dsa40_wizard/_questions_form.html"
     form_class = QuestionsForm
 
+    can_save = True
+    save_allowed_next_steps: dict[str, type[WizardFormStep]] = {
+        WizardStep.CHOOSE_VLOPSES: VlopseSelectionStep
+    }
+
     def check_prerequisites(self) -> HttpResponse | None:
         """Checks that at least one VLOPSE is selected and each has a config."""
         if not has_vlopse_configs(self.state):
@@ -330,6 +353,39 @@ class QuestionsStep(WizardFormStep):
 
     def update_state(self, form: forms.Form) -> None:
         self.state["answers"] = dict(form.cleaned_data)
+
+    def save(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        """Store the entered answers without enforcing them, refresh the token and
+        update the sections' answered counts (out of band; the form isn't swapped, so
+        focus and input stay). With ?next=<step>, show that step afterwards instead."""
+        next_step = request.GET.get("next")
+        if next_step and next_step not in self.save_allowed_next_steps:
+            return HttpResponseBadRequest()
+        self.save_answers(self.get_form(data=request.POST))
+        if next_step:
+            return self.go_to(self.save_allowed_next_steps[next_step])
+        response = render(
+            request,
+            "dsa40_wizard/_saved.html",
+            {
+                # unbound: counts from the stored answers, no errors before a submit
+                "form": self.get_form(),
+                "current_step": self.step,
+                "wizard_urls": get_wizard_urls(),
+            },
+        )
+        return self.add_response_headers(response)
+
+    def save_answers(self, form: QuestionsForm) -> None:
+        """Store an answer for every question: cleaned if valid, else as entered,
+        so nothing typed is lost."""
+        form.is_valid()
+        self.state["answers"] = {
+            name: form.cleaned_data[name]
+            if name in form.cleaned_data
+            else form[name].data
+            for name in form.fields
+        }
 
 
 class ReviewStep(WizardFormStep):
@@ -415,9 +471,10 @@ STEP_VIEWS: dict[WizardStep, Callable[..., HttpResponseBase]] = {
 
 
 def route_wizard_step(request: HttpRequest, step: WizardStep) -> HttpResponseBase:
-    """Route create/<step>/ (show) and create/<step>/submit/ (submit, see is_submit) to
-    the view of that WizardStep slug: one URL pattern each for all steps, so links are
-    built by slug. 404 for unknown steps and steps without a view yet (submit)."""
+    """Route create/<step>/ (show), create/<step>/submit/ (submit, see is_submit) and
+    create/<step>/save/ (save, see is_save) to the view of that WizardStep slug: one URL
+    pattern each for all steps, so links are built by slug. 404 for unknown steps and
+    steps without a view yet (submit)."""
     view = STEP_VIEWS.get(step)
     if view is None:
         raise Http404

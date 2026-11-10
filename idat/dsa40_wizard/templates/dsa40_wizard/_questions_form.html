@@ -5,6 +5,9 @@
   Next checks the visible section's answers in the browser first. The form itself is
   novalidate: the browser can't point at a required field in a hidden section, so the
   server validates and the form reopens on the first section with errors.
+  Saves (store the answers without validating them, refresh the draft token, update the
+  answered counts) run in the background: on a section switch, a file change
+  (wizard-save) and after 30 seconds without typing; "Back to platforms" saves too.
 {% endcomment %}
 
 {% load i18n %}
@@ -14,14 +17,25 @@
   hx-post="{% url 'dsa40_wizard:wizard_submit' 'enter-details' %}"
   hx-target="#application-wizard-body"
   hx-swap="innerHTML"
+  hx-sync="this:queue last"
   novalidate
+  data-wizard-save-url="{% url 'dsa40_wizard:wizard_save' 'enter-details' %}"
   x-data="{
     show(name) { this.section = name; window.scrollTo({ top: 0 }) },
     isValid(el) { return [...el.closest('section').querySelectorAll('input, select, textarea')].every((c) => c.reportValidity()) },
   }"
-  x-init="section = '{{ form.initial_section }}'"
+  x-init="section = '{{ form.initial_section }}'; $watch('section', () => $dispatch('wizard-save'))"
 >
   {% csrf_token %}
+  <div
+    hidden
+    hx-post="{% url 'dsa40_wizard:wizard_save' 'enter-details' %}"
+    hx-include="closest form"
+    hx-swap="none"
+    hx-sync="closest form:queue last"
+    hx-trigger="wizard-save from:closest form, input delay:30s from:closest form, change delay:30s from:closest form"
+  >
+  </div>
 
   {% for section in form.sections %}
     {# no id on the section: htmx settling would restore the swapped-out section's attributes over x-show's display #}
@@ -30,14 +44,7 @@
       x-show="section === '{{ section.category }}'"
       {% if section.category != form.initial_section %}x-cloak{% endif %}
     >
-      <c-forms.section-header
-        id="section-{{ section.category }}"
-        :icon="section.icon"
-        :title="section.label"
-        :description="section.description"
-        status="{{ section.answered }}/{{ section.total }}"
-        status-tone="{% if section.has_errors %}danger{% elif section.complete %}success{% else %}neutral{% endif %}"
-      />
+      {% include "dsa40_wizard/_section_header.html" %}
 
       {# Card: one row per question, the focused one marked by the active bar #}
       <div class="flex flex-col gap-lg rounded-lg border border-default bg-surface p-lg">
@@ -68,8 +75,9 @@
             variant="secondary"
             leading-icon="arrow-left"
             label="{% translate "Back to platforms" %}"
-            hx-post="{% url 'dsa40_wizard:wizard_step' 'choose-vlopses' %}"
+            hx-post="{% url 'dsa40_wizard:wizard_save' 'enter-details' %}?next=choose-vlopses"
             hx-target="#application-wizard-body"
+            hx-sync="closest form:queue last"
           />
         {% endif %}
 
@@ -92,8 +100,9 @@
           variant="secondary"
           leading-icon="arrow-left"
           label="{% translate "Back to platforms" %}"
-          hx-post="{% url 'dsa40_wizard:wizard_step' 'choose-vlopses' %}"
+          hx-post="{% url 'dsa40_wizard:wizard_save' 'enter-details' %}?next=choose-vlopses"
           hx-target="#application-wizard-body"
+          hx-sync="closest form:queue last"
         />
         <c-button type="submit" icon="arrow-right" label="{% translate "Generate applications" %}" />
       </div>

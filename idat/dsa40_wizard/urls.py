@@ -16,4 +16,9 @@ urlpatterns = [
         view=views.route_wizard_step,
         name="wizard_submit",
     ),
+    path(
+        "create/<slug:step>/save/",
+        view=views.route_wizard_step,
+        name="wizard_save",
+    ),
 ]

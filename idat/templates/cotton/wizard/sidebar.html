@@ -17,6 +17,8 @@
   inside), shown under "Enter your details" while that step is current.
 
   The search box dispatches "wizard-search" with { query } while typing.
+  Each step item carries data-wizard-step="<step slug>", e.g. for scripts that save the
+  current step before following a step link.
 
   Usage:
     <c-wizard.sidebar current-step="enter-details" :hrefs="wizard_urls">
@@ -49,30 +51,35 @@
     <ol class="flex flex-col gap-2xs">
       <c-wizard.step-item
         number="1"
+        data-wizard-step="choose-vlopses"
         label="{% translate "Choose platforms" %}"
         state="{% if current_step == "choose-vlopses" %}current{% else %}done{% endif %}"
         href="{% if current_step != "choose-vlopses" %}{{ hrefs.choose_vlopses }}{% endif %}"
       />
       <c-wizard.step-item
         number="2"
+        data-wizard-step="enter-details"
         label="{% translate "Enter your details" %}"
         state="{% if current_step == "choose-vlopses" %}upcoming{% elif current_step == "enter-details" %}current{% else %}done{% endif %}"
         href="{% if current_step != "choose-vlopses" and current_step != "enter-details" %}{{ hrefs.enter_details }}{% endif %}"
       >{% if current_step == "enter-details" %}{{ slot }}{% endif %}</c-wizard.step-item>
       <c-wizard.step-item
         number="3"
+        data-wizard-step="review"
         label="{% translate "Review" %}"
         state="{% if current_step == "review" %}current{% elif current_step == "generate" or current_step == "submit" %}done{% else %}upcoming{% endif %}"
         href="{% if current_step == "generate" or current_step == "submit" %}{{ hrefs.review }}{% endif %}"
       />
       <c-wizard.step-item
         number="4"
+        data-wizard-step="generate"
         label="{% translate "Generate" %}"
         state="{% if current_step == "generate" %}current{% elif current_step == "submit" %}done{% else %}upcoming{% endif %}"
         href="{% if current_step == "submit" %}{{ hrefs.generate }}{% endif %}"
       />
       <c-wizard.step-item
         number="5"
+        data-wizard-step="submit"
         label="{% translate "Submit" %}"
         state="{% if current_step == "submit" %}current{% else %}upcoming{% endif %}"
       />

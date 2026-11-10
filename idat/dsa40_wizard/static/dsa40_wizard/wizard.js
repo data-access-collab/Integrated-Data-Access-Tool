@@ -211,6 +211,9 @@ async function discardDraft() {
  *   draft can't be loaded (X-Wizard-Draft-Unavailable), discard it and go to that URL
  * - wizard-done: discard the draft (once saved; not dispatched yet)
  * - wizard-discard: discard the draft and go to event.detail.href ("Discard draft")
+ * - click on a sidebar step link while the questions form is shown: save the answers
+ *   and show that step (the save URL's ?next=), instead of loading the page and
+ *   losing what wasn't saved yet
  */
 function registerListeners() {
   document.body.addEventListener("htmx:configRequest", (e) => {
@@ -251,6 +254,16 @@ function registerListeners() {
   document.body.addEventListener("wizard-discard", async (e) => {
     await discardDraft().catch(console.error);
     window.location.assign(e.detail.href);
+  });
+
+  document.body.addEventListener("click", (e) => {
+    const link = e.target.closest("#wizard-sidebar [data-wizard-step] > a[href]");
+    const form = document.querySelector("form[data-wizard-save-url]");
+    if (!link || !form || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    const step = link.parentElement.dataset.wizardStep;
+    const url = `${form.dataset.wizardSaveUrl}?next=${encodeURIComponent(step)}`;
+    window.htmx.ajax("POST", url, { source: form, target: "#application-wizard-body" });
   });
 }
 
@@ -305,6 +318,8 @@ function clientFile() {
         this.metadata = metadata;
         this.missing = false;
         this.$refs.metadataInput.value = JSON.stringify(metadata);
+        // save now: a file stored in the browser without saved metadata is lost on reload
+        this.$dispatch("wizard-save");
       } catch (err) {
         this.error = err.message;
       } finally {
@@ -318,6 +333,7 @@ function clientFile() {
       this.metadata = null;
       this.missing = false;
       this.$refs.metadataInput.value = "";
+      this.$dispatch("wizard-save");
     },
   };
 }

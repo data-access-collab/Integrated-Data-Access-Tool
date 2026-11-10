@@ -1,0 +1,16 @@
+{% comment %}
+  Header of a questions form section, with its answered count. Rendered in the form, and
+  sent again out of band (oob=True) after a save, so the count follows the answers. Only
+  a submit's validation errors turn it red.
+{% endcomment %}
+
+<div id="section-header-{{ section.category }}" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <c-forms.section-header
+    id="section-{{ section.category }}"
+    :icon="section.icon"
+    :title="section.label"
+    :description="section.description"
+    status="{{ section.answered }}/{{ section.total }}"
+    status-tone="{% if section.has_errors %}danger{% elif section.complete %}success{% else %}neutral{% endif %}"
+  />
+</div>

@@ -89,6 +89,10 @@ def get_submit_url(step: str) -> str:
     return reverse("dsa40_wizard:wizard_submit", args=[step])
 
 
+def get_save_url(step: str) -> str:
+    return reverse("dsa40_wizard:wizard_save", args=[step])
+
+
 HTMX_HEADERS = {"HX-Request": "true"}
 
 
@@ -417,6 +421,86 @@ class WizardViewTests(TestCase):
         self.assertEqual(response["HX-Push-Url"], get_step_url("review"))
         self.assertContains(response, "a@example.org")
         self.assertEqual(response_state(response)["answers"]["email"], "a@example.org")
+
+    def test_saving_details_stores_answers_without_validating_them(self):
+        DsaQuestionFactory.create(
+            key="start", text="Project start", input_type=InputType.DATE_SELECT
+        )
+        VlopseQuestionFactory.create(
+            key="mastodon-start",
+            vlopse=self.mastodon,
+            required=True,
+            input_type=InputType.DATE_SELECT,
+        )
+        configs = {
+            "mastodon.json": platform_config(
+                "mastodon",
+                {
+                    "mastodon-email": "email",
+                    "mastodon-title": "project-title",
+                    "mastodon-start": "start",
+                },
+            )
+        }
+
+        with mock.patch(CONFIG_FILE_READER, new=config_reader(configs)):
+            response = self.client.post(
+                get_save_url("enter-details"),
+                data=step_data(
+                    create_state([self.mastodon.pk]),
+                    {"email": "", "project-title": "Audit", "start": "2026-13"},
+                ),
+                headers=HTMX_HEADERS,
+            )
+
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertNotIn("HX-Push-Url", response)
+        self.assertNotIn("HX-Replace-Url", response)
+        # required but empty and invalid answers are kept as entered
+        self.assertEqual(
+            response_state(response)["answers"],
+            {"email": "", "project-title": "Audit", "start": "2026-13"},
+        )
+        # only the counts, out of band: no form, no errors
+        self.assertTemplateUsed(response, "dsa40_wizard/_saved.html")
+        self.assertContains(response, 'hx-swap-oob="true"')
+        self.assertContains(response, "2/3")
+        self.assertNotContains(response, "This field is required.")
+
+    def test_saving_details_before_leaving_shows_the_next_step(self):
+        response = self.client.post(
+            f"{get_save_url('enter-details')}?next=choose-vlopses",
+            data=step_data(
+                create_state([self.mastodon.pk]), {"project-title": "Audit"}
+            ),
+            headers=HTMX_HEADERS,
+        )
+
+        self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
+        self.assertTemplateUsed(response, VlopseSelectionStep.template_name)
+        # a question the request didn't send is stored unanswered
+        self.assertEqual(
+            response_state(response)["answers"],
+            {"email": None, "project-title": "Audit"},
+        )
+
+    def test_saving_details_rejects_a_next_step_it_cannot_continue_to(self):
+        response = self.client.post(
+            f"{get_save_url('enter-details')}?next=review",
+            data=step_data(create_state([self.mastodon.pk])),
+            headers=HTMX_HEADERS,
+        )
+
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+
+    def test_only_the_details_step_can_be_saved(self):
+        response = self.client.post(
+            get_save_url("review"),
+            data=step_data(create_state([self.mastodon.pk])),
+            headers=HTMX_HEADERS,
+        )
+
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_review_advances_to_generate(self):
         # every question is stored, unanswered ones empty (QuestionsStep.update_state)
