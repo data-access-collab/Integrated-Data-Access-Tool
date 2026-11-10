@@ -55,7 +55,7 @@ draft in the browser as an encrypted, authenticated token instead gives:
    keeps. With plain state in sessionStorage, anyone at the device could read the
    draft ID and get the key at any time; expiry would be up to the browser.
 2. **Integrity.** The browser can't alter the state (e.g. the draft ID or the
-   selected VLOPSEs) without the server noticing; a tampered token resets the draft.
+   selected VLOPSEs) without the server noticing.
 3. **Confidentiality, as a side effect.** The answers aren't readable in browser
    storage.
 
@@ -70,6 +70,10 @@ fields; `wizard.js` adds the state to every htmx request:
   `htmx:afterRequest` stores it in sessionStorage.
 - The first step request has no token yet: the server starts an empty state with a
   new draft ID (`load_wizard_state`), whose token comes back with that response.
+- If the draft can't be loaded (token expired, tampered or from a rotated secret, or
+  no token on a later step, e.g. its URL opened in another tab), the server answers
+  204 with `X-Wizard-Draft-Unavailable`: `wizard.js` discards the draft (token, file
+  key, files) and goes to the "draft unavailable" page (`WizardFormStep.load_draft`).
 
 So every wizard request is an htmx **POST** (`hx-post`, never `hx-get`, a plain
 `<form method="post">` or a link); an htmx GET is rejected. As the method no longer
@@ -97,7 +101,9 @@ How the parts work together:
 - IndexedDB is shared by all tabs, so files expire by last-seen time and the token
   TTL rather than per tab: files of abandoned drafts stay, unreadable, until the
   wizard is used again in that browser.
-- "Discard draft" deletes the token, the key and the draft's files.
+- "Discard draft" and an unavailable draft delete the token, the key and the draft's
+  files. The draft ID is kept in sessionStorage next to the token, so this also works
+  after a reload.
 
 **Saving (not implemented yet):** the browser uploads the decrypted files
 (`getDecryptedFiles()`). The server must validate them against their actual content

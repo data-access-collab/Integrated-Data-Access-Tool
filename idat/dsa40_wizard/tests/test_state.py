@@ -10,6 +10,7 @@ from idat.dsa40_wizard.state import (
     MAX_STATE_AGE,
     STATE_POST_FIELD,
     WizardState,
+    WizardStateExpiredError,
     dump_wizard_state,
     file_encryption_key,
     load_wizard_state,
@@ -57,17 +58,15 @@ class WizardStateTests(SimpleTestCase):
 
         self.assertNotEqual(first["wizard_id"], second["wizard_id"])
 
-    def test_expired_state_token_yields_new_empty_state(self):
+    def test_expired_state_token_raises_expired_error(self):
         issued_at = time.time() - MAX_STATE_AGE - 60
         with mock.patch("cryptography.fernet.time.time", return_value=issued_at):
             token = dump_wizard_state(
                 WizardState(wizard_id="draft-1", vlopses=[1], answers={})
             )
 
-        loaded = load_wizard_state(request_with_state_token(token))
-
-        self.assertIsEmptyState(loaded)
-        self.assertNotEqual(loaded["wizard_id"], "draft-1")
+        with self.assertRaises(WizardStateExpiredError):
+            load_wizard_state(request_with_state_token(token))
 
     def test_tampered_state_token_raises_suspicious_operation(self):
         token = dump_wizard_state(

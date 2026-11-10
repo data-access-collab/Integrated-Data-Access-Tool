@@ -12,13 +12,8 @@
  * expire like the token (X-Wizard-Max-Age, sliding), not when another tab starts.
  */
 
-const STATE_KEY = "dsa40-wizard-state";
 const DB_NAME = "dsa40-wizard";
 const STORE = "files";
-
-let wizardId = null;
-let fileKey = null; // Promise<CryptoKey>
-let maxAgeMs = 0;
 
 // mirrored in dsa40_wizard.state
 const STATE_POST_FIELD = "wizard_state";
@@ -26,6 +21,54 @@ const STATE_REQUEST_HEADER = "X-Wizard-State";
 const WIZARD_ID_HEADER = "X-Wizard-Id";
 const FILE_KEY_HEADER = "X-Wizard-File-Key";
 const MAX_STATE_AGE_HEADER = "X-Wizard-Max-Age";
+const DRAFT_UNAVAILABLE_HEADER = "X-Wizard-Draft-Unavailable";
+
+/*
+ * Draft state of this tab
+ *
+ * In sessionStorage (per tab, survives reloads):
+ * - STATE_KEY: the encrypted state token, sent with every request.
+ * - WIZARD_ID_KEY: the draft ID, i.e. which stored files are this tab's. It is kept
+ *   so that a draft found unavailable right after a reload (before any step response
+ *   named it again) can still delete its files. No secret: it is in IndexedDB anyway,
+ *   and the server never accepts it from the browser.
+ * In memory only, set from each step response:
+ * - fileKey: Promise<CryptoKey> of the draft's file key; never persisted.
+ * - maxAgeMs: the token TTL, after which stored files expire.
+ * The draft ID and file key change only in rememberDraft / forgetDraft.
+ */
+const STATE_KEY = "dsa40-wizard-state";
+const WIZARD_ID_KEY = "dsa40-wizard-id";
+
+let wizardId = readSession(WIZARD_ID_KEY);
+let fileKey = null;
+let maxAgeMs = 0;
+
+function readSession(key) {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/** Take the draft ID and file key of a step response (re-importing the key after a reload). */
+function rememberDraft(id, encodedKey) {
+  if (id === wizardId && fileKey) return;
+  wizardId = id;
+  fileKey = importKey(encodedKey);
+  sessionStorage.setItem(WIZARD_ID_KEY, id);
+}
+
+/** Drop the token, draft ID and file key; the caller deletes the stored files first. */
+function forgetDraft() {
+  try {
+    sessionStorage.removeItem(STATE_KEY);
+    sessionStorage.removeItem(WIZARD_ID_KEY);
+  } catch {}
+  wizardId = null;
+  fileKey = null;
+}
 
 /* IndexedDB */
 
@@ -64,6 +107,8 @@ const deleteStoredFile = (question) => withStore("readwrite", (store) => store.d
  * the server won't hand out their key anymore.
  */
 function touchStoredFiles() {
+  // without the TTL every other draft's files would count as expired
+  if (!maxAgeMs) return Promise.resolve();
   const now = Date.now();
   return withStore("readwrite", (store) => {
     store.openCursor().onsuccess = (event) => {
@@ -152,12 +197,8 @@ async function validateFile(file, { maxSize, types }) {
 /* Draft lifecycle */
 
 async function discardDraft() {
-  try {
-    sessionStorage.removeItem(STATE_KEY);
-  } catch {}
   if (wizardId) await deleteDraftStoredFiles();
-  wizardId = null;
-  fileKey = null;
+  forgetDraft();
 }
 
 /**
@@ -166,7 +207,8 @@ async function discardDraft() {
  *   it can't end up in a URL)
  * - htmx:beforeSwap: take the draft id, file key and TTL from step responses and
  *   refresh/expire stored files
- * - htmx:afterRequest: keep the re-issued state token in sessionStorage
+ * - htmx:afterRequest: keep the re-issued state token in sessionStorage; if the
+ *   draft can't be loaded (X-Wizard-Draft-Unavailable), discard it and go to that URL
  * - wizard-done: discard the draft (once saved; not dispatched yet)
  * - wizard-discard: discard the draft and go to event.detail.href ("Discard draft")
  */
@@ -182,17 +224,25 @@ function registerListeners() {
     const id = xhr.getResponseHeader(WIZARD_ID_HEADER);
     const key = xhr.getResponseHeader(FILE_KEY_HEADER);
     if (!id || !key) return;
-    if (id !== wizardId) {
-      wizardId = id;
-      fileKey = importKey(key);
-    }
+    rememberDraft(id, key);
     maxAgeMs = Number(xhr.getResponseHeader(MAX_STATE_AGE_HEADER)) * 1000;
     // on every step response, as the server re-issues the token on each
     touchStoredFiles().catch(console.error);
   });
 
-  document.body.addEventListener("htmx:afterRequest", (e) => {
-    const token = e.detail.xhr.getResponseHeader(STATE_REQUEST_HEADER);
+  document.body.addEventListener("htmx:afterRequest", async (e) => {
+    const xhr = e.detail.xhr;
+    const unavailableUrl = xhr.getResponseHeader(DRAFT_UNAVAILABLE_HEADER);
+    if (unavailableUrl) {
+      maxAgeMs = Number(xhr.getResponseHeader(MAX_STATE_AGE_HEADER)) * 1000;
+      // this draft's files, then those of drafts that expired meanwhile
+      await discardDraft()
+        .then(touchStoredFiles)
+        .catch(console.error);
+      window.location.assign(unavailableUrl);
+      return;
+    }
+    const token = xhr.getResponseHeader(STATE_REQUEST_HEADER);
     if (token) sessionStorage.setItem(STATE_KEY, token);
   });
 

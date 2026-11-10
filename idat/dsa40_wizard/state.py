@@ -29,11 +29,17 @@ STATE_REQUEST_HEADER = "X-Wizard-State"
 WIZARD_ID_HEADER = "X-Wizard-Id"
 FILE_KEY_HEADER = "X-Wizard-File-Key"
 MAX_STATE_AGE_HEADER = "X-Wizard-Max-Age"
+# the draft can't be loaded: the browser discards it and goes to this URL
+DRAFT_UNAVAILABLE_HEADER = "X-Wizard-Draft-Unavailable"
 
 # Encryption domain separation.
 # Don't change - invalidates all existing tokens and client-side stored files
 _STATE_TOKEN_KEY_INFO = b"dsa40-wizard-token"
 _FILE_KEY_INFO = b"dsa40-wizard-file:"
+
+
+class WizardStateExpiredError(Exception):
+    """The state token is valid but older than MAX_STATE_AGE."""
 
 
 class WizardState(TypedDict):
@@ -74,7 +80,8 @@ def _state_token_cipher() -> Fernet:
 def load_wizard_state(request: HttpRequest) -> WizardState:
     """Load the state from the request's POST parameter.
 
-    Missing or expired token → new empty state.
+    Missing token → new empty state.
+    Expired token → raises WizardStateExpiredError.
     Tampered token, or one encrypted with another secret → raises SuspiciousOperation.
     """
     token = request.POST.get(STATE_POST_FIELD)
@@ -91,7 +98,7 @@ def load_wizard_state(request: HttpRequest) -> WizardState:
         except InvalidToken as err:  # tampered
             msg = "Invalid wizard state"
             raise SuspiciousOperation(msg) from err
-        return empty_wizard_state()
+        raise WizardStateExpiredError from None
     return WizardJSONSerializer().loads(zlib.decompress(data))
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing
 from enum import StrEnum
+from http import HTTPStatus
 from typing import Any
 
 from django.core.exceptions import SuspiciousOperation
@@ -29,14 +30,16 @@ from idat.dsa40_wizard.forms import (
 )
 from idat.dsa40_wizard.services.preview import build_application_previews
 from idat.dsa40_wizard.state import (
+    DRAFT_UNAVAILABLE_HEADER,
     FILE_KEY_HEADER,
     MAX_STATE_AGE,
     MAX_STATE_AGE_HEADER,
+    STATE_POST_FIELD,
     STATE_REQUEST_HEADER,
     WIZARD_ID_HEADER,
     WizardState,
+    WizardStateExpiredError,
     dump_wizard_state,
-    empty_wizard_state,
     encode_file_encryption_key,
     load_wizard_state,
 )
@@ -107,6 +110,16 @@ def get_shell_context(load_url: str, current_step: WizardStep) -> dict[str, Any]
     }
 
 
+def draft_unavailable_response() -> HttpResponse:
+    """Tell wizard.js the draft can't be loaded: it discards the draft (token, file key,
+    stored files) and goes to the draft unavailable page. No content, so htmx swaps
+    nothing; the TTL lets the browser also drop expired files."""
+    response = HttpResponse(status=HTTPStatus.NO_CONTENT)
+    response[DRAFT_UNAVAILABLE_HEADER] = reverse("dsa40_wizard:draft_unavailable")
+    response[MAX_STATE_AGE_HEADER] = str(MAX_STATE_AGE)
+    return response
+
+
 class WizardFormView(TemplateView):
     """Entry view for DSA 40 application wizard"""
 
@@ -149,12 +162,10 @@ class WizardFormStep(View):
             # the state token travels in the POST body only
             return HttpResponseNotAllowed(["POST"])
 
-        try:
-            self.state = load_wizard_state(request)
-        except SuspiciousOperation:
-            # Tampered token or rotated secret: start over
-            self.state = empty_wizard_state()
-            return self.go_to(VlopseSelectionStep)
+        state = self.load_draft()
+        if state is None:
+            return draft_unavailable_response()
+        self.state = state
 
         if redirect_to := self.check_prerequisites():
             return redirect_to
@@ -163,6 +174,21 @@ class WizardFormStep(View):
         if is_submit(request):
             return self.post(request, *args, **kwargs)
         return self.get(request, *args, **kwargs)
+
+    def load_draft(self) -> WizardState | None:
+        """The request's wizard state, or None if the draft can't be loaded: its token
+        expired, was tampered with or encrypted with a rotated secret, or there is none
+        on a later step (e.g. its URL opened in another tab). Without a token, only the
+        first step starts a new draft."""
+        if (
+            not self.request.POST.get(STATE_POST_FIELD)
+            and self.step != WizardStep.CHOOSE_VLOPSES
+        ):
+            return None
+        try:
+            return load_wizard_state(self.request)
+        except WizardStateExpiredError, SuspiciousOperation:
+            return None
 
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         return self.render_step(self.get_form())
@@ -350,6 +376,11 @@ class GenerateStep(ReviewStep):
         # TODO: Validate uploaded files against their content (type, size, SHA-256)
         #  before storing;
         raise NotImplementedError
+
+
+class WizardDraftUnavailableView(TemplateView):
+    template_name = "dsa40_wizard/draft_unavailable.html"
+    extra_context = {"state_ttl": int(MAX_STATE_AGE / 60 / 60)}
 
 
 VlopseSelectionStep.next_step = QuestionsStep

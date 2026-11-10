@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from http import HTTPStatus
 from unittest import mock
 
@@ -15,6 +16,7 @@ from idat.dsa40_form_handler.tests.factories import (
 from idat.dsa40_form_handler.validation.config import VLOPSEConfiguration
 from idat.dsa40_wizard.forms import VlopseSelectionForm
 from idat.dsa40_wizard.state import (
+    DRAFT_UNAVAILABLE_HEADER,
     FILE_KEY_HEADER,
     MAX_STATE_AGE,
     MAX_STATE_AGE_HEADER,
@@ -203,19 +205,58 @@ class WizardViewTests(TestCase):
 
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-    def test_tampered_state_token_restarts_wizard_with_empty_state(self):
+    def ensure_draft_is_unavailable(self, response):
+        # no content to swap: wizard.js discards the draft and goes to the page
+        self.assertEqual(response.status_code, HTTPStatus.NO_CONTENT)
+        self.assertEqual(
+            response[DRAFT_UNAVAILABLE_HEADER],
+            reverse("dsa40_wizard:draft_unavailable"),
+        )
+        self.assertEqual(response[MAX_STATE_AGE_HEADER], str(MAX_STATE_AGE))
+        self.assertNotIn(STATE_REQUEST_HEADER, response)
+
+    def test_tampered_state_token_makes_draft_unavailable(self):
         response = self.client.post(
             get_step_url("review"),
             data={STATE_POST_FIELD: "not-an-encrypted-token"},
             headers=HTMX_HEADERS,
         )
 
+        self.ensure_draft_is_unavailable(response)
+
+    def test_expired_state_token_makes_draft_unavailable(self):
+        issued_at = time.time() - MAX_STATE_AGE - 60
+        with mock.patch("cryptography.fernet.time.time", return_value=issued_at):
+            data = step_data(create_state([self.mastodon.pk]))
+
+        response = self.client.post(
+            get_step_url("enter-details"), data=data, headers=HTMX_HEADERS
+        )
+
+        self.ensure_draft_is_unavailable(response)
+
+    def test_later_step_without_token_makes_draft_unavailable(self):
+        # e.g. a step URL opened in another tab: its draft lives in the first tab
+        response = self.client.post(
+            get_step_url("review"), data=step_data(), headers=HTMX_HEADERS
+        )
+
+        self.ensure_draft_is_unavailable(response)
+
+    def test_first_step_without_token_starts_a_new_draft(self):
+        response = self.client.post(
+            get_step_url("choose-vlopses"), data=step_data(), headers=HTMX_HEADERS
+        )
+
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response["HX-Replace-Url"], get_step_url("choose-vlopses"))
-        self.assertTemplateUsed(response, VlopseSelectionStep.template_name)
-        state = response_state(response)
-        self.assertEqual(state["vlopses"], [])
-        self.assertEqual(state["answers"], {})
+        self.assertEqual(response_state(response)["vlopses"], [])
+
+    def test_draft_unavailable_page_names_the_token_ttl(self):
+        response = self.client.get(reverse("dsa40_wizard:draft_unavailable"))
+
+        self.assertContains(response, "This draft is no longer available")
+        hours = MAX_STATE_AGE // 3600
+        self.assertContains(response, f"inactive for more than {hours} hours")
 
     def test_vlopse_step_preselects_previously_chosen_vlopses(self):
         state = create_state([self.mastodon.pk], {})
@@ -273,7 +314,7 @@ class WizardViewTests(TestCase):
     def test_questions_step_without_vlopses_falls_back_to_selection(self):
         response = self.client.post(
             get_step_url("enter-details"),
-            data=step_data(),
+            data=step_data(create_state([])),
             headers=HTMX_HEADERS,
         )
 
