@@ -41,6 +41,7 @@ def test_list_vlopse_questions(client: Client, vlopse: Vlopse):
             "input_type": question.input_type,
             "details": question.details,
             "config": question.config,
+            "category": question.category,
         },
     ]
 
@@ -60,6 +61,7 @@ def test_get_single_vlopse_question(client: Client, vlopse_question: VLOPSEQuest
         "input_type": vlopse_question.input_type,
         "details": vlopse_question.details,
         "config": vlopse_question.config,
+        "category": vlopse_question.category,
     }
 
 

@@ -14,6 +14,21 @@ class InputType(models.TextChoices):
     ISO_3166_1 = "iso-3166-1"
 
 
+class QuestionCategory(models.TextChoices):
+    GENERAL = "general", "General"  # Fallback category
+    CONTACT = "contact_details", "Contact details"
+    COLLABORATION = "collaboration", "Collaboration"
+    QUALIFICATIONS = "qualifications", "Qualifications"
+    AFFILIATION = "affiliation", "Affiliation"
+    FUNDING = "funding_commercial_interests", "Funding"
+    RESEARCH_PROJECT = "research_project", "Research project"
+    TECHNICAL = "technical", "Technical"
+    REQUESTED_DATA = "requested_data", "Requested data"
+    EXPERIENCE = "previous_experience", "Previous experience"
+    DATA_SECURITY = "data_security", "Data security"
+    LEGAL = "legal", "Legal"
+
+
 class VLOPSEQuestion(models.Model):
     """
     Top Level Configuration object for a
@@ -31,9 +46,17 @@ class VLOPSEQuestion(models.Model):
     )
     details = TextField(blank=True)
     config = JSONField(null=True, blank=True)
+    category = CharField(max_length=200, blank=True)
+
+    class Meta:
+        verbose_name = "VLOPSE Question"
 
     def __str__(self) -> str:
-        return f"{self.vlopse.name}Q[{self.key}]('{self.text}')"
+        max_length = 50
+        truncated_text = (
+            self.text[:max_length] + "..." if len(self.text) > max_length else self.text
+        )
+        return f"{self.vlopse.name} [{self.key}] - {truncated_text}"
 
 
 class DSAQuestion(models.Model):
@@ -46,6 +69,14 @@ class DSAQuestion(models.Model):
         default=InputType.TEXT,
     )
     config = JSONField(null=True, blank=True)
+    category = CharField(
+        max_length=32,
+        choices=QuestionCategory,
+        default=QuestionCategory.GENERAL,
+    )
+
+    class Meta:
+        verbose_name = "DSA Question"
 
     def __str__(self) -> str:
         return f"Q[{self.key}]('{self.text}')"

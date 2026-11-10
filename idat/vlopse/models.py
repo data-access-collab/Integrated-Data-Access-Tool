@@ -29,5 +29,9 @@ class Vlopse(models.Model):
         default=ApplicationModality.EMAIL,
     )
 
+    class Meta:
+        verbose_name = "VLOPSE"
+        verbose_name_plural = "VLOPSEs"
+
     def __str__(self) -> str:
         return self.name

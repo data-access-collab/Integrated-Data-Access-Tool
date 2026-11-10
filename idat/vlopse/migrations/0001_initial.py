@@ -21,5 +21,6 @@ class Migration(migrations.Migration):
                 ('application_link', models.URLField(blank=True)),
                 ('modality', models.CharField(choices=[('form', 'Form'), ('email', 'eMail')], default='email', max_length=10)),
             ],
+            options={'verbose_name': 'VLOPSE', 'verbose_name_plural': 'VLOPSEs'},
         ),
     ]
