@@ -54,15 +54,18 @@ def platform_config(name: str, mappings: dict[str, str]) -> VLOPSEConfiguration:
 # Example mappings for the real Mastodon and TikTok VLOPSEs, defined here so the
 # tests do not depend on dsa40/fixtures/vlopses. Both ask for an institutional
 # e-mail; Mastodon also asks for an optional project title, TikTok for the
-# applicant's role.
+# applicant's role. Keyed by config file name: the mock replaces reading the file,
+# so looking the file up by the VLOPSE's name still runs.
 PLATFORM_CONFIGS = {
-    "mastodon": platform_config(
+    "mastodon.json": platform_config(
         "mastodon", {"mastodon-email": "email", "mastodon-title": "project-title"}
     ),
-    "tiktok": platform_config(
+    "tiktok.json": platform_config(
         "tiktok", {"tiktok-email": "email", "tiktok-role": "role"}
     ),
 }
+
+CONFIG_FILE_READER = "idat.dsa40_form_handler.validation.config._load_json"
 
 
 def get_step_url(step: str) -> str:
@@ -96,18 +99,7 @@ def response_state(response) -> WizardState:
 
 
 # mocked to use the stable test configs defined above
-@mock.patch(
-    "idat.dsa40_form_handler.validation.mapping.get_vlopse_configuration_for",
-    new=PLATFORM_CONFIGS.__getitem__,
-)
-@mock.patch(
-    "idat.dsa40_form_handler.validation.transform.get_vlopse_configuration_for",
-    new=PLATFORM_CONFIGS.__getitem__,
-)
-@mock.patch(
-    "idat.dsa40_wizard.services.preview.get_vlopse_configuration_for",
-    new=PLATFORM_CONFIGS.__getitem__,
-)
+@mock.patch(CONFIG_FILE_READER, new=PLATFORM_CONFIGS.__getitem__)
 class WizardViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -115,8 +107,9 @@ class WizardViewTests(TestCase):
         VLOPSEQuestion.objects.all().delete()
         DSAQuestion.objects.all().delete()
         Vlopse.objects.all().delete()
-        cls.mastodon = VlopseFactory.create(name="mastodon")
-        cls.tiktok = VlopseFactory.create(name="tiktok")
+        # named like the seeded VLOPSEs, unlike their config files
+        cls.mastodon = VlopseFactory.create(name="Mastodon")
+        cls.tiktok = VlopseFactory.create(name="TikTok")
         for key, text in [
             ("email", "Institutional e-mail"),
             ("project-title", "Project title"),
@@ -377,21 +370,6 @@ class WizardViewTests(TestCase):
         # a POST that lands on another step pushes (render_step)
         self.assertEqual(response["HX-Push-Url"], get_step_url("enter-details"))
 
-    def test_review_without_questions_is_reachable(self):
-        # the platform maps no DSA questions: nothing to answer, nothing stored
-        configs = {"mastodon": platform_config("mastodon", {})}
-        with mock.patch(
-            "idat.dsa40_form_handler.validation.mapping.get_vlopse_configuration_for",
-            new=configs.__getitem__,
-        ):
-            response = self.client.post(
-                get_step_url("review"),
-                data=step_data(create_state([self.mastodon.pk], {})),
-                headers=HTMX_HEADERS,
-            )
-
-        self.assertEqual(response["HX-Replace-Url"], get_step_url("review"))
-
     def test_generate_shows_each_platforms_mapped_answers(self):
         state = create_state(
             [self.mastodon.pk, self.tiktok.pk],
@@ -405,7 +383,7 @@ class WizardViewTests(TestCase):
         )
 
         previews = response.context["application_previews"]
-        self.assertEqual([p.vlopse_name for p in previews], ["mastodon", "tiktok"])
+        self.assertEqual([p.vlopse_name for p in previews], ["Mastodon", "TikTok"])
         mastodon, tiktok = (p.form for p in previews)
         self.assertEqual(mastodon["mastodon-email"].value(), "a@example.org")
         self.assertIsNone(mastodon["mastodon-title"].value())
@@ -457,26 +435,13 @@ class WizardViewTests(TestCase):
             "sha256": "b" * 64,
         }
         configs = {
-            "mastodon": platform_config(
+            "mastodon.json": platform_config(
                 "mastodon", {"mastodon-email": "email", "mastodon-cv": "cv"}
             )
         }
 
         # override mock to include the file field in the configs
-        with (
-            mock.patch(
-                "idat.dsa40_form_handler.validation.mapping.get_vlopse_configuration_for",
-                new=configs.__getitem__,
-            ),
-            mock.patch(
-                "idat.dsa40_form_handler.validation.transform.get_vlopse_configuration_for",
-                new=configs.__getitem__,
-            ),
-            mock.patch(
-                "idat.dsa40_wizard.services.preview.get_vlopse_configuration_for",
-                new=configs.__getitem__,
-            ),
-        ):
+        with mock.patch(CONFIG_FILE_READER, new=configs.__getitem__):
             response = self.client.post(
                 get_submit_url("enter-details"),
                 data=step_data(

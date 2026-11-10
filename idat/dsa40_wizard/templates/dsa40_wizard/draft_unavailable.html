@@ -21,7 +21,7 @@
       <ul class="flex flex-col gap-sm">
         <li class="flex items-center gap-sm type-body-md text-primary">
           <c-icon name="clock" class="size-4.5 text-icon-default" />
-          {% blocktranslate with hours=state_ttl trimmed %}
+          {% blocktranslate trimmed with hours=state_ttl %}
             It was inactive for more than {{ hours }} hours
           {% endblocktranslate %}
         </li>
