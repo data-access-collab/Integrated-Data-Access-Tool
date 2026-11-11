@@ -40,3 +40,11 @@ manage +args:
 # pytest: Run tests with pytest.
 pytest *args:
     @docker compose run --rm django pytest {{args}}
+
+# docs: Serve the docs with live reload at http://localhost:9000.
+docs:
+    @uv run --group docs zensical serve --dev-addr localhost:9000
+
+# docs-build: Build the docs into site/, failing on warnings.
+docs-build:
+    @uv run --group docs zensical build --strict
