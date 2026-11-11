@@ -1,0 +1,58 @@
+/*
+  Docs theme: maps the app's design tokens (idat/assets/css/input.css) onto Zensical's
+  colour variables. Keep the hex values in sync with input.css when tokens change.
+*/
+
+/* Light: tokens on :root */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #F7F8FA;              /* bg-canvas */
+  --md-default-fg-color: #1C2230;              /* text-primary */
+  --md-default-fg-color--light: #4B4F58;       /* text-secondary */
+  --md-default-fg-color--lighter: #646B78;     /* text-tertiary */
+  --md-default-fg-color--lightest: #DDE1E7;    /* border-default */
+  --md-primary-fg-color: #212D45;              /* bg-nav */
+  --md-primary-fg-color--dark: #2A3549;        /* bg-nav-hover */
+  --md-primary-bg-color: #F2F5F7;              /* text-on-nav */
+  --md-primary-bg-color--light: #AEB6C6;       /* text-on-nav-muted */
+  --md-accent-fg-color: #8A5A00;               /* text-accent */
+  --md-accent-fg-color--transparent: #FFF3D6;  /* bg-accent-subtle */
+  --md-typeset-a-color: #1D4ED8;               /* text-link */
+  --md-code-bg-color: #EEF0F3;                 /* bg-surface-muted */
+  --md-footer-bg-color: #212D45;               /* bg-nav */
+  --md-footer-bg-color--dark: #111827;
+  --md-footer-fg-color: #F2F5F7;               /* text-on-nav */
+  --md-footer-fg-color--light: #AEB6C6;        /* text-on-nav-muted */
+}
+
+/* Dark: tokens on .dark */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #161E30;              /* bg-canvas */
+  --md-default-fg-color: #F2F5F7;              /* text-primary */
+  --md-default-fg-color--light: #AEB6C6;       /* text-secondary */
+  --md-default-fg-color--lighter: #8F96A3;     /* text-tertiary */
+  --md-default-fg-color--lightest: #3A4762;    /* border-default */
+  --md-primary-fg-color: #111827;              /* bg-nav */
+  --md-primary-fg-color--dark: #212D45;        /* bg-nav-hover */
+  --md-primary-bg-color: #F2F5F7;              /* text-on-nav */
+  --md-primary-bg-color--light: #AEB6C6;       /* text-on-nav-muted */
+  --md-accent-fg-color: #FFC03D;               /* text-accent */
+  --md-accent-fg-color--transparent: #3A3220;  /* bg-accent-subtle */
+  --md-typeset-a-color: #8AB4FF;               /* text-link */
+  --md-code-bg-color: #212D45;                 /* bg-surface */
+  --md-footer-bg-color: #111827;               /* bg-nav */
+  --md-footer-bg-color--dark: #0B111C;
+  --md-footer-fg-color: #F2F5F7;               /* text-on-nav */
+  --md-footer-fg-color--light: #AEB6C6;        /* text-on-nav-muted */
+}
+
+/* Header in the app's nav colour, so the gold DSA40 logo reads as it does in the app */
+.md-header {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.md-header__title {
+  color: var(--md-primary-bg-color);
+}
