@@ -58,12 +58,10 @@ def empty_wizard_state() -> WizardState:
 
 class WizardJSONSerializer:
     def dumps(self, obj: WizardState) -> bytes:
-        return json.dumps(obj, separators=(",", ":"), cls=DjangoJSONEncoder).encode(
-            "latin-1"
-        )
+        return json.dumps(obj, separators=(",", ":"), cls=DjangoJSONEncoder).encode()
 
     def loads(self, data: bytes) -> WizardState:
-        return json.loads(data.decode("latin-1"))
+        return json.loads(data.decode())
 
 
 def _derive_key(secret: str, info: bytes) -> bytes:

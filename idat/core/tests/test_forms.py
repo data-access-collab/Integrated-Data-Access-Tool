@@ -2,11 +2,13 @@ import datetime
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.forms.renderers import get_default_renderer
 from django.test import SimpleTestCase
 from django.utils.formats import date_format
 
 from idat.core.forms.boundfield import IdatBoundField, widget_component
 from idat.core.forms.fields import TOP_COUNTRIES, YesNoField, country_field
+from idat.core.forms.renderers import IdatFormRenderer
 
 
 class _AllFieldsForm(forms.Form):
@@ -55,10 +57,14 @@ EXPECTED_COMPONENTS = {
 
 
 class WidgetComponentTests(SimpleTestCase):
-    def test_every_form_gets_the_idat_bound_field(self):
-        form = _AllFieldsForm()
+    def test_idat_renderer_is_the_default(self):
+        self.assertIsInstance(get_default_renderer(), IdatFormRenderer)
 
-        self.assertIsInstance(form["text"], IdatBoundField)
+    def test_no_field_overrides_the_idat_bound_field(self):
+        form = _AllFieldsForm()
+        for name in form.fields:
+            with self.subTest(field=name):
+                self.assertIsInstance(form[name], IdatBoundField)
 
     def test_component_per_stock_widget(self):
         form = _AllFieldsForm()

@@ -48,6 +48,8 @@ function readSession(key) {
   try {
     return sessionStorage.getItem(key);
   } catch {
+    // possible errors: SecurityError (sessionStorage disabled) or `TypeError`/`ReferenceError`
+    //  (undefined sessionStorage)
     return null;
   }
 }
