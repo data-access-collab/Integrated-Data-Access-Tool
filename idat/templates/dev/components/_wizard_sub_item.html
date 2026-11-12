@@ -1,0 +1,15 @@
+<div class="flex flex-col gap-xs">
+  <p class="type-body-sm text-tertiary">
+    Sub items go in the slot of the current section item and line up with its label.
+  </p>
+  <nav aria-label="Sections with questions {{ theme }}" class="max-w-xs rounded-lg bg-nav p-xs">
+    <ol class="flex flex-col gap-2xs">
+      <c-wizard.section-item state="current" icon="flask" label="Research project" count="3/9" href="#wizard-sub-item">
+        <c-wizard.sub-item label="Project title" href="#wizard-sub-item" />
+        <c-wizard.sub-item label="Research question" href="#wizard-sub-item" current />
+        <c-wizard.sub-item label="Methodology" href="#wizard-sub-item" />
+      </c-wizard.section-item>
+      <c-wizard.section-item icon="database" label="Data requested" count="0/6" href="#wizard-sub-item" />
+    </ol>
+  </nav>
+</div>

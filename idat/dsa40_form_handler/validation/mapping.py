@@ -94,16 +94,25 @@ class QuestionMapper:
 
     def map_vlopse_to_unified(self) -> list[tuple[bool, DSAQuestion]]:
         map_traces = self._map()
-        # FIXME: this should ask the db
+        # all questions in two queries rather than one per question
+        dsa_questions = {
+            q.key: q for q in self.questions.get_all_unified_for(list(map_traces))
+        }
+        vlopse_questions = {
+            q.key: q
+            for q in self.questions.get_all_for(
+                list({key for keys in map_traces.values() for key in keys})
+            )
+        }
         result: list[tuple[bool, DSAQuestion]] = []
         for dsa_id, vlopse_ids in map_traces.items():
-            dsa = self.questions.get_unified(dsa_id)
+            dsa = dsa_questions.get(dsa_id)
             if dsa is None:
                 print(f"WARNING {dsa_id} MAPPED TO UNKNOWN DSA QUESTION")  # noqa: T201
                 continue
             required = False
             for vlopse_id in vlopse_ids:
-                vlopse = self.questions.get(vlopse_id)
+                vlopse = vlopse_questions.get(vlopse_id)
                 if vlopse is None:
                     print(f"WARNING {vlopse_id} MAPPED TO UNKNOWN VLOPSE QUESTION")  # noqa: T201
                     continue

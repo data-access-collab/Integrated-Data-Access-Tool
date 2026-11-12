@@ -24,6 +24,10 @@ down:
     @echo "Stopping containers..."
     @docker compose down
 
+# restart: Restart a service (default: django).
+restart service="django":
+    @docker compose restart {{service}}
+
 # prune: Remove containers and their volumes.
 prune *args:
     @echo "Killing containers and removing volumes..."

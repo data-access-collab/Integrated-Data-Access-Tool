@@ -19,8 +19,11 @@ urlpatterns = [
     # User management
     path("users/", include("idat.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
-    # Your stuff: custom urls includes go here
-    # ...
+    # Django apps
+    path(
+        "applications/",
+        include("idat.dsa40_wizard.urls", namespace="dsa40_wizard"),
+    ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

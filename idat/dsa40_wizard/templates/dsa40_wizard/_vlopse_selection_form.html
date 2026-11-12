@@ -1,0 +1,58 @@
+{% load i18n %}
+
+<h1 class="type-headline-lg">{% translate 'Which platforms do you want data from?' %}</h1>
+
+<p class="type-body-lg text-secondary">
+  {% blocktranslate %}
+    Pick every very large online platform or search engine (VLOPSE) you want data from.
+  {% endblocktranslate %}
+</p>
+
+<form
+  hx-post="{% url 'dsa40_wizard:wizard_submit' 'choose-vlopses' %}"
+  hx-target="#application-wizard-body"
+  hx-swap="innerHTML"
+  class="flex flex-col gap-lg"
+>
+  {% csrf_token %}
+
+  {% with field=form.vlopses %}
+    <fieldset
+      class="flex flex-col gap-xs"
+      {% if field.errors %}aria-describedby="{{ field.auto_id }}-error"{% endif %}
+    >
+      <legend class="sr-only">{{ field.label }}</legend>
+
+      <div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
+        {# Column header: visual only, each row's label already names the platform. #}
+        <div class="@container" aria-hidden="true">
+          <div class="flex items-start gap-md bg-surface-muted px-md py-xs type-overline text-tertiary">
+            <span class="w-17 shrink-0"></span>
+            <span class="min-w-0 flex-1">{% translate 'Platform' %}</span>
+            <span class="hidden w-37.5 shrink-0 @2xl:block"></span>
+            <span class="hidden w-30 shrink-0 @2xl:block">{% translate 'How you apply' %}</span>
+            <span class="hidden w-25 shrink-0 @2xl:block"></span>
+          </div>
+        </div>
+
+        {% for choice in field %}
+          <c-platform-row
+            :name="choice.data.value.instance.name"
+            channel="{{ choice.data.value.instance.modality }}"
+            :input-name="choice.data.name"
+            :value="choice.data.value"
+            :selected="choice.data.selected"
+            id="{{ choice.id_for_label }}"
+          />
+        {% endfor %}
+      </div>
+      {% if field.errors %}
+        <c-field-message id="{{ field.auto_id }}-error">{{ field.errors|join:" " }}</c-field-message>
+      {% endif %}
+    </fieldset>
+  {% endwith %}
+
+  <div class="flex justify-end">
+    <c-button label="{% translate 'Continue to questions' %}" icon="arrow-right" type="submit" />
+  </div>
+</form>

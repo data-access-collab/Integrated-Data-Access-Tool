@@ -24,4 +24,32 @@
       <c-yes-no-toggle :field="form_errors.has_ethics_approval" />
     </div>
   </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Question row · c-field-layout inline (Figma 43:3962)</span>
+    <c-field-layout
+      input-id="yn_row_{{ theme }}"
+      label="Does your research contribute to detecting or understanding systemic risks (Art. 34 DSA)?"
+      required
+      help-text="Required by all platforms for vetted-researcher access under Art. 40(4)."
+      help-tip="systemic-risks"
+      inline
+    >
+      <c-yes-no-toggle
+        id="yn_row_{{ theme }}"
+        name="yn_row_{{ theme }}"
+        label="Does your research contribute to detecting or understanding systemic risks (Art. 34 DSA)?"
+        value="yes"
+      />
+    </c-field-layout>
+  </div>
+  <div class="flex flex-col gap-xs">
+    <span class="type-overline text-tertiary">Question row · bound field · error</span>
+    <c-field-layout
+      :field="form_errors.has_ethics_approval"
+      :input-id="form_errors.has_ethics_approval.id_for_label"
+      inline
+    >
+      <c-yes-no-toggle :field="form_errors.has_ethics_approval" hide-errors />
+    </c-field-layout>
+  </div>
 </div>

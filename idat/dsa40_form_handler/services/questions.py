@@ -21,6 +21,9 @@ class QuestionService:
     def get(self, key: str) -> VLOPSEQuestion | None:
         return VLOPSEQuestion.objects.filter(key=key).first()
 
+    def get_all_for(self, keys: list[str]) -> QuerySet[VLOPSEQuestion]:
+        return VLOPSEQuestion.objects.filter(key__in=keys).all()
+
     def add_unified(
         self,
         id: str | None,  # noqa: A002

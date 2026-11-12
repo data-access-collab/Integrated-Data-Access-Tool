@@ -1,0 +1,25 @@
+<div class="flex flex-col gap-xs">
+  <p class="type-body-sm text-tertiary">All states; the rows are links (hover not designed: bg-nav-hover).</p>
+  <nav aria-label="Sections {{ theme }}" class="max-w-xs rounded-lg bg-nav p-xs">
+    <ol class="flex flex-col gap-2xs">
+      <c-wizard.section-item state="complete" icon="user" label="Applicant" count="9/9" href="#wizard-section-item" />
+      <c-wizard.section-item
+        state="current"
+        icon="flask"
+        label="Research project"
+        count="3/9"
+        href="#wizard-section-item"
+      />
+      <c-wizard.section-item icon="database" label="Data requested" count="0/6" href="#wizard-section-item" />
+      <c-wizard.section-item
+        state="blocking"
+        icon="shield"
+        label="Data protection"
+        count="3/9"
+        href="#wizard-section-item"
+      />
+      <c-wizard.section-item state="warning" icon="coins" label="Funding" count="3/9" href="#wizard-section-item" />
+      <c-wizard.section-item label="No icon, no link" count="1/2" />
+    </ol>
+  </nav>
+</div>

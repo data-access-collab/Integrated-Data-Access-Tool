@@ -90,11 +90,13 @@ THIRD_PARTY_APPS = [
     "allauth.mfa",
     "allauth.socialaccount",
     "corsheaders",
+    "django_htmx",
     "django_cotton",
 ]
 
 LOCAL_APPS = [
     "idat.users",
+    "idat.dsa40_wizard",
     "idat.core",
     "idat.vlopse",
     "idat.dsa40_form_handler",
@@ -156,6 +158,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 # STATIC
@@ -209,7 +212,7 @@ TEMPLATES = [
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#form-renderer
-FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
+FORM_RENDERER = "idat.core.forms.renderers.IdatFormRenderer"
 
 # FIXTURES
 # ------------------------------------------------------------------------------

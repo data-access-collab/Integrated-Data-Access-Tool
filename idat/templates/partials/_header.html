@@ -1,27 +1,18 @@
 {% load i18n %}
 
-<header id="header" class="border-b">
-  <div class="container flex flex-wrap items-center justify-between gap-4 py-4">
-    <a class="font-bold" href="/">Integrated Data Access Tool</a>
-
-    <nav aria-label="{% translate "Account" %}" class="flex gap-4">
-      {% if request.user.is_authenticated %}
-        <a class="nav-link" href="{% url 'users:detail' request.user.username %}">
-          {% translate "My Account" %}
-        </a>
-        <a class="nav-link" href="{% url 'account_logout' %}">
-          {% translate "Log out" %}
-        </a>
-      {% else %}
-        {% if ACCOUNT_ALLOW_REGISTRATION %}
-          <a class="nav-link" href="{% url 'account_signup' %}">
-            {% translate "Sign up" %}
-          </a>
-        {% endif %}
-        <a class="nav-link" href="{% url 'account_login' %}">
-          {% translate "Log in" %}
-        </a>
-      {% endif %}
-    </nav>
-  </div>
-</header>
+<c-top-bar>
+  <c-slot name="nav">
+    <a
+      class="rounded-sm type-label-lg text-secondary hover:text-primary"
+      href="#top-bar"
+    >{% translate "How it works" %}</a>
+    <a
+      class="rounded-sm type-label-lg text-secondary hover:text-primary"
+      href="#top-bar"
+    >{% translate "Community" %}</a>
+  </c-slot>
+  <c-slot name="actions">
+    <c-button variant="ghost" label="{% translate 'Why are we doing this?' %}" />
+    <c-button variant="secondary" label="{% translate 'Sign in' %}" href="#top-bar" />
+  </c-slot>
+</c-top-bar>

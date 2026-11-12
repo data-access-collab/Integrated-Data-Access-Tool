@@ -86,9 +86,9 @@
         <li><a class="text-link hover:underline" href="#country-select">Country Select</a></li>
         <li><a class="text-link hover:underline" href="#file-upload">File Upload</a></li>
         <li class="mt-sm type-overline text-tertiary">Navigation &amp; help</li>
-        <li><a class="text-link hover:underline" href="#nav-phase-step">Nav / Phase Step</a></li>
-        <li><a class="text-link hover:underline" href="#nav-section-item">Nav / Section Item</a></li>
-        <li><a class="text-link hover:underline" href="#nav-sub-item">Nav / Sub Item</a></li>
+        <li><a class="text-link hover:underline" href="#wizard-step-item">Wizard / Step Item</a></li>
+        <li><a class="text-link hover:underline" href="#wizard-section-item">Wizard / Section Item</a></li>
+        <li><a class="text-link hover:underline" href="#wizard-sub-item">Wizard / Sub Item</a></li>
         <li><a class="text-link hover:underline" href="#nav-app-item">Nav / App Item</a></li>
         <li><a class="text-link hover:underline" href="#lifecycle-step">Lifecycle Step</a></li>
         <li><a class="text-link hover:underline" href="#overview-tab">Overview Tab</a></li>
@@ -122,7 +122,7 @@
         <li class="mt-sm type-overline text-tertiary">Patterns</li>
         <li><a class="text-link hover:underline" href="#top-bar">Top Bar</a></li>
         <li><a class="text-link hover:underline" href="#app-sidebar">App Sidebar</a></li>
-        <li><a class="text-link hover:underline" href="#wizard-sidebar">Wizard Sidebar</a></li>
+        <li><a class="text-link hover:underline" href="#wizard-sidebar">Wizard / Sidebar</a></li>
         <li><a class="text-link hover:underline" href="#dialog-log-platform-reply">Dialog / Log platform reply</a></li>
         <li>
           <a class="text-link hover:underline" href="#dialog-withdraw-application">Dialog / Withdraw application</a>
@@ -161,11 +161,12 @@
       {% include "dev/_section.html" with slug="multi-select" title="Multi-select" node="24:677" tag="c-multi-select" demo="dev/components/_multi_select.html" %}
       {% include "dev/_section.html" with slug="country-select" title="Country Select" node="24:733" tag="c-country-select" demo="dev/components/_country_select.html" %}
       {% include "dev/_section.html" with slug="file-upload" title="File Upload" node="23:587" tag="c-file-upload" demo="dev/components/_file_upload.html" %}
+      {% include "dev/_section.html" with slug="form-default" title="Form / Default rendering" tag="form" demo="dev/components/_form_default.html" %}
 
       {# Tier 3 · Navigation & help #}
-      {% include "dev/_section.html" with slug="nav-phase-step" title="Nav / Phase Step" node="5:128" tag="c-nav.phase-step" demo="dev/components/_nav_phase_step.html" %}
-      {% include "dev/_section.html" with slug="nav-section-item" title="Nav / Section Item" node="5:175" tag="c-nav.section-item" demo="dev/components/_nav_section_item.html" %}
-      {% include "dev/_section.html" with slug="nav-sub-item" title="Nav / Sub Item" node="5:181" tag="c-nav.sub-item" demo="dev/components/_nav_sub_item.html" %}
+      {% include "dev/_section.html" with slug="wizard-step-item" title="Wizard / Step Item" node="5:128" tag="c-wizard.step-item" demo="dev/components/_wizard_step_item.html" %}
+      {% include "dev/_section.html" with slug="wizard-section-item" title="Wizard / Section Item" node="5:175" tag="c-wizard.section-item" demo="dev/components/_wizard_section_item.html" %}
+      {% include "dev/_section.html" with slug="wizard-sub-item" title="Wizard / Sub Item" node="5:181" tag="c-wizard.sub-item" demo="dev/components/_wizard_sub_item.html" %}
       {% include "dev/_section.html" with slug="nav-app-item" title="Nav / App Item" node="31:616" tag="c-nav.app-item" demo="dev/components/_nav_app_item.html" %}
       {% include "dev/_section.html" with slug="lifecycle-step" title="Lifecycle Step" node="31:630" tag="c-lifecycle-step" demo="dev/components/_lifecycle_step.html" %}
       {% include "dev/_section.html" with slug="overview-tab" title="Overview Tab" node="36:680" tag="c-overview-tab" demo="dev/components/_overview_tab.html" %}
@@ -202,7 +203,7 @@
       {# Patterns #}
       {% include "dev/_section.html" with slug="top-bar" title="Top Bar" node="7:278" tag="c-top-bar" wide=True demo="dev/components/_top_bar.html" %}
       {% include "dev/_section.html" with slug="app-sidebar" title="App Sidebar" node="68:1228" tag="c-app-sidebar" wide=True demo="dev/components/_app_sidebar.html" %}
-      {% include "dev/_section.html" with slug="wizard-sidebar" title="Wizard Sidebar" node="7:464" tag="c-wizard-sidebar" wide=True demo="dev/components/_wizard_sidebar.html" %}
+      {% include "dev/_section.html" with slug="wizard-sidebar" title="Wizard / Sidebar" node="7:464" tag="c-wizard.sidebar" wide=True demo="dev/components/_wizard_sidebar.html" %}
       {% include "dev/_section.html" with slug="dialog-log-platform-reply" title="Dialog / Log platform reply" node="41:1169" tag="c-dialog.log-platform-reply" demo="dev/components/_dialog_log_platform_reply.html" %}
       {% include "dev/_section.html" with slug="dialog-withdraw-application" title="Dialog / Withdraw application" node="41:1212" tag="c-dialog.withdraw-application" demo="dev/components/_dialog_withdraw_application.html" %}
     </main>

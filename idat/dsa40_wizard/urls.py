@@ -1,0 +1,24 @@
+from django.urls import path
+
+from idat.dsa40_wizard import views
+
+app_name = "dsa40_wizard"
+urlpatterns = [
+    path("create/", view=views.WizardFormView.as_view(), name="create"),
+    path(
+        "draft-unavailable/",
+        view=views.WizardDraftUnavailableView.as_view(),
+        name="draft_unavailable",
+    ),
+    path("create/<slug:step>/", view=views.route_wizard_step, name="wizard_step"),
+    path(
+        "create/<slug:step>/submit/",
+        view=views.route_wizard_step,
+        name="wizard_submit",
+    ),
+    path(
+        "create/<slug:step>/save/",
+        view=views.route_wizard_step,
+        name="wizard_save",
+    ),
+]
