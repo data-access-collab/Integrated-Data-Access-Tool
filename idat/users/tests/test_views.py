@@ -9,16 +9,12 @@ from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.http import HttpRequest
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from idat.users.forms import UserAdminChangeForm
-from idat.users.tests.factories import UserFactory
-from idat.users.views import UserRedirectView
-from idat.users.views import UserUpdateView
-from idat.users.views import user_detail_view
+from idat.users.views import UserRedirectView, UserUpdateView, user_detail_view
 
 if TYPE_CHECKING:
     from django.test import RequestFactory
@@ -46,7 +42,7 @@ class TestUserUpdateView:
         request.user = user
 
         view.request = request
-        assert view.get_success_url() == f"/users/{user.username}/"
+        assert view.get_success_url() == "/users/my-account/"
 
     def test_get_object(self, user: User, rf: RequestFactory):
         view = UserUpdateView()
@@ -85,21 +81,21 @@ class TestUserRedirectView:
         request.user = user
 
         view.request = request
-        assert view.get_redirect_url() == f"/users/{user.username}/"
+        assert view.get_redirect_url() == "/users/my-account/"
 
 
 class TestUserDetailView:
     def test_authenticated(self, user: User, rf: RequestFactory):
         request = rf.get("/fake-url/")
-        request.user = UserFactory.create()
-        response = user_detail_view(request, username=user.username)
+        request.user = user
+        response = user_detail_view(request)
 
         assert response.status_code == HTTPStatus.OK
 
-    def test_not_authenticated(self, user: User, rf: RequestFactory):
+    def test_not_authenticated(self, rf: RequestFactory):
         request = rf.get("/fake-url/")
         request.user = AnonymousUser()
-        response = user_detail_view(request, username=user.username)
+        response = user_detail_view(request)
         login_url = reverse(settings.LOGIN_URL)
 
         assert isinstance(response, HttpResponseRedirect)
