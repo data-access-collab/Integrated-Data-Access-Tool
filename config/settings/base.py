@@ -138,7 +138,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 15},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -158,6 +161,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "idat.users.middleware.StaffSecurityMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
 ]
 
@@ -248,7 +252,7 @@ ADMINS = ['"Luis Glaser" <l.glaser@comprensio.ai>']
 MANAGERS = ADMINS
 # https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
 # Force the `admin` sign in process to go through the `django-allauth` workflow
-DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=False)
+DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=True)
 
 # LOGGING
 # ------------------------------------------------------------------------------
@@ -298,5 +302,10 @@ SOCIALACCOUNT_ADAPTER = "idat.users.adapters.SocialAccountAdapter"
 SOCIALACCOUNT_FORMS = {"signup": "idat.users.forms.UserSocialSignupForm"}
 
 
-# Your stuff...
-# ------------------------------------------------------------------------------
+# MFA
+MFA_SUPPORTED_TYPES = ["totp", "webauthn", "recovery_codes"]
+MFA_PASSKEY_LOGIN_ENABLED = True
+
+# Staff are logged out after this many seconds without a request
+# (see idat.users.middleware.StaffSecurityMiddleware)
+STAFF_SESSION_IDLE_TIMEOUT = 60 * 60 * 8

@@ -63,6 +63,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
     "DJANGO_SECURE_CONTENT_TYPE_NOSNIFF",
     default=True,
 )
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 2  # 48h
 
 # STATIC & MEDIA
 # ------------------------
@@ -150,7 +151,3 @@ LOGGING = {
         },
     },
 }
-
-
-# Your stuff...
-# ------------------------------------------------------------------------------
