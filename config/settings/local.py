@@ -36,6 +36,12 @@ EMAIL_BACKEND = env(
     default="django.core.mail.backends.console.EmailBackend",
 )
 
+if DEBUG and env("DJANGO_USE_MAILPIT", default=False):
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "mailpit"
+    EMAIL_PORT = 1025
+    EMAIL_USE_TLS = False
+
 # WhiteNoise
 # ------------------------------------------------------------------------------
 # http://whitenoise.evans.io/en/latest/django.html#using-whitenoise-in-development
