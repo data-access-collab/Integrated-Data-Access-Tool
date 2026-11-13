@@ -1,3 +1,5 @@
+{# djangofmt: file-ignore[invalid-syntax] #}
+
 {% comment %}
   Label above input.
   Required = small red asterisk.
@@ -18,6 +20,9 @@
     help-tip     help-panel tip id; shows the help icon
 
   Focus, error and disabled are CSS states; errors replace the helper text.
+  Password inputs never render their value (like Django's PasswordInput) and get a
+  show/hide toggle (Alpine; without JS the input stays a plain password field).
+  The toggle shows eye while hidden and eye-off while shown. Not in Figma yet.
   {{ attrs }} go on the <input> (x-model, autocomplete, disabled …); class goes on the wrapper.
 
   Usage:
@@ -25,6 +30,7 @@
     <c-text-field name="title" label="Project title" required help-text="Max. 120 characters." />
 {% endcomment %}
 
+{% load i18n %}
 <c-vars
   field=""
   label=""
@@ -40,6 +46,15 @@
 />
 {# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
 {% with input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name input_type=field.field.widget.input_type|default:type help=field.help_text|default:help_text %}
+  {# password: the box is a wrapper around a borderless input and the toggle #}
+  {% if input_type == "password" %}
+    {% define "min-w-0 flex-1 self-stretch border-0 bg-transparent p-0 focus:outline-none focus:ring-0" as input_class %}
+    {% translate "Show password" as toggle_label %}
+  {% elif field.errors %}
+    {% define "h-11 w-full rounded-sm border bg-surface px-sm py-xs focus:border-focus focus:ring-1 focus:ring-inset focus:ring-focus border-danger ring-1 ring-inset ring-danger" as input_class %}
+  {% else %}
+    {% define "h-11 w-full rounded-sm border bg-surface px-sm py-xs focus:border-focus focus:ring-1 focus:ring-inset focus:ring-focus border-strong" as input_class %}
+  {% endif %}
   <c-field-layout
     :field="field"
     :input-id="input_id"
@@ -49,11 +64,23 @@
     :help-tip="help_tip"
     class="{{ class }}"
   >
+    {% if input_type == "password" %}
+      <div
+        x-data="{ shown: false }"
+        class="
+          flex h-11 w-full items-center gap-xs rounded-sm border bg-surface px-sm
+          focus-within:border-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-focus
+          has-disabled:cursor-not-allowed has-disabled:bg-disabled
+          {% if field.errors %}border-danger ring-1 ring-inset ring-danger{% else %}border-strong{% endif %}
+        "
+      >
+    {% endif %}
     <input
       type="{{ input_type }}"
       {% if input_id %}id="{{ input_id }}"{% endif %}
       {% if input_name %}name="{{ input_name }}"{% endif %}
-      value="{% if field %}{{ field.value|default_if_none:"" }}{% else %}{{ value }}{% endif %}"
+      {# never echo a submitted password back into the page #}
+      {% if input_type != "password" %}value="{% if field %}{{ field.value|default_if_none:"" }}{% else %}{{ value }}{% endif %}"{% endif %}
       {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
       {% for attr, attr_value in field.field.widget.attrs.items %}{{ attr }}="{{ attr_value }}" {% endfor %}
       {% if required or field.field.required %}required{% endif %}
@@ -64,13 +91,27 @@
       {% elif help %}
         aria-describedby="{{ input_id }}-help"
       {% endif %}
-      class="
-        h-11 w-full rounded-sm border bg-surface px-sm py-xs type-body-md text-primary placeholder:text-tertiary
-        focus:border-focus focus:ring-1 focus:ring-inset focus:ring-focus
-        disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled
-        {% if field.errors %}border-danger ring-1 ring-inset ring-danger{% else %}border-strong{% endif %}
-      "
+      {% if input_type == "password" %}x-ref="input" x-bind:type="shown ? 'text' : 'password'"{% endif %}
+      class="{{ input_class }} type-body-md text-primary placeholder:text-tertiary disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled"
       {{ attrs }}
     />
+    {% if input_type == "password" %}
+        <button
+          type="button"
+          class="flex shrink-0 cursor-pointer rounded-sm text-icon-default hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:text-disabled"
+          aria-label="{{ toggle_label }}"
+          {% if input_id %}aria-controls="{{ input_id }}"{% endif %}
+          aria-pressed="false"
+          x-bind:aria-pressed="shown.toString()"
+          x-on:click="shown = !shown"
+          x-bind:disabled="$refs.input.disabled"
+          x-cloak
+        >
+          {# the icon shows what a click does: eye = show, eye-off = hide #}
+          <c-icon name="eye" class="size-5" x-show="!shown" />
+          <c-icon name="eye-off" class="size-5" x-show="shown" x-cloak />
+        </button>
+      </div>
+    {% endif %}
   </c-field-layout>
 {% endwith %}
