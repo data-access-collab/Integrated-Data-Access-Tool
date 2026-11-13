@@ -31,9 +31,6 @@ jobs:
           python-version-file: '.python-version'
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
-        # FIXME(#24): Remove once T1 is complete
-        with:
-          extra_args:
 
   # With no caching at all the entire ci process takes 3m to complete!
   pytest:
