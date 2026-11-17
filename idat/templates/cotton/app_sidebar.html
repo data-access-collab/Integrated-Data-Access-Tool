@@ -11,8 +11,10 @@
     user-name     e.g. "Jana D."
     initials      e.g. "JD"
     account-href  "Account & settings" link
-    account-current  boolean attribute: the account page is shown (aria-current="page",
-                     highlighted like a current nav item)
+    account-current  highlights the user block like a current nav item: "page" (or the
+                     boolean attribute) on My account itself (aria-current="page"),
+                     "section" on pages below it, e.g. e-mail or password
+                     (aria-current="true")
 
   Slots (each holds <c-nav.app-item> items):
     slot    main navigation: Home, Tasks (count), My applications, Community
@@ -82,7 +84,7 @@
   {% if user_name %}
     <a
       href="{{ account_href }}"
-      {% if account_current %}aria-current="page"{% endif %}
+      {% if account_current == "section" %}aria-current="true"{% elif account_current %}aria-current="page"{% endif %}
       class="
         flex items-center gap-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus
         {% if account_current %}rounded-md border-t border-on-nav bg-nav-hover p-sm

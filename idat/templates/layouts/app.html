@@ -7,7 +7,11 @@
   Blocks:
     sidebar_nav   <c-nav.app-item> items, default: Home
     content       the page; messages are shown above it
-  Context: account_current (True on My account) highlights the user block.
+    page          wraps content; override it to put a frame around content (the
+                  allauth pages: account/base_manage.html)
+  The sidebar's user block is highlighted on My account (context account_current) and
+  on the signed-in allauth pages (/accounts/…, which use this layout through
+  allauth/layouts/manage.html).
 {% endcomment %}
 
 {% load i18n %}
@@ -28,7 +32,7 @@
         user-name="{{ user.display_name }}"
         initials="{{ user.initials }}"
         account-href="{% url 'users:detail' %}"
-        :account-current="account_current"
+        account-current="{% if account_current %}page{% elif '/accounts/' in request.path %}section{% endif %}"
       >
         {% block sidebar_nav %}
           <c-nav.app-item label="{% translate 'Home' %}" icon="layout-grid" href="{% url 'home' %}" />
@@ -38,7 +42,9 @@
 
     <div class="flex min-w-0 flex-1 flex-col gap-lg px-md py-lg sm:px-2xl sm:py-xl">
       {% include "partials/_messages.html" %}
-      {% block content %}{% endblock content %}
+      {% block page %}
+        {% block content %}{% endblock content %}
+      {% endblock page %}
     </div>
   </div>
 {% endblock main %}

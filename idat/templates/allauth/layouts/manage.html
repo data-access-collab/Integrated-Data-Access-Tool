@@ -1,8 +1,19 @@
-{% extends "base.html" %}
+{% extends "layouts/app.html" %}
+
+{% comment %}
+  allauth's layout for signed-in pages (e-mail, password, 2FA, sign out).
+  Pages fill {% block content %}; account/base_manage.html wraps it with a back link
+  through {% block manage_body %}.
+{% endcomment %}
 
 {% block title %}
   {% block head_title %} {% endblock head_title %}
 {% endblock title %}
-{% block main %}
-  {% block content %} {% endblock content %}
-{% endblock main %}
+
+{% block page %}
+  {% include "users/partials/_account_header.html" %}
+  <hr class="border-default" />
+  {% block manage_body %}
+    {% block content %}{% endblock content %}
+  {% endblock manage_body %}
+{% endblock page %}

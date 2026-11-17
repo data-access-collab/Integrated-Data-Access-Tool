@@ -11,26 +11,24 @@
 {% endblock head_title %}
 
 {% block content %}
-  <div class="flex flex-1 items-start justify-center p-md sm:p-xl">
-    <form
-      class="flex w-full max-w-120 flex-col gap-lg rounded-lg border border-default bg-surface p-md sm:p-lg"
-      method="post"
-      action="{% url 'account_logout' %}"
-    >
-      {% csrf_token %}
-      {{ redirect_field }}
-      <div class="flex flex-col gap-xs">
-        <h1 class="type-headline-sm text-primary">{% translate "Sign out?" %}</h1>
-        <p class="type-body-md text-secondary">
-          {% blocktranslate trimmed with email=request.user.email %}
-            You're signed in as {{ email }}.
-          {% endblocktranslate %}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-sm">
-        <c-button type="submit" label="{% translate 'Sign out' %}" />
-        <c-button variant="secondary" label="{% translate 'Cancel' %}" href="{% url 'users:account' %}" />
-      </div>
-    </form>
-  </div>
+  <form
+    class="flex w-full max-w-120 flex-col gap-lg rounded-lg border border-default bg-surface p-md sm:p-lg"
+    method="post"
+    action="{% url 'account_logout' %}"
+  >
+    {% csrf_token %}
+    {{ redirect_field }}
+    <div class="flex flex-col gap-xs">
+      <h1 class="type-headline-sm text-primary">{% translate "Sign out?" %}</h1>
+      <p class="type-body-md text-secondary">
+        {% blocktranslate trimmed with email=request.user.email %}
+          You're signed in as {{ email }}.
+        {% endblocktranslate %}
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-sm">
+      <c-button type="submit" label="{% translate 'Sign out' %}" />
+      <c-button variant="secondary" label="{% translate 'Cancel' %}" href="{% url 'users:account' %}" />
+    </div>
+  </form>
 {% endblock content %}

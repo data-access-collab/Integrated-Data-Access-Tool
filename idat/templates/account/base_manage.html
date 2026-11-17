@@ -2,29 +2,21 @@
 
 {% comment %}
   Page shell of the signed-in account pages (allauth's e-mail, password and 2FA pages
-  all extend this, the 2FA ones through mfa/base_manage.html): a centred column on the
-  canvas with a back link (blocks back_href and back_label; default: the Account tab of My account), then
-  {% block content %}.
-  Not in Figma; same pattern as the other app pages.
-  Content conventions: <h1 class="type-headline-sm"> + intro paragraph, then a card
-  (rounded-lg border border-default bg-surface). Confirmation pages: a danger Button
-  plus a secondary "Cancel" back to the overview.
+  all extend this, the 2FA ones through mfa/base_manage.html).
 {% endcomment %}
 
 {% load i18n %}
 
-{% block main %}
-  <div class="flex flex-1 items-start justify-center p-md sm:p-xl">
-    <section class="flex w-full max-w-180 flex-col gap-lg">
-      {# a plain link, not a ghost Button: no inner padding, so the arrow lines up with the content #}
-      <a
-        href="{% block back_href %}{% url 'users:account' %}{% endblock back_href %}"
-        class="flex items-center gap-xs self-start rounded-sm type-label-lg text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-      >
-        <c-icon name="arrow-left" class="size-4.5" />
-        {% block back_label %}{% translate "My account" %}{% endblock back_label %}
-      </a>
-      {% block content %}{% endblock content %}
-    </section>
-  </div>
-{% endblock main %}
+{% block manage_body %}
+  <section class="flex w-full max-w-180 flex-col gap-lg">
+    {# a plain link, not a ghost Button: no inner padding, so the arrow lines up with the content #}
+    <a
+      href="{% block back_href %}{% url 'users:account' %}{% endblock back_href %}"
+      class="flex items-center gap-xs self-start rounded-sm type-label-lg text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      <c-icon name="arrow-left" class="size-4.5" />
+      {% block back_label %}{% translate "My account" %}{% endblock back_label %}
+    </a>
+    {% block content %}{% endblock content %}
+  </section>
+{% endblock manage_body %}

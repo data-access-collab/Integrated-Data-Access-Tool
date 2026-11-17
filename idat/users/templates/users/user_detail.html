@@ -21,20 +21,7 @@
 {% endblock title %}
 
 {% block content %}
-  <div class="flex flex-col gap-lg">
-    <p class="type-body-sm text-tertiary">{% translate "Account & settings" %}</p>
-    <div class="flex items-center gap-md">
-      <c-avatar size="medium" :initials="object.initials" />
-      <div class="flex min-w-0 flex-1 flex-col gap-2xs">
-        <h1 class="truncate type-headline-lg text-primary">{{ object.get_full_name|default:object.email }}</h1>
-        <p class="type-body-md text-secondary">
-          {% blocktranslate trimmed with date=object.date_joined|date:"j M Y" %}
-            Researcher account since {{ date }}
-          {% endblocktranslate %}
-        </p>
-      </div>
-    </div>
-  </div>
+  {% include "users/partials/_account_header.html" with heading=True %}
 
   <c-tabs label="{% translate 'Account sections' %}">
     <c-tabs.tab
