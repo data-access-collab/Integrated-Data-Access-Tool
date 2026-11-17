@@ -17,7 +17,7 @@
 {% block content %}
   <h1 class="type-headline-sm text-primary">{% translate "Sign up" %}</h1>
 
-  <form class="flex flex-col gap-md" method="post" action="{% url 'account_signup' %}" novalidate>
+  <form class="flex flex-col gap-md" method="post" action="{% url 'account_signup' %}">
     {% csrf_token %}
     {{ redirect_field }}
     {% if form.non_field_errors %}
