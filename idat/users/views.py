@@ -22,12 +22,21 @@ if TYPE_CHECKING:
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):
+    """My account: one URL per tab (profile, affiliations, account)."""
+
+    tab = "profile"
+
     def get_object(self, queryset: QuerySet | None = None) -> User:
         assert self.request.user.is_authenticated  # type guard
         return self.request.user
 
+    def get_context_data(self, **kwargs) -> dict:
+        return super().get_context_data(account_current=True, tab=self.tab, **kwargs)
+
 
 user_detail_view = UserDetailView.as_view()
+user_affiliations_view = UserDetailView.as_view(tab="affiliations")
+user_account_view = UserDetailView.as_view(tab="account")
 
 
 class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):

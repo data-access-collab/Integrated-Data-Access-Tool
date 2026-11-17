@@ -67,6 +67,13 @@ class User(AbstractUser):
         return reverse("users:detail")
 
     @property
+    def display_name(self) -> str:
+        """Short name for the app sidebar: "Jana D.", else the e-mail."""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name[:1]}."
+        return self.first_name or self.email
+
+    @property
     def initials(self) -> str:
         """For the avatar: first letters of first and last name, else of the e-mail."""
         initials = (self.first_name[:1] + self.last_name[:1]).upper()

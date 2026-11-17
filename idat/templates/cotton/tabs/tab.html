@@ -1,0 +1,27 @@
+{% comment %}
+  One tab link inside <c-tabs> (Figma "Overview Tab" 34:653, without count). Current:
+  navy underline and Label/Large primary; else Body/Medium secondary.
+
+  Props:
+    label    tab name
+    href     the tab's URL
+    current  boolean attribute: the tab shown (aria-current="page"); a computed one
+             works as a string, empty = off: current="{% if tab == 'x' %}true{% endif %}"
+
+  Usage: see cotton/tabs/index.html.
+{% endcomment %}
+
+<c-vars label="" href="" :current="False" class="" />
+<li class="flex shrink-0 list-none {{ class }}" {{ attrs }}>
+  <a
+    href="{{ href }}"
+    {% if current %}aria-current="page"{% endif %}
+    class="
+      relative flex items-center gap-xs bg-surface px-sm pt-3.5 pb-sm whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus
+      {% if current %}type-label-lg text-primary{% else %}type-body-md text-secondary hover:text-primary{% endif %}
+    "
+  >
+    {{ label }}
+    {% if current %}<span class="absolute inset-x-0 bottom-0 h-0.5 bg-brand" aria-hidden="true"></span>{% endif %}
+  </a>
+</li>

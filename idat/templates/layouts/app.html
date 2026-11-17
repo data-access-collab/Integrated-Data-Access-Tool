@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% comment %}
+  Signed-in app shell: the App Sidebar on the left, the page on the
+  canvas to its right, no footer.
+
+  Blocks:
+    sidebar_nav   <c-nav.app-item> items, default: Home
+    content       the page; messages are shown above it
+  Context: account_current (True on My account) highlights the user block.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block header_wrapper %}
+  <header id="header" class="lg:hidden">
+    {% include "partials/_header.html" %}
+  </header>
+{% endblock header_wrapper %}
+{% block footer_wrapper %}{% endblock footer_wrapper %}
+{% block messages %}{% endblock messages %}
+
+{% block main %}
+  <div class="flex flex-1 bg-canvas">
+    {# sticky, full viewport height: the user block stays at the bottom while the page scrolls #}
+    <div class="sticky top-0 hidden h-screen self-start lg:block">
+      <c-app-sidebar
+        user-name="{{ user.display_name }}"
+        initials="{{ user.initials }}"
+        account-href="{% url 'users:detail' %}"
+        :account-current="account_current"
+      >
+        {% block sidebar_nav %}
+          <c-nav.app-item label="{% translate 'Home' %}" icon="layout-grid" href="{% url 'home' %}" />
+        {% endblock sidebar_nav %}
+      </c-app-sidebar>
+    </div>
+
+    <div class="flex min-w-0 flex-1 flex-col gap-lg px-md py-lg sm:px-2xl sm:py-xl">
+      {% include "partials/_messages.html" %}
+      {% block content %}{% endblock content %}
+    </div>
+  </div>
+{% endblock main %}
