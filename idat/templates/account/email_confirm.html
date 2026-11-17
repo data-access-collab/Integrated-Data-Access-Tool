@@ -2,8 +2,9 @@
 
 {% comment %}
   Target of the verification link (allauth ConfirmEmailView). Three states:
-  - valid link: confirm with a POST (ACCOUNT_CONFIRM_EMAIL_ON_GET stays off, so mail
-    scanners that open links can't confirm on their own).
+  - valid link: activate the account (address used to sign up) or add the address
+    (added later while signed in). Confirmed with a POST: ACCOUNT_CONFIRM_EMAIL_ON_GET
+    stays off, so mail scanners that open links can't confirm on their own.
   - address confirmed by another account.
   - expired, invalid or already used link.
 {% endcomment %}
@@ -11,8 +12,10 @@
 {% load i18n %}
 
 {% block head_title %}
-  {% if confirmation and can_confirm %}
-    {% translate "Confirm your e-mail" %}
+  {% if confirmation and can_confirm and confirmation.email_address.primary %}
+    {% translate "Activate your account" %}
+  {% elif confirmation and can_confirm %}
+    {% translate "Add this e-mail address" %}
   {% elif confirmation %}
     {% translate "This address already has an account" %}
   {% else %}
@@ -30,16 +33,28 @@
 
 {% block content %}
   {% if confirmation and can_confirm %}
-    <h1 class="type-headline-sm text-primary">{% translate "Confirm your e-mail" %}</h1>
-    <p class="type-body-md text-secondary">
-      {% blocktranslate trimmed with email=confirmation.email_address.email %}
-        Confirm that {{ email }} is your e-mail address to activate your account.
-      {% endblocktranslate %}
-    </p>
+    {# primary = the address the account signed up with; otherwise one added later on /accounts/email/ #}
+    {% if confirmation.email_address.primary %}
+      <h1 class="type-headline-sm text-primary">{% translate "Activate your account" %}</h1>
+      <p class="type-body-md text-secondary">
+        {% blocktranslate trimmed with email=confirmation.email_address.email %}
+          You signed up for IDAT with {{ email }}. Activate your account to continue.
+        {% endblocktranslate %}
+      </p>
+      {% translate "Activate account" as submit_label %}
+    {% else %}
+      <h1 class="type-headline-sm text-primary">{% translate "Add this e-mail address" %}</h1>
+      <p class="type-body-md text-secondary">
+        {% blocktranslate trimmed with email=confirmation.email_address.email %}
+          Add {{ email }} to your IDAT account.
+        {% endblocktranslate %}
+      </p>
+      {% translate "Add e-mail address" as submit_label %}
+    {% endif %}
     <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
       {% csrf_token %}
       {{ redirect_field }}
-      <c-button type="submit" label="{% translate 'Confirm e-mail' %}" class="w-full" />
+      <c-button type="submit" :label="submit_label" class="w-full" />
     </form>
   {% elif confirmation %}
     {# only the mailbox owner gets this link, so naming the address reveals nothing new #}
