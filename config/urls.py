@@ -5,7 +5,10 @@ from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
 
-from idat.users.views import verification_sent_view
+from idat.users.views import (
+    confirm_email_change_view,
+    verification_sent_view,
+)
 
 from .api import api
 
@@ -20,7 +23,12 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
     path("users/", include("idat.users.urls", namespace="users")),
-    # before allauth.urls: replaces its view of the same name
+    # before allauth.urls: replace its views of the same name
+    path(
+        "accounts/confirm-email/<str:key>/",
+        confirm_email_change_view,
+        name="account_confirm_email",
+    ),
     path(
         "accounts/confirm-email/",
         verification_sent_view,

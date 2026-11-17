@@ -297,6 +297,18 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+# One address per account: /accounts/email/ changes it (the new address replaces the
+# old one once verified) instead of managing several.
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_CHANGE_EMAIL = True
+# Tell the old address when the e-mail or password changes (alarm on takeover)
+ACCOUNT_EMAIL_NOTIFICATIONS = True
+# After confirming a changed address while signed in, back to the e-mail page
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "account_email"
+# Requesting (or cancelling) an e-mail change asks for the password or a 2FA code
+# ("Confirm it's you", unless signed in within ACCOUNT_REAUTHENTICATION_TIMEOUT).
+# Only affects e-mail management here (phone numbers and social accounts are unused).
+ACCOUNT_REAUTHENTICATION_REQUIRED = True
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_ADAPTER = "idat.users.adapters.AccountAdapter"
 # https://docs.allauth.org/en/latest/account/forms.html
@@ -304,6 +316,7 @@ ACCOUNT_FORMS = {
     "login": "idat.users.forms.UserLoginForm",
     "signup": "idat.users.forms.UserSignupForm",
     "reauthenticate": "idat.users.forms.UserReauthenticateForm",
+    "add_email": "idat.users.forms.UserAddEmailForm",
     "reset_password": "idat.users.forms.UserResetPasswordForm",
     "reset_password_from_key": "idat.users.forms.UserResetPasswordKeyForm",
 }
@@ -316,6 +329,16 @@ SOCIALACCOUNT_FORMS = {"signup": "idat.users.forms.UserSocialSignupForm"}
 # MFA
 MFA_SUPPORTED_TYPES = ["totp", "webauthn", "recovery_codes"]
 MFA_PASSKEY_LOGIN_ENABLED = True
+# Lifts two allauth.mfa guards:
+# - no new e-mail address on a 2FA account while verification is by link (a link
+#   proves only control of the mailbox): here the change link must be opened signed
+#   in to the same account with a recent password or 2FA confirmation
+#   (idat.users.views.ConfirmEmailChangeView).
+# - no 2FA while an address is unverified (an attacker could sign up with someone
+#   else's address and lock its owner out): ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+#   keeps unverified accounts from signing in at all. Keep it mandatory; a test
+#   checks this.
+MFA_ALLOW_UNVERIFIED_EMAIL = True
 # https://docs.allauth.org/en/latest/mfa/forms.html
 MFA_FORMS = {
     "authenticate": "idat.users.forms.UserMFAAuthenticateForm",

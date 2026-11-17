@@ -1,29 +1,11 @@
-{% extends "allauth/layouts/manage.html" %}
+{% extends "account/base_manage.html" %}
 
 {% comment %}
-  Page shell of the two-factor pages (/accounts/2fa/ …), all of which extend this
-  template: a centred column on the canvas with a back link (blocks back_href and
-  back_label; default: the 2FA overview), then {% block content %}.
-  Not in Figma; same pattern as the other app pages.
-  Content conventions: <h1 class="type-headline-sm"> + intro paragraph, then a card
-  (rounded-lg border border-default bg-surface). Confirmation pages: a danger Button
-  plus a secondary "Cancel" back to the overview.
+  Shell of the two-factor pages (/accounts/2fa/ …): account/base_manage.html with the
+  back link pointing to the 2FA overview (the overview itself points to My account).
 {% endcomment %}
 
 {% load i18n %}
 
-{% block main %}
-  <div class="flex flex-1 items-start justify-center p-md sm:p-xl">
-    <section class="flex w-full max-w-180 flex-col gap-lg">
-      {# a plain link, not a ghost Button: no inner padding, so the arrow lines up with the content #}
-      <a
-        href="{% block back_href %}{% url 'mfa_index' %}{% endblock back_href %}"
-        class="flex items-center gap-xs self-start rounded-sm type-label-lg text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-      >
-        <c-icon name="arrow-left" class="size-4.5" />
-        {% block back_label %}{% translate "Two-factor authentication" %}{% endblock back_label %}
-      </a>
-      {% block content %}{% endblock content %}
-    </section>
-  </div>
-{% endblock main %}
+{% block back_href %}{% url 'mfa_index' %}{% endblock back_href %}
+{% block back_label %}{% translate "Two-factor authentication" %}{% endblock back_label %}

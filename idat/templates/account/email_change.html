@@ -1,0 +1,115 @@
+{% extends "account/base_manage.html" %}
+
+{% comment %}
+  /accounts/email/ with ACCOUNT_CHANGE_EMAIL (allauth EmailView): one address per
+  account. Not in Figma: built from the tokens like the 2FA overview (card with rows,
+  Badge for the status).
+  - current_emailaddress: the verified address you sign in with.
+  - new_emailaddress: a requested change, pending until the link in it is opened; then
+    it replaces the current one. Re-send and Cancel post the hidden #pending-email form
+    (action_send / action_remove).
+  - The form requests a change (action_add); allauth asks to confirm it's you first.
+  The old address gets a notice once it's changed (ACCOUNT_EMAIL_NOTIFICATIONS).
+  Requesting or cancelling asks to confirm it's you (ACCOUNT_REAUTHENTICATION_REQUIRED);
+  the link only switches the address when opened signed in to this account, again
+  with a recent confirmation (ConfirmEmailChangeView). That also covers 2FA accounts.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "E-mail address" %}
+{% endblock head_title %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "E-mail address" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% translate "You sign in with this address, and platforms use it to verify your affiliation." %}
+    </p>
+  </div>
+
+  <div class="flex flex-col rounded-lg border border-default bg-surface px-md sm:px-lg">
+    {% if current_emailaddress or new_emailaddress %}
+      <ul class="flex flex-col">
+        {% if current_emailaddress %}
+          <li class="flex items-start gap-md border-b border-default py-lg">
+            <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
+              <c-icon name="mail" class="size-5 text-icon-default" />
+            </span>
+            <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+              <div class="flex flex-wrap items-center gap-xs">
+                <h2 class="type-title-md text-primary">{% translate "Current address" %}</h2>
+                <c-badge tone="success" label="{% translate 'Verified' %}" />
+              </div>
+              <p class="break-all type-body-md text-secondary">{{ current_emailaddress.email }}</p>
+            </div>
+          </li>
+        {% endif %}
+        {% if new_emailaddress %}
+          <li class="flex flex-wrap items-center gap-md border-b border-default py-lg">
+            <div class="flex min-w-60 flex-1 items-start gap-md">
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
+                <c-icon name="mail" class="size-5 text-icon-default" />
+              </span>
+              <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+                <div class="flex flex-wrap items-center gap-xs">
+                  <h2 class="type-title-md text-primary">
+                    {% if current_emailaddress %}
+                      {% translate "Changing to" %}
+                    {% else %}
+                      {% translate "Current address" %}
+                    {% endif %}
+                  </h2>
+                  <c-badge tone="warning" label="{% translate 'Not verified' %}" />
+                </div>
+                <p class="break-all type-body-md text-secondary">{{ new_emailaddress.email }}</p>
+                <p class="type-body-sm text-tertiary">
+                  {% blocktranslate trimmed %}
+                    Open the link we sent there within {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours to finish the
+                    change.
+                  {% endblocktranslate %}
+                </p>
+              </div>
+            </div>
+            {# on narrow screens the buttons wrap below the text; align them with it #}
+            <div class="flex flex-wrap gap-xs pl-14 sm:pl-0">
+              <c-button
+                variant="secondary"
+                type="submit"
+                form="pending-email"
+                name="action_send"
+                label="{% translate 'Re-send link' %}"
+              />
+              {% if current_emailaddress %}
+                <c-button
+                  variant="secondary"
+                  type="submit"
+                  form="pending-email"
+                  name="action_remove"
+                  label="{% translate 'Cancel change' %}"
+                />
+              {% endif %}
+            </div>
+          </li>
+        {% endif %}
+      </ul>
+    {% endif %}
+
+    <form class="flex flex-col gap-md py-lg" method="post" action="{% url 'account_email' %}">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
+      {% endif %}
+      {{ form.email.as_field_group }}
+      <c-button type="submit" name="action_add" label="{% translate 'Change e-mail address' %}" class="self-start" />
+    </form>
+  </div>
+
+  {% if new_emailaddress %}
+    <form id="pending-email" method="post" action="{% url 'account_email' %}" hidden>
+      {% csrf_token %}
+      <input type="hidden" name="email" value="{{ new_emailaddress.email }}" />
+    </form>
+  {% endif %}
+{% endblock content %}

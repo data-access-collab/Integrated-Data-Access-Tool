@@ -1,4 +1,5 @@
 from allauth.account.forms import (
+    AddEmailForm,
     LoginForm,
     ReauthenticateForm,
     ResetPasswordForm,
@@ -121,6 +122,19 @@ class UserLoginForm(LoginForm):
         self.fields["password"].help_text = ""
         if "remember" in self.fields:
             self.fields["remember"].label = _("Remember me")
+
+
+class UserAddEmailForm(AddEmailForm):
+    """The "change e-mail" form on /accounts/email/ (ACCOUNT_CHANGE_EMAIL)."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["email"].label = _("New e-mail address")
+        self.fields["email"].help_text = _(
+            "We send a link to the new address. Until you open it, you keep "
+            "signing in with the current one.",
+        )
+        self.fields["email"].widget.attrs.pop("placeholder", None)
 
 
 class UserResetPasswordForm(ResetPasswordForm):

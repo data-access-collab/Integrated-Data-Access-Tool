@@ -2,11 +2,15 @@
 
 {% comment %}
   Target of the verification link (allauth ConfirmEmailView). Three states:
-  - valid link: activate the account (address used to sign up) or add the address
-    (added later while signed in). Confirmed with a POST: ACCOUNT_CONFIRM_EMAIL_ON_GET
+  - valid link: activate the account (address used to sign up) or switch to a new
+    address (requested on /accounts/email/; ACCOUNT_CHANGE_EMAIL replaces the old one).
+    A switch is only shown signed in to that account with a recent password or 2FA
+    confirmation (ConfirmEmailChangeView sends everyone else to sign in first).
+    Confirmed with a POST: ACCOUNT_CONFIRM_EMAIL_ON_GET
     stays off, so mail scanners that open links can't confirm on their own.
   - address confirmed by another account.
-  - expired, invalid or already used link.
+  - expired, invalid or already used link: signed in (an e-mail change), back to the
+    e-mail page; signed out, sign in (which re-sends an unverified signup link).
 {% endcomment %}
 
 {% load i18n %}
@@ -15,7 +19,7 @@
   {% if confirmation and can_confirm and confirmation.email_address.primary %}
     {% translate "Activate your account" %}
   {% elif confirmation and can_confirm %}
-    {% translate "Add this e-mail address" %}
+    {% translate "Confirm your new e-mail address" %}
   {% elif confirmation %}
     {% translate "This address already has an account" %}
   {% else %}
@@ -33,7 +37,7 @@
 
 {% block content %}
   {% if confirmation and can_confirm %}
-    {# primary = the address the account signed up with; otherwise one added later on /accounts/email/ #}
+    {# primary = the address the account signed up with; otherwise a change requested on /accounts/email/ #}
     {% if confirmation.email_address.primary %}
       <h1 class="type-headline-sm text-primary">{% translate "Activate your account" %}</h1>
       <p class="type-body-md text-secondary">
@@ -43,13 +47,13 @@
       </p>
       {% translate "Activate account" as submit_label %}
     {% else %}
-      <h1 class="type-headline-sm text-primary">{% translate "Add this e-mail address" %}</h1>
+      <h1 class="type-headline-sm text-primary">{% translate "Confirm your new e-mail address" %}</h1>
       <p class="type-body-md text-secondary">
         {% blocktranslate trimmed with email=confirmation.email_address.email %}
-          Add {{ email }} to your IDAT account.
+          From now on, you'll sign in to IDAT with {{ email }}, and it replaces your current address.
         {% endblocktranslate %}
       </p>
-      {% translate "Add e-mail address" as submit_label %}
+      {% translate "Use this address" as submit_label %}
     {% endif %}
     <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
       {% csrf_token %}
@@ -68,12 +72,23 @@
     <c-button href="{% url 'account_login' %}" label="{% translate 'Sign in' %}" class="w-full" />
   {% else %}
     <h1 class="type-headline-sm text-primary">{% translate "This link has expired" %}</h1>
-    <p class="type-body-md text-secondary">
-      {% blocktranslate trimmed %}
-        Verification links are valid for {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours and work once. Sign in to
-        continue: if your e-mail isn't verified yet, we'll send you a new link.
-      {% endblocktranslate %}
-    </p>
-    <c-button href="{% url 'account_login' %}" label="{% translate 'Sign in' %}" class="w-full" />
+    {# signed in: most likely an e-mail change (signup links are opened signed out) #}
+    {% if user.is_authenticated %}
+      <p class="type-body-md text-secondary">
+        {% blocktranslate trimmed %}
+          Verification links are valid for {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours and work once. If you're
+          changing your e-mail address, request a new link on the e-mail page.
+        {% endblocktranslate %}
+      </p>
+      <c-button href="{% url 'account_email' %}" label="{% translate 'Go to e-mail address' %}" class="w-full" />
+    {% else %}
+      <p class="type-body-md text-secondary">
+        {% blocktranslate trimmed %}
+          Verification links are valid for {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours and work once. Sign in to
+          continue: if your e-mail isn't verified yet, we'll send you a new link.
+        {% endblocktranslate %}
+      </p>
+      <c-button href="{% url 'account_login' %}" label="{% translate 'Sign in' %}" class="w-full" />
+    {% endif %}
   {% endif %}
 {% endblock content %}
