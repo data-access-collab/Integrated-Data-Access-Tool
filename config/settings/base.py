@@ -319,6 +319,7 @@ ACCOUNT_FORMS = {
     "add_email": "idat.users.forms.UserAddEmailForm",
     "reset_password": "idat.users.forms.UserResetPasswordForm",
     "reset_password_from_key": "idat.users.forms.UserResetPasswordKeyForm",
+    "change_password": "idat.users.forms.UserChangePasswordForm",
 }
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_ADAPTER = "idat.users.adapters.SocialAccountAdapter"

@@ -1,5 +1,6 @@
 from allauth.account.forms import (
     AddEmailForm,
+    ChangePasswordForm,
     LoginForm,
     ReauthenticateForm,
     ResetPasswordForm,
@@ -144,19 +145,39 @@ class UserResetPasswordForm(ResetPasswordForm):
         self.fields["email"].widget.attrs.pop("placeholder", None)
 
 
+def setup_new_password_fields(form: forms.Form) -> None:
+    """
+    Labels and help for allauth's new-password pair (password1, password2) on the
+    reset and change pages. The minlength attr feeds the page's requirements box
+    (c-forms.password-requirements); the browser checks it on submit too.
+    """
+    password1 = form.fields["password1"]
+    password1.label = _("New password")
+    password1.help_text = _("%(length)s A passphrase works well.") % {
+        "length": password_length_help(),
+    }
+    if n := min_password_length():
+        password1.widget.attrs["minlength"] = n
+    form.fields["password2"].label = _("Repeat new password")
+    for field in ("password1", "password2"):
+        form.fields[field].widget.attrs.pop("placeholder", None)
+
+
 class UserResetPasswordKeyForm(ResetPasswordKeyForm):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.fields["password1"].label = _("New password")
-        self.fields["password1"].help_text = _(
-            "%(length)s A passphrase works well.",
-        ) % {"length": password_length_help()}
-        # the page's requirements box reads it; the browser checks it on submit too
-        if n := min_password_length():
-            self.fields["password1"].widget.attrs["minlength"] = n
-        self.fields["password2"].label = _("Repeat new password")
-        for field in ("password1", "password2"):
-            self.fields[field].widget.attrs.pop("placeholder", None)
+        setup_new_password_fields(self)
+
+
+class UserChangePasswordForm(ChangePasswordForm):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        oldpassword = self.fields["oldpassword"]
+        oldpassword.label = _("Current password")
+        # the page has its own "Forgot password?" link; allauth adds one as help text
+        oldpassword.help_text = ""
+        oldpassword.widget.attrs.pop("placeholder", None)
+        setup_new_password_fields(self)
 
 
 class UserReauthenticateForm(ReauthenticateForm):
