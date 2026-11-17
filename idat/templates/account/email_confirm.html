@@ -1,0 +1,64 @@
+{% extends "account/base_entrance.html" %}
+
+{% comment %}
+  Target of the verification link (allauth ConfirmEmailView). Three states:
+  - valid link: confirm with a POST (ACCOUNT_CONFIRM_EMAIL_ON_GET stays off, so mail
+    scanners that open links can't confirm on their own).
+  - address confirmed by another account.
+  - expired, invalid or already used link.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% if confirmation and can_confirm %}
+    {% translate "Confirm your e-mail" %}
+  {% elif confirmation %}
+    {% translate "This address already has an account" %}
+  {% else %}
+    {% translate "This link has expired" %}
+  {% endif %}
+{% endblock head_title %}
+
+{% block entrance_aside %}
+  <p class="type-headline-lg text-on-nav">{% translate "One more step" %}</p>
+  <p class="type-body-lg text-on-nav-muted">
+    {% translate "We verify your e-mail before you can save applications." %}
+  </p>
+  {% include "account/partials/_benefits.html" %}
+{% endblock entrance_aside %}
+
+{% block content %}
+  {% if confirmation and can_confirm %}
+    <h1 class="type-headline-sm text-primary">{% translate "Confirm your e-mail" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% blocktranslate trimmed with email=confirmation.email_address.email %}
+        Confirm that {{ email }} is your e-mail address to activate your account.
+      {% endblocktranslate %}
+    </p>
+    <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+      {% csrf_token %}
+      {{ redirect_field }}
+      <c-button type="submit" label="{% translate 'Confirm e-mail' %}" class="w-full" />
+    </form>
+  {% elif confirmation %}
+    {# only the mailbox owner gets this link, so naming the address reveals nothing new #}
+    <h1 class="type-headline-sm text-primary">{% translate "This address already has an account" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% blocktranslate trimmed with email=confirmation.email_address.email %}
+        {{ email }} is already confirmed for another account, so nothing was changed. If that account is yours, sign
+        in.
+      {% endblocktranslate %}
+    </p>
+    <c-button href="{% url 'account_login' %}" label="{% translate 'Sign in' %}" class="w-full" />
+  {% else %}
+    <h1 class="type-headline-sm text-primary">{% translate "This link has expired" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% blocktranslate trimmed %}
+        Verification links are valid for {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours and work once. Sign in to
+        continue: if your e-mail isn't verified yet, we'll send you a new link.
+      {% endblocktranslate %}
+    </p>
+    <c-button href="{% url 'account_login' %}" label="{% translate 'Sign in' %}" class="w-full" />
+  {% endif %}
+{% endblock content %}

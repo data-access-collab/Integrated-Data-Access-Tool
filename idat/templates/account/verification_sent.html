@@ -19,11 +19,13 @@
   <p class="type-body-md text-secondary">
     {% if email %}
       {% blocktranslate trimmed %}
-        We sent a verification link to {{ email }}. Open it within {{ expire_hours }} hours to activate your account.
+        We sent a verification link to {{ email }}. Open it within {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours to
+        activate your account.
       {% endblocktranslate %}
     {% else %}
       {% blocktranslate trimmed %}
-        We sent you a verification link. Open it within {{ expire_hours }} hours to activate your account.
+        We sent you a verification link. Open it within {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours to activate your
+        account.
       {% endblocktranslate %}
     {% endif %}
   </p>
