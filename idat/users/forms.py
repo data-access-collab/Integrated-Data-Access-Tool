@@ -1,4 +1,10 @@
-from allauth.account.forms import LoginForm, ReauthenticateForm, SignupForm
+from allauth.account.forms import (
+    LoginForm,
+    ReauthenticateForm,
+    ResetPasswordForm,
+    ResetPasswordKeyForm,
+    SignupForm,
+)
 from allauth.mfa.base.forms import AuthenticateForm
 from allauth.mfa.base.forms import ReauthenticateForm as MFAReauthenticateForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
@@ -71,17 +77,24 @@ class SignupFieldsMixin(forms.Form):
         return orcid
 
 
-def password_length_help() -> str:
-    """'At least n characters.' from the MinimumLengthValidator setting."""
+def min_password_length() -> int | None:
+    """min_length of the MinimumLengthValidator setting, if there is one."""
     for validator in get_default_password_validators():
         if isinstance(validator, MinimumLengthValidator):
-            n = validator.min_length
-            return ngettext(
-                "At least %(n)d character.",
-                "At least %(n)d characters.",
-                n,
-            ) % {"n": n}
-    return ""
+            return validator.min_length
+    return None
+
+
+def password_length_help() -> str:
+    """'At least n characters.' from the MinimumLengthValidator setting."""
+    n = min_password_length()
+    if n is None:
+        return ""
+    return ngettext(
+        "At least %(n)d character.",
+        "At least %(n)d characters.",
+        n,
+    ) % {"n": n}
 
 
 class UserSignupForm(SignupFieldsMixin, SignupForm):
@@ -108,6 +121,28 @@ class UserLoginForm(LoginForm):
         self.fields["password"].help_text = ""
         if "remember" in self.fields:
             self.fields["remember"].label = _("Remember me")
+
+
+class UserResetPasswordForm(ResetPasswordForm):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["email"].label = _("E-mail")
+        self.fields["email"].widget.attrs.pop("placeholder", None)
+
+
+class UserResetPasswordKeyForm(ResetPasswordKeyForm):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["password1"].label = _("New password")
+        self.fields["password1"].help_text = _(
+            "%(length)s A passphrase works well.",
+        ) % {"length": password_length_help()}
+        # the page's requirements box reads it; the browser checks it on submit too
+        if n := min_password_length():
+            self.fields["password1"].widget.attrs["minlength"] = n
+        self.fields["password2"].label = _("Repeat new password")
+        for field in ("password1", "password2"):
+            self.fields[field].widget.attrs.pop("placeholder", None)
 
 
 class UserReauthenticateForm(ReauthenticateForm):

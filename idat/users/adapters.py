@@ -87,6 +87,13 @@ class AccountAdapter(DefaultAccountAdapter):
             and not request.user.is_authenticated
         ):
             return
+        # After a password reset (signed out), the "Password changed" page says it
+        # already. A password change while signed in keeps the message.
+        if (
+            message_template == "account/messages/password_changed.txt"
+            and not request.user.is_authenticated
+        ):
+            return
         super().add_message(
             request,
             level,

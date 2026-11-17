@@ -133,6 +133,9 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
 ]
+# Password reset links (allauth uses Django's token generator) expire after 1 hour
+# https://docs.djangoproject.com/en/dev/ref/settings/#password-reset-timeout
+PASSWORD_RESET_TIMEOUT = 60 * 60
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -301,6 +304,8 @@ ACCOUNT_FORMS = {
     "login": "idat.users.forms.UserLoginForm",
     "signup": "idat.users.forms.UserSignupForm",
     "reauthenticate": "idat.users.forms.UserReauthenticateForm",
+    "reset_password": "idat.users.forms.UserResetPasswordForm",
+    "reset_password_from_key": "idat.users.forms.UserResetPasswordKeyForm",
 }
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_ADAPTER = "idat.users.adapters.SocialAccountAdapter"
