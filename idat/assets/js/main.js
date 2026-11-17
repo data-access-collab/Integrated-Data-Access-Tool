@@ -10,8 +10,8 @@ Alpine.data("dateField", dateField);
 Alpine.data("plainFile", plainFile);
 Alpine.start();
 
-/* Messages close button */
+/* Messages close button (partials/_messages.html) */
 document.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-dismiss-alert]");
-  if (btn) btn.closest("[role=alert]").remove();
+  const btn = e.target.closest("[data-dismiss-message]");
+  if (btn) btn.closest("[data-message]").remove();
 });

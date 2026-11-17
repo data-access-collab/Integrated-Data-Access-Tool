@@ -45,7 +45,7 @@
 
       <main id="main" class="flex flex-1 flex-col">
         {% block messages %}
-          {% include "partials/_messages.html" %}
+          {% include "partials/_messages.html" with class="px-md pt-md" %}
         {% endblock messages %}
 
         {% block main %}
