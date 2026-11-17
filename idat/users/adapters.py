@@ -12,11 +12,16 @@ from django.utils.translation import gettext_lazy as _
 from idat.users.middleware import MFA_REQUIRED_MESSAGE, has_second_factor
 
 if typing.TYPE_CHECKING:
+    from allauth.account.models import EmailAddress, EmailConfirmation
     from allauth.socialaccount.models import SocialLogin
     from django.forms import BaseForm
     from django.http import HttpRequest, HttpResponse
 
     from idat.users.models import User
+
+# Session key: the address the last verification e-mail went to, for the
+# "Check your inbox" page (VerificationSentView).
+VERIFICATION_EMAIL_KEY = "verification_email"
 
 
 class AccountAdapter(DefaultAccountAdapter):
@@ -27,6 +32,25 @@ class AccountAdapter(DefaultAccountAdapter):
 
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
+
+    def send_confirmation_mail(
+        self,
+        request: HttpRequest,
+        emailconfirmation: EmailConfirmation,
+        signup: bool,
+    ) -> None:
+        request.session[VERIFICATION_EMAIL_KEY] = emailconfirmation.email_address.email
+        super().send_confirmation_mail(request, emailconfirmation, signup)
+
+    def send_account_already_exists_mail(self, email: str) -> None:
+        # Sign-up with a taken address: show the address too to not disclose the
+        # information that it already exists.
+        self.request.session[VERIFICATION_EMAIL_KEY] = email
+        super().send_account_already_exists_mail(email)
+
+    def confirm_email(self, request: HttpRequest, email_address: EmailAddress) -> bool:
+        request.session.pop(VERIFICATION_EMAIL_KEY, None)
+        return super().confirm_email(request, email_address)
 
     def save_user(
         self,
@@ -44,6 +68,33 @@ class AccountAdapter(DefaultAccountAdapter):
         if commit:
             user.save()
         return user
+
+    def add_message(  # noqa: PLR0913, PLR0917 (allauth's signature)
+        self,
+        request: HttpRequest,
+        level: int,
+        message_template: str | None = None,
+        message_context: dict[str, typing.Any] | None = None,
+        extra_tags: str = "",
+        message: str | None = None,
+    ) -> None:
+        # Signed out (sign-up, or sign-in while unverified), allauth redirects to the
+        # "Check your inbox" page, which names the address and the message is thus
+        # unnecessary. When signed in, adding or re-verifying an address on
+        # /accounts/email/, the message is the only feedback so it's kept.
+        if (
+            message_template == "account/messages/email_confirmation_sent.txt"
+            and not request.user.is_authenticated
+        ):
+            return
+        super().add_message(
+            request,
+            level,
+            message_template,
+            message_context,
+            extra_tags,
+            message,
+        )
 
     def post_login(  # noqa: PLR0913
         self,
