@@ -1,0 +1,157 @@
+{% extends "mfa/base_manage.html" %}
+
+{% comment %}
+  allauth's two-factor overview (/accounts/2fa/).
+  One row per method in MFA_SUPPORTED_TYPES: icon and text on the left (min. 15rem, so
+  narrow screens wrap the actions below instead of squeezing the text), actions right.
+  Recovery codes only work once an authenticator app or security key is set up
+  (is_mfa_enabled).
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Two-factor authentication" %}
+{% endblock head_title %}
+
+{% block back_href %}{% url 'users:detail' %}{% endblock back_href %}
+{% block back_label %}{% translate "My account" %}{% endblock back_label %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "Two-factor authentication" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% translate "Add a second step when you sign in, so a stolen password alone can't open your account." %}
+    </p>
+  </div>
+
+  <ul class="flex flex-col rounded-lg border border-default bg-surface px-md sm:px-lg">
+    {% if "totp" in MFA_SUPPORTED_TYPES %}
+      <li class="flex flex-wrap items-center gap-md border-b border-default py-lg last:border-b-0">
+        <div class="flex min-w-60 flex-1 items-start gap-md">
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
+            <c-icon name="layout-grid" class="size-5 text-icon-default" />
+          </span>
+          <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+            <div class="flex flex-wrap items-center gap-xs">
+              <h2 class="type-title-md text-primary">{% translate "Authenticator app" %}</h2>
+              {% if authenticators.totp %}
+                <c-badge tone="success" label="{% translate 'Active' %}" />
+              {% else %}
+                <c-badge tone="neutral" label="{% translate 'Not set up' %}" />
+              {% endif %}
+            </div>
+            <p class="type-body-md text-secondary">
+              {% translate "A 6-digit code from an app like Aegis, Google Authenticator or 1Password." %}
+            </p>
+          </div>
+        </div>
+        {# on narrow screens the button wraps below the text; align it with the text #}
+        <div class="pl-14 sm:pl-0">
+          {% if authenticators.totp %}
+            <c-button
+              variant="secondary"
+              label="{% translate 'Deactivate' %}"
+              href="{% url 'mfa_deactivate_totp' %}"
+            />
+          {% else %}
+            <c-button label="{% translate 'Set up' %}" href="{% url 'mfa_activate_totp' %}" />
+          {% endif %}
+        </div>
+      </li>
+    {% endif %}
+
+    {% if "webauthn" in MFA_SUPPORTED_TYPES %}
+      <li class="flex flex-wrap items-center gap-md border-b border-default py-lg last:border-b-0">
+        <div class="flex min-w-60 flex-1 items-start gap-md">
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
+            <c-icon name="shield" class="size-5 text-icon-default" />
+          </span>
+          <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+            <div class="flex flex-wrap items-center gap-xs">
+              <h2 class="type-title-md text-primary">{% translate "Security keys and passkeys" %}</h2>
+              {% with count=authenticators.webauthn|length %}
+                {% if count %}
+                  {% blocktranslate asvar keys_label %}{{ count }} added{% endblocktranslate %}
+                  <c-badge tone="success" :label="keys_label" />
+                {% else %}
+                  <c-badge tone="neutral" label="{% translate 'Not set up' %}" />
+                {% endif %}
+              {% endwith %}
+            </div>
+            <p class="type-body-md text-secondary">
+              {% translate "A hardware key or your device's fingerprint, face or screen lock." %}
+            </p>
+          </div>
+        </div>
+        {# on narrow screens the button wraps below the text; align it with the text #}
+        <div class="pl-14 sm:pl-0">
+          {% if authenticators.webauthn|length %}
+            <c-button variant="secondary" label="{% translate 'Manage' %}" href="{% url 'mfa_list_webauthn' %}" />
+          {% else %}
+            <c-button variant="secondary" label="{% translate 'Add' %}" href="{% url 'mfa_add_webauthn' %}" />
+          {% endif %}
+        </div>
+      </li>
+    {% endif %}
+
+    {% if "recovery_codes" in MFA_SUPPORTED_TYPES %}
+      {% with total_count=authenticators.recovery_codes.generate_codes|length unused_count=authenticators.recovery_codes.get_unused_codes|length %}
+        <li class="flex flex-wrap items-center gap-md border-b border-default py-lg last:border-b-0">
+          <div class="flex min-w-60 flex-1 items-start gap-md">
+            <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
+              <c-icon name="file-text" class="size-5 text-icon-default" />
+            </span>
+            <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+              <div class="flex flex-wrap items-center gap-xs">
+                <h2 class="type-title-md text-primary">{% translate "Recovery codes" %}</h2>
+                {% if authenticators.recovery_codes %}
+                  {% blocktranslate trimmed asvar codes_label %}
+                    {{ unused_count }} of {{ total_count }} left
+                  {% endblocktranslate %}
+                  {% if unused_count %}
+                    <c-badge tone="success" :label="codes_label" />
+                  {% else %}
+                    <c-badge tone="warning" :label="codes_label" />
+                  {% endif %}
+                {% else %}
+                  <c-badge tone="neutral" label="{% translate 'Not set up' %}" />
+                {% endif %}
+              </div>
+              <p class="type-body-md text-secondary">
+                {% if is_mfa_enabled %}
+                  {% translate "One-time codes for when you can't use your app or key. Keep them somewhere safe." %}
+                {% else %}
+                  {% translate "Available once you've set up an authenticator app or a security key." %}
+                {% endif %}
+              </p>
+            </div>
+          </div>
+          {% if is_mfa_enabled %}
+            {# three buttons: always below the text, aligned with it (icon 40px + gap 16px) #}
+            <div class="flex w-full flex-wrap gap-xs pl-14">
+              {% if authenticators.recovery_codes and unused_count > 0 and not MFA_RECOVERY_CODES_SHOW_ONCE %}
+                <c-button
+                  variant="secondary"
+                  label="{% translate 'View' %}"
+                  href="{% url 'mfa_view_recovery_codes' %}"
+                />
+                <c-button
+                  variant="secondary"
+                  label="{% translate 'Download' %}"
+                  leading-icon="download"
+                  href="{% url 'mfa_download_recovery_codes' %}"
+                />
+              {% endif %}
+              <c-button
+                variant="secondary"
+                label="{% translate 'Generate new' %}"
+                href="{% url 'mfa_generate_recovery_codes' %}"
+              />
+            </div>
+          {% endif %}
+        </li>
+      {% endwith %}
+    {% endif %}
+  </ul>
+{% endblock content %}

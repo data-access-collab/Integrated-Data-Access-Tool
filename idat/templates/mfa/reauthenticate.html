@@ -1,0 +1,20 @@
+{% extends "account/base_reauthenticate.html" %}
+
+{% comment %}
+  Confirm access with an authenticator or recovery code (allauth ReauthenticateView
+  in mfa). Layout and the alternative methods: account/base_reauthenticate.html.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block reauthenticate_content %}
+  <form class="flex flex-col gap-md" method="post" action="{% url 'mfa_reauthenticate' %}">
+    {% csrf_token %}
+    {{ redirect_field }}
+    {% if form.non_field_errors %}
+      <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
+    {% endif %}
+    {{ form.code.as_field_group }}
+    <c-button type="submit" label="{% translate 'Confirm' %}" class="w-full" />
+  </form>
+{% endblock reauthenticate_content %}

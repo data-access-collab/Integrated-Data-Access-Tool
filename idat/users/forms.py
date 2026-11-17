@@ -1,4 +1,6 @@
-from allauth.account.forms import LoginForm, SignupForm
+from allauth.account.forms import LoginForm, ReauthenticateForm, SignupForm
+from allauth.mfa.base.forms import AuthenticateForm
+from allauth.mfa.base.forms import ReauthenticateForm as MFAReauthenticateForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from django import forms
 from django.contrib.auth import forms as admin_forms
@@ -106,6 +108,34 @@ class UserLoginForm(LoginForm):
         self.fields["password"].help_text = ""
         if "remember" in self.fields:
             self.fields["remember"].label = _("Remember me")
+
+
+class UserReauthenticateForm(ReauthenticateForm):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # the page has its own "Forgot password?" link; allauth adds one as help text
+        self.fields["password"].help_text = ""
+
+
+class MFACodeFieldMixin(forms.Form):
+    """Label and help for the code field of the 2FA sign-in and confirm-access steps."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        code = self.fields["code"]
+        code.label = _("Authentication code")
+        code.help_text = _(
+            "From your authenticator app, or one of your recovery codes."
+        )
+        code.widget.attrs.pop("placeholder", None)
+
+
+class UserMFAAuthenticateForm(MFACodeFieldMixin, AuthenticateForm):
+    pass
+
+
+class UserMFAReauthenticateForm(MFACodeFieldMixin, MFAReauthenticateForm):
+    pass
 
 
 class UserSocialSignupForm(SignupFieldsMixin, SocialSignupForm):

@@ -1,0 +1,35 @@
+{% extends "mfa/totp/base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Deactivate the authenticator app" %}
+{% endblock head_title %}
+
+{% block content %}
+  <form
+    class="flex flex-col gap-lg rounded-lg border border-default bg-surface p-md sm:p-lg"
+    method="post"
+    action="{% url 'mfa_deactivate_totp' %}"
+  >
+    {% csrf_token %}
+    <div class="flex flex-col gap-xs">
+      <h1 class="type-headline-sm text-primary">{% translate "Deactivate the authenticator app?" %}</h1>
+      <p class="type-body-md text-secondary">
+        {% translate "You will no longer be asked for a code from your app when you sign in." %}
+      </p>
+      {% if request.user.is_staff %}
+        <c-field-message tone="warning">
+          {% translate "Staff accounts need a second factor to use the admin." %}
+        </c-field-message>
+      {% endif %}
+    </div>
+    {% if form.non_field_errors %}
+      <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
+    {% endif %}
+    <div class="flex flex-wrap gap-sm">
+      <c-button variant="danger" type="submit" label="{% translate 'Deactivate' %}" />
+      <c-button variant="secondary" label="{% translate 'Cancel' %}" href="{% url 'mfa_index' %}" />
+    </div>
+  </form>
+{% endblock content %}

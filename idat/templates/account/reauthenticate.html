@@ -1,0 +1,21 @@
+{% extends "account/base_reauthenticate.html" %}
+
+{% comment %}
+  Confirm access with the password (allauth ReauthenticateView). Layout and the
+  alternative methods: account/base_reauthenticate.html.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block reauthenticate_content %}
+  <form class="flex flex-col gap-md" method="post" action="{% url 'account_reauthenticate' %}">
+    {% csrf_token %}
+    {{ redirect_field }}
+    {{ form.password.as_field_group }}
+    <a
+      href="{% url 'account_reset_password' %}"
+      class="self-start type-label-lg text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >{% translate "Forgot password?" %}</a>
+    <c-button type="submit" label="{% translate 'Confirm' %}" class="w-full" />
+  </form>
+{% endblock reauthenticate_content %}

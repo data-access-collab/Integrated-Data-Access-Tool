@@ -1,0 +1,10 @@
+{% comment %}
+  allauth's hidden "logout-from-stage" form: a Cancel button on a sign-in stage
+  (2FA code, trust this browser) submits it with form="logout-from-stage", which ends
+  the half-finished sign-in and goes back to the sign-in page.
+{% endcomment %}
+
+<form id="logout-from-stage" method="post" action="{% url 'account_logout' %}">
+  <input type="hidden" name="next" value="{% url 'account_login' %}" />
+  {% csrf_token %}
+</form>

@@ -300,6 +300,7 @@ ACCOUNT_ADAPTER = "idat.users.adapters.AccountAdapter"
 ACCOUNT_FORMS = {
     "login": "idat.users.forms.UserLoginForm",
     "signup": "idat.users.forms.UserSignupForm",
+    "reauthenticate": "idat.users.forms.UserReauthenticateForm",
 }
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_ADAPTER = "idat.users.adapters.SocialAccountAdapter"
@@ -310,6 +311,11 @@ SOCIALACCOUNT_FORMS = {"signup": "idat.users.forms.UserSocialSignupForm"}
 # MFA
 MFA_SUPPORTED_TYPES = ["totp", "webauthn", "recovery_codes"]
 MFA_PASSKEY_LOGIN_ENABLED = True
+# https://docs.allauth.org/en/latest/mfa/forms.html
+MFA_FORMS = {
+    "authenticate": "idat.users.forms.UserMFAAuthenticateForm",
+    "reauthenticate": "idat.users.forms.UserMFAReauthenticateForm",
+}
 
 # Staff are logged out after this many seconds without a request
 # (see idat.users.middleware.StaffSecurityMiddleware)
