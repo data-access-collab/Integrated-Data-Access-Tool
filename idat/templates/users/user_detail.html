@@ -3,14 +3,14 @@
 {% load static %}
 
 {% block title %}
-  User:
-  {{ object.username }}
+  {{ object.get_full_name|default:object.email }}
 {% endblock title %}
 {% block content %}
   <div class="mx-auto max-w-6xl px-4">
-    <h2>{{ object.username }}</h2>
-    {% if object.name %}
-      <p>{{ object.name }}</p>
+    <h2>{{ object.get_full_name|default:object.email }}</h2>
+    <p>{{ object.email }}</p>
+    {% if object.orcid %}
+      <p>{{ object.orcid }}</p>
     {% endif %}
 
     {% if object == request.user %}

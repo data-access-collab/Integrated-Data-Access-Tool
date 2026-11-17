@@ -20,6 +20,7 @@ urlpatterns = [
     path("users/", include("idat.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Django apps
+    path("", include("idat.core.urls", namespace="core")),
     path(
         "applications/",
         include("idat.dsa40_wizard.urls", namespace="dsa40_wizard"),

@@ -2,7 +2,8 @@
   Props:
     field    Django BoundField (:field="form.x"): name, id, label, checked, required,
              help_text and errors come from it
-    label    label text without a form; or pass rich content (links) as the slot
+    label    label text without a form; or pass rich content (links) as the slot,
+             which replaces the label (also a field's)
     name     input name without a form
     value    submitted value, default "on"
     checked  boolean attribute, without a form
@@ -35,7 +36,8 @@
         describedby="{% if field.help_text %}{{ input_id }}-help{% endif %}{% if field.help_text and field.errors %} {% endif %}{% if field.errors %}{{ input_id }}-error{% endif %}"
         :attrs="attrs"
       />
-      <span>{% if label_text %}{{ label_text }}{% else %}{{ slot }}{% endif %}</span>
+      {# a slot (rich label with links) wins over the field's plain label #}
+      <span>{% if slot %}{{ slot }}{% else %}{{ label_text }}{% endif %}</span>
     </label>
     {% if field.help_text %}<p id="{{ input_id }}-help" class="pl-7.5 type-body-sm text-tertiary">
         {{ field.help_text }}

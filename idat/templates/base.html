@@ -44,7 +44,9 @@
       {% endblock header_wrapper %}
 
       <main id="main" class="flex flex-1 flex-col">
-        {% include "partials/_messages.html" %}
+        {% block messages %}
+          {% include "partials/_messages.html" %}
+        {% endblock messages %}
 
         {% block main %}
           <div id="hero" class="text-center grid gap-4">

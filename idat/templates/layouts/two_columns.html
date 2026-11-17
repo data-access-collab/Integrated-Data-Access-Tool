@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% comment %}
+  Full-screen two-column layout without header and footer (sign-up, sign-in …):
+  a navy panel on the left (hidden below lg) and a centred column on the right.
+  Blocks: column_left, column_right. Messages are left to the page (block messages).
+{% endcomment %}
+
+{% block header_wrapper %}{% endblock header_wrapper %}
+{% block footer_wrapper %}{% endblock footer_wrapper %}
+{% block messages %}{% endblock messages %}
+
+{% block main %}
+  <div class="flex flex-1 bg-canvas">
+    <aside class="hidden w-140 shrink-0 flex-col gap-10 bg-nav px-3xl py-14 lg:flex">
+      {% block column_left %}{% endblock column_left %}
+    </aside>
+
+    <div class="flex flex-1 flex-col items-center justify-center px-md py-2xl">
+      {% block column_right %}{% endblock column_right %}
+    </div>
+  </div>
+{% endblock main %}

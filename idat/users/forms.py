@@ -2,7 +2,12 @@ from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from django import forms
 from django.contrib.auth import forms as admin_forms
+from django.contrib.auth.password_validation import (
+    MinimumLengthValidator,
+    get_default_password_validators,
+)
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 
 from idat.users.models import User
 from idat.users.validators import validate_orcid
@@ -41,7 +46,10 @@ class SignupFieldsMixin(forms.Form):
         max_length=19,
         required=False,
         validators=[validate_orcid],
-        help_text=_("Format: 0000-0000-0000-0000"),
+        help_text=_("Optional · speeds up verification with most platforms."),
+    )
+    terms = forms.BooleanField(
+        label=_("I accept the Terms of Use"),
     )
 
     field_order = [
@@ -51,6 +59,7 @@ class SignupFieldsMixin(forms.Form):
         "orcid",
         "password1",
         "password2",
+        "terms",
     ]
 
     def clean_orcid(self) -> str | None:
@@ -60,12 +69,33 @@ class SignupFieldsMixin(forms.Form):
         return orcid
 
 
+def password_length_help() -> str:
+    """'At least n characters.' from the MinimumLengthValidator setting."""
+    for validator in get_default_password_validators():
+        if isinstance(validator, MinimumLengthValidator):
+            n = validator.min_length
+            return ngettext(
+                "At least %(n)d character.",
+                "At least %(n)d characters.",
+                n,
+            ) % {"n": n}
+    return ""
+
+
 class UserSignupForm(SignupFieldsMixin, SignupForm):
     """
     Form that will be rendered on a user sign up section/screen.
     Default fields will be added automatically.
     Check UserSocialSignupForm for accounts created from social.
     """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["email"].label = _("Institutional e-mail")
+        self.fields["email"].help_text = _(
+            "Platforms use this to verify your affiliation.",
+        )
+        self.fields["password1"].help_text = password_length_help()
 
 
 class UserSocialSignupForm(SignupFieldsMixin, SocialSignupForm):
