@@ -10,14 +10,15 @@
     case-title    app/anonymous: e.g. "Recommender systems & youth mental health"
     save-status   app/anonymous: e.g. "All changes saved · 2 min ago" /
                   "Not saved · kept in this tab for 6 h" (announced politely when it changes)
-    initials      app: avatar initials; omitted when empty
-    account-href  app: link around the avatar
+    initials      signed in: avatar initials (any context); omitted when empty
+    account-href  link around the avatar
 
   Slots:
     nav      public: text links, e.g. "How it works", "Community"
              (<a class="type-label-lg text-secondary hover:text-primary" …>)
     actions  buttons on the right, per context:
-             public: ghost "Why are we doing this?" + secondary "Sign in"
+             public: ghost "Why are we doing this?" + secondary "Sign in" (signed out;
+             signed in, the avatar takes its place)
              app: secondary "Save & exit" (icon save)
              anonymous: ghost "Discard draft" + primary "Create account to save" + "Sign in" link
 
@@ -80,7 +81,7 @@
 
   {% if actions %}<div class="flex shrink-0 items-center gap-lg">{{ actions }}</div>{% endif %}
 
-  {% if context == "app" and initials %}
+  {% if initials %}
     {% if account_href %}
       <a
         href="{{ account_href }}"

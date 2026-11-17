@@ -1,6 +1,6 @@
 {% load i18n %}
 
-<c-top-bar>
+<c-top-bar initials="{{ user.initials }}" account-href="{% url 'users:detail' %}">
   <c-slot name="nav">
     <a
       class="rounded-sm type-label-lg text-secondary hover:text-primary"
@@ -13,6 +13,8 @@
   </c-slot>
   <c-slot name="actions">
     <c-button variant="ghost" label="{% translate 'Why are we doing this?' %}" />
-    <c-button variant="secondary" label="{% translate 'Sign in' %}" href="#top-bar" />
+    {% if not user.is_authenticated %}
+      <c-button variant="secondary" label="{% translate 'Sign in' %}" href="{% url 'account_login' %}" />
+    {% endif %}
   </c-slot>
 </c-top-bar>

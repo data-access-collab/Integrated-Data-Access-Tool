@@ -9,6 +9,15 @@
       <c-button variant="secondary" label="Sign in" href="#top-bar" />
     </c-slot>
   </c-top-bar>
+  <c-top-bar initials="JD" account-href="#top-bar">
+    <c-slot name="nav">
+      <a class="rounded-sm type-label-lg text-secondary hover:text-primary" href="#top-bar">How it works</a>
+      <a class="rounded-sm type-label-lg text-secondary hover:text-primary" href="#top-bar">Community</a>
+    </c-slot>
+    <c-slot name="actions">
+      <c-button variant="ghost" label="Why are we doing this?" />
+    </c-slot>
+  </c-top-bar>
   <c-top-bar
     context="app"
     case-meta="Application · TikTok, Instagram, YouTube"

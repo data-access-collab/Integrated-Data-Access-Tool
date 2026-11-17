@@ -65,3 +65,9 @@ class User(AbstractUser):
 
     def get_absolute_url(self) -> str:
         return reverse("users:detail")
+
+    @property
+    def initials(self) -> str:
+        """For the avatar: first letters of first and last name, else of the e-mail."""
+        initials = (self.first_name[:1] + self.last_name[:1]).upper()
+        return initials or self.email[:1].upper()
