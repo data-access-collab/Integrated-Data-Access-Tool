@@ -11,41 +11,7 @@
   <p class="type-body-lg text-on-nav-muted">
     {% translate "Free for researchers at EU research organisations." %}
   </p>
-  <ul class="flex flex-col gap-md">
-    <li class="flex items-start gap-sm">
-      <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-nav-hover">
-        <c-icon name="layout-grid" class="size-5 text-warning-on-nav" />
-      </span>
-      <div class="flex flex-1 flex-col gap-0.5">
-        <p class="type-title-md text-on-nav">{% translate "Answer once, apply everywhere" %}</p>
-        <p class="type-body-md text-on-nav-muted">
-          {% translate "Your answers are filled into each platform’s application form." %}
-        </p>
-      </div>
-    </li>
-    <li class="flex items-start gap-sm">
-      <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-nav-hover">
-        <c-icon name="target" class="size-5 text-warning-on-nav" />
-      </span>
-      <div class="flex flex-1 flex-col gap-0.5">
-        <p class="type-title-md text-on-nav">{% translate "Know what platforms expect" %}</p>
-        <p class="type-body-md text-on-nav-muted">
-          {% translate "Tips and community data at every question." %}
-        </p>
-      </div>
-    </li>
-    <li class="flex items-start gap-sm">
-      <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-nav-hover">
-        <c-icon name="bell" class="size-5 text-warning-on-nav" />
-      </span>
-      <div class="flex flex-1 flex-col gap-0.5">
-        <p class="type-title-md text-on-nav">{% translate "Never lose track" %}</p>
-        <p class="type-body-md text-on-nav-muted">
-          {% translate "Status updates and reminders for every case." %}
-        </p>
-      </div>
-    </li>
-  </ul>
+  {% include "account/partials/_benefits.html" %}
 {% endblock entrance_aside %}
 
 {% block content %}
@@ -68,18 +34,20 @@
     {% with link_class="text-link underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus" %}
       <div class="flex flex-col gap-sm">
         <c-checkbox :field="form.terms">
+          {% url 'terms-of-service' as terms_url %}
           {% blocktranslate trimmed %}
             I accept the <a
-              href="{% url 'terms-of-service' %}"
+              href="{{ terms_url }}"
               target="_blank"
               rel="noopener"
               class="{{ link_class }}">Terms of Use</a>
           {% endblocktranslate %}
         </c-checkbox>
         <p class="type-body-md text-secondary">
+          {% url 'privacy-policy' as privacy_policy_url %}
           {% blocktranslate trimmed %}
             Read how we handle your data in our <a
-              href="{% url 'privacy-policy' %}"
+              href="{{ privacy_policy_url }}"
               target="_blank"
               rel="noopener"
               class="{{ link_class }}">Privacy Policy</a>.

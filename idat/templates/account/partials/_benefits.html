@@ -1,0 +1,37 @@
+{# Benefit list in the left panel of the sign-up and sign-in pages #}
+{% load i18n %}
+<ul class="flex flex-col gap-md">
+  <li class="flex items-start gap-sm">
+    <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-nav-hover">
+      <c-icon name="layout-grid" class="size-5 text-warning-on-nav" />
+    </span>
+    <div class="flex flex-1 flex-col gap-0.5">
+      <p class="type-title-md text-on-nav">{% translate "Answer once, apply everywhere" %}</p>
+      <p class="type-body-md text-on-nav-muted">
+        {% translate "Your answers are filled into each platform’s application form." %}
+      </p>
+    </div>
+  </li>
+  <li class="flex items-start gap-sm">
+    <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-nav-hover">
+      <c-icon name="target" class="size-5 text-warning-on-nav" />
+    </span>
+    <div class="flex flex-1 flex-col gap-0.5">
+      <p class="type-title-md text-on-nav">{% translate "Know what platforms expect" %}</p>
+      <p class="type-body-md text-on-nav-muted">
+        {% translate "Tips and community data at every question." %}
+      </p>
+    </div>
+  </li>
+  <li class="flex items-start gap-sm">
+    <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-nav-hover">
+      <c-icon name="bell" class="size-5 text-warning-on-nav" />
+    </span>
+    <div class="flex flex-1 flex-col gap-0.5">
+      <p class="type-title-md text-on-nav">{% translate "Never lose track" %}</p>
+      <p class="type-body-md text-on-nav-muted">
+        {% translate "Status updates and reminders for every case." %}
+      </p>
+    </div>
+  </li>
+</ul>

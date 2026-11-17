@@ -7,6 +7,7 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.utils.translation import gettext_lazy as _
 
 from idat.users.middleware import MFA_REQUIRED_MESSAGE, has_second_factor
 
@@ -19,6 +20,11 @@ if typing.TYPE_CHECKING:
 
 
 class AccountAdapter(DefaultAccountAdapter):
+    error_messages = {
+        **DefaultAccountAdapter.error_messages,
+        "email_password_mismatch": _("E-mail or password is not correct."),
+    }
+
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
 

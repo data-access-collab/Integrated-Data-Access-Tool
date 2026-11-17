@@ -1,4 +1,4 @@
-from allauth.account.forms import SignupForm
+from allauth.account.forms import LoginForm, SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from django import forms
 from django.contrib.auth import forms as admin_forms
@@ -96,6 +96,16 @@ class UserSignupForm(SignupFieldsMixin, SignupForm):
             "Platforms use this to verify your affiliation.",
         )
         self.fields["password1"].help_text = password_length_help()
+
+
+class UserLoginForm(LoginForm):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["login"].label = _("E-mail")
+        # the page has its own "Forgot password?" link; allauth adds one as help text
+        self.fields["password"].help_text = ""
+        if "remember" in self.fields:
+            self.fields["remember"].label = _("Remember me")
 
 
 class UserSocialSignupForm(SignupFieldsMixin, SocialSignupForm):
