@@ -1,0 +1,13 @@
+{% extends "account/email/base_message.txt" %}
+{% load i18n %}
+
+{% block content %}{% autoescape off %}{% translate "You asked to use this address for your IDAT account. Confirm it to make the switch; until then you keep signing in with your current address." %}
+
+{% translate "Confirm your new e-mail address:" %}
+{{ activate_url }}
+
+{% blocktranslate trimmed count hours=EMAIL_CONFIRMATION_EXPIRE_HOURS %}
+  The link is valid for {{ hours }} hour. If you didn't ask for this, ignore this e-mail — nothing changes.
+{% plural %}
+  The link is valid for {{ hours }} hours. If you didn't ask for this, ignore this e-mail — nothing changes.
+{% endblocktranslate %}{% endautoescape %}{% endblock content %}

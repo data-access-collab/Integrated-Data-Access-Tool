@@ -1,0 +1,15 @@
+{% extends "account/email/base_message.txt" %}
+{% comment %}
+  Security notices (e-mail or password changed, 2FA changes …; ACCOUNT_EMAIL_NOTIFICATIONS).
+  Overrides allauth's wording; the notification_message blocks stay allauth's.
+{% endcomment %}
+{% load i18n %}
+
+{% block content %}{% autoescape off %}{% translate "This change was just made to your IDAT account:" %}
+
+{% block notification_message %}{% endblock notification_message %}
+
+{% blocktranslate trimmed with when=timestamp|date:"j M Y, H:i e" %}
+  If you didn't do this, reset your password right away. The change
+  came from IP address {{ ip }} ({{ user_agent }}) on {{ when }}.
+{% endblocktranslate %}{% endautoescape %}{% endblock content %}

@@ -303,6 +303,8 @@ ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
 ACCOUNT_CHANGE_EMAIL = True
 # Tell the old address when the e-mail or password changes (alarm on takeover)
 ACCOUNT_EMAIL_NOTIFICATIONS = True
+# Plain subjects ("Reset your password"); allauth's default prepends "[<site name>] "
+ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
 # After confirming a changed address while signed in, back to the e-mail page
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "account_email"
 # Requesting (or cancelling) an e-mail change asks for the password or a 2FA code

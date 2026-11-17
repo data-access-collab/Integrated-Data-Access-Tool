@@ -1,0 +1,17 @@
+{% comment %}
+  Text version of every e-mail (overrides allauth's): greeting, content, signature.
+  The HTML version (base.html) has its own footer, so AccountAdapter.render_mail cuts
+  the text at the "-- " signature line when it wraps a text-only e-mail
+  - so do not delete it!
+{% endcomment %}
+
+{% load i18n %}
+{% autoescape off %}
+{% include "account/email/_greeting.txt" %}
+
+{% block content %}{% endblock content %}
+
+--
+{% translate "IDAT (Integrated Data Access Tool)" %}
+{% translate "DSA40 Data Access Collaboratory · dsa40collaboratory.eu" %}
+{% endautoescape %}

@@ -1,0 +1,1 @@
+{% load i18n %}{% autoescape off %}{% translate "Confirm your new e-mail address" %}{% endautoescape %}

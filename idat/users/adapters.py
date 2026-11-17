@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import re
 import typing
+from typing import Any
 
+import css_inline
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.contrib import messages
+from django.core.mail import EmailAlternative, EmailMessage, EmailMultiAlternatives
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 
 from idat.users.middleware import MFA_REQUIRED_MESSAGE, has_second_factor
@@ -23,6 +28,13 @@ if typing.TYPE_CHECKING:
 # "Check your inbox" page (VerificationSentView).
 VERIFICATION_EMAIL_KEY = "verification_email"
 
+# The "-- " line before the signature of the text e-mails
+# (account/email/base_message.txt).
+SIGNATURE_RE = re.compile(r"\n--[ \t]*\n")
+
+# Copies the e-mail CSS into style="" attributes; the style block stays for @media.
+CSS_INLINER = css_inline.CSSInliner(keep_style_tags=True)
+
 
 class AccountAdapter(DefaultAccountAdapter):
     error_messages = {
@@ -32,6 +44,47 @@ class AccountAdapter(DefaultAccountAdapter):
 
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
+
+    def render_mail(
+        self,
+        template_prefix: str,
+        email: str | list[str],
+        context: dict[str, Any],
+        headers: dict[str, str] | None = None,
+    ) -> EmailMessage:
+        """E-mails with only a text template (allauth defaults) get an HTML version too:
+        the text (minus its "-- " signature, the layout has a footer) inside
+        account/email/base.html.
+        The HTML's CSS is copied into style="" attributes because some clients
+        drop <style>.
+        """
+        msg = super().render_mail(template_prefix, email, context, headers)
+        if not isinstance(msg, EmailMultiAlternatives):
+            return msg
+
+        # allauth attaches at most one alternative: the _message.html version
+        if msg.alternatives:
+            html = msg.alternatives[0].content
+        else:
+            body = SIGNATURE_RE.split(msg.body, maxsplit=1)[0]
+            html = render_to_string(
+                "account/email/base.html",
+                {**context, "title": msg.subject, "body": body},
+                context.get("request"),
+            )
+        msg.alternatives = [EmailAlternative(CSS_INLINER.inline(html), "text/html")]
+        return msg
+
+    def send_notification_mail(
+        self,
+        template_prefix: str,
+        user: User,
+        context: dict[str, Any] | None = None,
+        email: str | None = None,
+    ) -> None:
+        """allauth leaves the user out of the context; the greeting needs the name."""
+        context = {"user": user, **(context or {})}
+        super().send_notification_mail(template_prefix, user, context, email)
 
     def send_confirmation_mail(
         self,
