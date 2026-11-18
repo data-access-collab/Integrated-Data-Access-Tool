@@ -5,7 +5,7 @@
     …_message.html: blocks title and content.
   - All other allauth e-mails have only a text version; AccountAdapter.render_mail
     renders this layout for them with `title` (the subject) and `body` (the text,
-    without its "-- " signature), links made clickable.
+    without its signature), links made clickable.
   Styles live in the style block below, hex values based on the light design tokens (input.css).
   AccountAdapter.render_mail copies them into style="" attributes when sending (for
   clients that drop style blocks); @media rules stay in the block.

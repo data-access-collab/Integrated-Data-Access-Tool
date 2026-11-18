@@ -8,7 +8,6 @@ from django.core import mail
 from django.core.cache import cache
 from django.urls import reverse
 
-from idat.users.adapters import SIGNATURE_RE
 from idat.users.tests.factories import UserFactory
 
 if TYPE_CHECKING:
@@ -45,22 +44,25 @@ def test_signup_verification_email(client: Client):
     )
     [msg] = mail.outbox
     assert msg.subject == "Confirm your e-mail address"
-    assert msg.body.startswith("Hi Jana,")
+    # unverified address: the name came from whoever signed up, so it's left out
+    assert msg.body.startswith("Hi,")
     html = html_of(msg)
-    assert "Hi Jana," in html
+    assert "Jana" not in html
     assert "Confirm e-mail address</a>" in html  # the button
     assert "/accounts/confirm-email/" in html
 
 
-def test_password_reset_email(client: Client):
-    user = UserFactory.create(email="ada@example.com", first_name="")
+@pytest.mark.parametrize(("verified", "greeting"), [(True, "Hi Ada,"), (False, "Hi,")])
+def test_password_reset_email(client: Client, verified: bool, greeting: str):
+    user = UserFactory.create(email="ada@example.com", first_name="Ada")
     EmailAddress.objects.create(
-        user=user, email=user.email, verified=True, primary=True
+        user=user, email=user.email, verified=verified, primary=True
     )
     client.post(reverse("account_reset_password"), {"email": user.email})
     [msg] = mail.outbox
     assert msg.subject == "Reset your password"
-    assert msg.body.startswith("Hi,")  # no name: plain greeting
+    assert msg.body.startswith(greeting)
+    assert greeting in html_of(msg)
     assert "Choose a new password</a>" in html_of(msg)
 
 
@@ -84,8 +86,10 @@ def test_text_only_email_is_wrapped_in_the_layout(client: Client):
     )
     [msg] = mail.outbox
     assert msg.body.startswith("Hi Ada,")
-    assert SIGNATURE_RE.search(msg.body)  # the text version keeps its signature
+    signature = "\n--\nIDAT (Integrated Data Access Tool)"
+    assert signature in msg.body  # the text version keeps its signature
     html = html_of(msg)
     assert "Hi Ada," in html
     assert "Your password has been changed." in html
-    assert "IDAT (Integrated Data Access Tool)\nDSA40" not in html  # footer replaces it
+    # the layout's footer replaces the signature (its last line is text-only)
+    assert "Collaboratory · dsa40collaboratory.eu" not in html

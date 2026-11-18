@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import re
 import typing
 from typing import Any
 
 import css_inline
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.account.models import EmailAddress
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.contrib import messages
@@ -17,7 +17,7 @@ from django.utils.translation import gettext_lazy as _
 from idat.users.middleware import MFA_REQUIRED_MESSAGE, has_second_factor
 
 if typing.TYPE_CHECKING:
-    from allauth.account.models import EmailAddress, EmailConfirmation
+    from allauth.account.models import EmailConfirmation
     from allauth.socialaccount.models import SocialLogin
     from django.forms import BaseForm
     from django.http import HttpRequest, HttpResponse
@@ -27,10 +27,6 @@ if typing.TYPE_CHECKING:
 # Session key: the address the last verification e-mail went to, for the
 # "Check your inbox" page (VerificationSentView).
 VERIFICATION_EMAIL_KEY = "verification_email"
-
-# The "-- " line before the signature of the text e-mails
-# (account/email/base_message.txt).
-SIGNATURE_RE = re.compile(r"\n--[ \t]*\n")
 
 # Copies the e-mail CSS into style="" attributes; the style block stays for @media.
 CSS_INLINER = css_inline.CSSInliner(keep_style_tags=True)
@@ -52,12 +48,21 @@ class AccountAdapter(DefaultAccountAdapter):
         context: dict[str, Any],
         headers: dict[str, str] | None = None,
     ) -> EmailMessage:
-        """E-mails with only a text template (allauth defaults) get an HTML version too:
-        the text (minus its "-- " signature, the layout has a footer) inside
-        account/email/base.html.
-        The HTML's CSS is copied into style="" attributes because some clients
-        drop <style>.
         """
+        E-mails with only a text template (allauth default) get an HTML version too.
+        """
+        # Greet by name only on a verified address: anyone can sign up (or change
+        # their address) with someone else's address and a "name" of their choice.
+        user = context.get("user")
+        if (
+            isinstance(email, str)
+            and user
+            and EmailAddress.objects.filter(
+                user=user, email__iexact=email, verified=True
+            ).exists()
+        ):
+            context = {**context, "greeting_name": user.first_name}
+
         msg = super().render_mail(template_prefix, email, context, headers)
         if not isinstance(msg, EmailMultiAlternatives):
             return msg
@@ -66,12 +71,19 @@ class AccountAdapter(DefaultAccountAdapter):
         if msg.alternatives:
             html = msg.alternatives[0].content
         else:
-            body = SIGNATURE_RE.split(msg.body, maxsplit=1)[0]
+            # render text without its signature bc. the HTML layout has a footer
+            body = render_to_string(
+                f"{template_prefix}_message.txt",
+                {**context, "without_signature": True},
+                context.get("request"),
+            )
             html = render_to_string(
                 "account/email/base.html",
                 {**context, "title": msg.subject, "body": body},
                 context.get("request"),
             )
+
+        # HTML's CSS is copied into style-attributes bc. some clients drop <style>.
         msg.alternatives = [EmailAlternative(CSS_INLINER.inline(html), "text/html")]
         return msg
 

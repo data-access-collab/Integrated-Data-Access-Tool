@@ -1,1 +1,1 @@
-{% load i18n %}{% if user.first_name %}{% blocktranslate with name=user.first_name %}Hi {{ name }},{% endblocktranslate %}{% else %}{% translate "Hi," %}{% endif %}
+{% load i18n %}{% if greeting_name %}{% blocktranslate with name=greeting_name %}Hi {{ name }},{% endblocktranslate %}{% else %}{% translate "Hi," %}{% endif %}
