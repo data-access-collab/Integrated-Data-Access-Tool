@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 from idat.users.forms import UserAdminChangeForm
 from idat.users.tests.factories import UserFactory
-from idat.users.views import UserRedirectView, UserUpdateView, user_detail_view
+from idat.users.views import UserUpdateView, user_detail_view
 
 if TYPE_CHECKING:
     from django.test import Client, RequestFactory
@@ -76,16 +76,6 @@ class TestUserUpdateView:
 
         messages_sent = [m.message for m in messages.get_messages(request)]
         assert messages_sent == [_("Information successfully updated")]
-
-
-class TestUserRedirectView:
-    def test_get_redirect_url(self, user: User, rf: RequestFactory):
-        view = UserRedirectView()
-        request = rf.get("/fake-url")
-        request.user = user
-
-        view.request = request
-        assert view.get_redirect_url() == "/users/my-account/"
 
 
 class TestUserDetailView:

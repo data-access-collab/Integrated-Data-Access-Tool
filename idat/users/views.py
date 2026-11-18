@@ -9,9 +9,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import redirect_to_login
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView, RedirectView, UpdateView
+from django.views.generic import DetailView, UpdateView
 
 from idat.users.adapters import VERIFICATION_EMAIL_KEY
 from idat.users.models import User
@@ -40,6 +39,12 @@ user_account_view = UserDetailView.as_view(tab="account")
 
 
 class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    """Edit name and ORCID iD.
+
+    TODO: Not routed yet: the Profile tab isn't designed yet, and
+     users/user_form.html is unstyled.
+    """
+
     model = User
     fields = ["first_name", "last_name", "orcid"]  # e-mail changes go through allauth
     success_message = _("Information successfully updated")
@@ -54,16 +59,6 @@ class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 
 
 user_update_view = UserUpdateView.as_view()
-
-
-class UserRedirectView(LoginRequiredMixin, RedirectView):
-    permanent = False
-
-    def get_redirect_url(self) -> str:
-        return reverse("users:detail")
-
-
-user_redirect_view = UserRedirectView.as_view()
 
 
 class VerificationSentView(EmailVerificationSentView):
