@@ -30,7 +30,7 @@ class UserDetailView(LoginRequiredMixin, DetailView):
         return self.request.user
 
     def get_context_data(self, **kwargs) -> dict:
-        return super().get_context_data(account_current=True, tab=self.tab, **kwargs)
+        return super().get_context_data(tab=self.tab, **kwargs)
 
 
 user_detail_view = UserDetailView.as_view()

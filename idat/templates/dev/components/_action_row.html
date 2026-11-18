@@ -1,0 +1,20 @@
+<ul class="flex max-w-180 flex-col rounded-lg border border-default bg-surface px-md sm:px-lg">
+  <c-action-row icon="layout-grid" title="Authenticator app">
+    <c-slot name="status"><c-badge tone="success" label="Active" /></c-slot>
+    <p class="type-body-md text-secondary">A 6-digit code from an app like Aegis or 1Password.</p>
+    <c-slot name="actions"><c-button variant="secondary" label="Deactivate" href="#action-row" /></c-slot>
+  </c-action-row>
+  <c-action-row icon="file-text" title="Recovery codes · actions-below" actions-below>
+    <c-slot name="status"><c-badge tone="warning" label="0 of 10 left" /></c-slot>
+    <p class="type-body-md text-secondary">One-time codes for when you can't use your app or key.</p>
+    <c-slot name="actions">
+      <c-button variant="secondary" label="View" href="#action-row" />
+      <c-button variant="secondary" label="Download" leading-icon="download" href="#action-row" />
+      <c-button variant="secondary" label="Generate new" href="#action-row" />
+    </c-slot>
+  </c-action-row>
+  <c-action-row icon="mail" title="Without actions">
+    <c-slot name="status"><c-badge tone="success" label="Verified" /></c-slot>
+    <p class="break-all type-body-md text-secondary">jana.doe@uni-example.eu</p>
+  </c-action-row>
+</ul>

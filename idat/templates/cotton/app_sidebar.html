@@ -11,10 +11,9 @@
     user-name     e.g. "Jana D."
     initials      e.g. "JD"
     account-href  "Account & settings" link
-    account-current  highlights the user block like a current nav item: "page" (or the
-                     boolean attribute) on My account itself (aria-current="page"),
-                     "section" on pages below it, e.g. e-mail or password
-                     (aria-current="true")
+    in-account-area  boolean attribute: the page belongs to My account (its tabs, e-mail,
+                     password …); highlights the user block like a current nav item.
+                     aria-current is "page" on account-href itself, else "true".
 
   Slots (each holds <c-nav.app-item> items):
     slot    main navigation: Home, Tasks (count), My applications, Community
@@ -34,7 +33,7 @@
 {% endcomment %}
 
 {% load i18n %}
-<c-vars home-href="/" new-href="" user-name="" initials="" account-href="" :account-current="False" class="" />
+<c-vars home-href="/" new-href="" user-name="" initials="" account-href="" :in-account-area="False" class="" />
 <aside class="flex h-full w-75 shrink-0 flex-col gap-2xs bg-nav px-2.5 py-md {{ class }}" {{ attrs }}>
   <a
     href="{{ home_href }}"
@@ -84,10 +83,12 @@
   {% if user_name %}
     <a
       href="{{ account_href }}"
-      {% if account_current == "section" %}aria-current="true"{% elif account_current %}aria-current="page"{% endif %}
+      {% if in_account_area %}
+        aria-current="{% if request.path == account_href %}page{% else %}true{% endif %}"
+      {% endif %}
       class="
         flex items-center gap-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus
-        {% if account_current %}rounded-md border-t border-on-nav bg-nav-hover p-sm
+        {% if in_account_area %}rounded-md border-t border-on-nav bg-nav-hover p-sm
         {% else %}border-t border-on-nav px-sm pt-sm pb-2xs
         {% endif %}
       "

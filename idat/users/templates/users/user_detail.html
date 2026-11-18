@@ -20,6 +20,10 @@
   · {% translate "My account" %}
 {% endblock title %}
 
+{% block sidebar %}
+  {% with in_account_area=True %}{{ block.super }}{% endwith %}
+{% endblock sidebar %}
+
 {% block content %}
   {% include "users/partials/_account_header.html" with heading=True %}
 

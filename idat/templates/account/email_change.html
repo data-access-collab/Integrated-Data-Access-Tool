@@ -2,8 +2,7 @@
 
 {% comment %}
   /accounts/email/ with ACCOUNT_CHANGE_EMAIL (allauth EmailView): one address per
-  account. Not in Figma: built from the tokens like the 2FA overview (card with rows,
-  Badge for the status).
+  account.
   - current_emailaddress: the verified address you sign in with.
   - new_emailaddress: a requested change, pending until the link in it is opened; then
     it replaces the current one. Re-send and Cancel post the hidden #pending-email form
@@ -31,49 +30,29 @@
 
   <div class="flex flex-col rounded-lg border border-default bg-surface px-md sm:px-lg">
     {% if current_emailaddress or new_emailaddress %}
-      <ul class="flex flex-col">
+      {# the rows' last divider is off; the list's border separates them from the form #}
+      <ul class="flex flex-col border-b border-default">
         {% if current_emailaddress %}
-          <li class="flex items-start gap-md border-b border-default py-lg">
-            <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
-              <c-icon name="mail" class="size-5 text-icon-default" />
-            </span>
-            <div class="flex min-w-0 flex-1 flex-col gap-2xs">
-              <div class="flex flex-wrap items-center gap-xs">
-                <h2 class="type-title-md text-primary">{% translate "Current address" %}</h2>
-                <c-badge tone="success" label="{% translate 'Verified' %}" />
-              </div>
-              <p class="break-all type-body-md text-secondary">{{ current_emailaddress.email }}</p>
-            </div>
-          </li>
+          <c-action-row icon="mail" title="{% translate 'Current address' %}">
+            <c-slot name="status"><c-badge tone="success" label="{% translate 'Verified' %}" /></c-slot>
+            <p class="break-all type-body-md text-secondary">{{ current_emailaddress.email }}</p>
+          </c-action-row>
         {% endif %}
         {% if new_emailaddress %}
-          <li class="flex flex-wrap items-center gap-md border-b border-default py-lg">
-            <div class="flex min-w-60 flex-1 items-start gap-md">
-              <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
-                <c-icon name="mail" class="size-5 text-icon-default" />
-              </span>
-              <div class="flex min-w-0 flex-1 flex-col gap-2xs">
-                <div class="flex flex-wrap items-center gap-xs">
-                  <h2 class="type-title-md text-primary">
-                    {% if current_emailaddress %}
-                      {% translate "Changing to" %}
-                    {% else %}
-                      {% translate "Current address" %}
-                    {% endif %}
-                  </h2>
-                  <c-badge tone="warning" label="{% translate 'Not verified' %}" />
-                </div>
-                <p class="break-all type-body-md text-secondary">{{ new_emailaddress.email }}</p>
-                <p class="type-body-sm text-tertiary">
-                  {% blocktranslate trimmed %}
-                    Open the link we sent there within {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours to finish the
-                    change.
-                  {% endblocktranslate %}
-                </p>
-              </div>
-            </div>
-            {# on narrow screens the buttons wrap below the text; align them with it #}
-            <div class="flex flex-wrap gap-xs pl-14 sm:pl-0">
+          {% if current_emailaddress %}
+            {% translate "Changing to" as new_title %}
+          {% else %}
+            {% translate "Current address" as new_title %}
+          {% endif %}
+          <c-action-row icon="mail" :title="new_title">
+            <c-slot name="status"><c-badge tone="warning" label="{% translate 'Not verified' %}" /></c-slot>
+            <p class="break-all type-body-md text-secondary">{{ new_emailaddress.email }}</p>
+            <p class="type-body-sm text-tertiary">
+              {% blocktranslate trimmed %}
+                Open the link we sent there within {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours to finish the change.
+              {% endblocktranslate %}
+            </p>
+            <c-slot name="actions">
               <c-button
                 variant="secondary"
                 type="submit"
@@ -90,8 +69,8 @@
                   label="{% translate 'Cancel change' %}"
                 />
               {% endif %}
-            </div>
-          </li>
+            </c-slot>
+          </c-action-row>
         {% endif %}
       </ul>
     {% endif %}

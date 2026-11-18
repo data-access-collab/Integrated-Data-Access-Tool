@@ -5,13 +5,13 @@
   canvas to its right, no footer.
 
   Blocks:
+    sidebar       the App Sidebar; pages of My account (and the allauth pages) set
+                  in_account_area around it to highlight the user block:
+                    {% block sidebar %}{% with in_account_area=True %}{{ block.super }}{% endwith %}{% endblock sidebar %}
     sidebar_nav   <c-nav.app-item> items, default: Home
     content       the page; messages are shown above it
     page          wraps content; override it to put a frame around content (the
                   allauth pages: account/base_manage.html)
-  The sidebar's user block is highlighted on My account (context account_current) and
-  on the signed-in allauth pages (/accounts/…, which use this layout through
-  allauth/layouts/manage.html).
 {% endcomment %}
 
 {% load i18n %}
@@ -27,18 +27,20 @@
 {% block main %}
   <div class="flex flex-1 bg-canvas">
     {# sticky, full viewport height: the user block stays at the bottom while the page scrolls #}
-    <div class="sticky top-0 hidden h-screen self-start lg:block">
-      <c-app-sidebar
-        user-name="{{ user.display_name }}"
-        initials="{{ user.initials }}"
-        account-href="{% url 'users:detail' %}"
-        account-current="{% if account_current %}page{% elif '/accounts/' in request.path %}section{% endif %}"
-      >
-        {% block sidebar_nav %}
-          <c-nav.app-item label="{% translate 'Home' %}" icon="layout-grid" href="{% url 'home' %}" />
-        {% endblock sidebar_nav %}
-      </c-app-sidebar>
-    </div>
+    {% block sidebar %}
+      <div class="sticky top-0 hidden h-screen self-start lg:block">
+        <c-app-sidebar
+          user-name="{{ user.display_name }}"
+          initials="{{ user.initials }}"
+          account-href="{% url 'users:detail' %}"
+          in-account-area="{% if in_account_area %}true{% endif %}"
+        >
+          {% block sidebar_nav %}
+            <c-nav.app-item label="{% translate 'Home' %}" icon="layout-grid" href="{% url 'home' %}" />
+          {% endblock sidebar_nav %}
+        </c-app-sidebar>
+      </div>
+    {% endblock sidebar %}
 
     <div class="flex min-w-0 flex-1 flex-col gap-lg px-md py-lg sm:px-2xl sm:py-xl">
       {% include "partials/_messages.html" %}

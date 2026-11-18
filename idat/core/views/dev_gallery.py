@@ -54,6 +54,11 @@ class GalleryDemoForm(forms.Form):
         label="Institutional e-mail",
         help_text="Used by platforms to verify your affiliation.",
     )
+    password = forms.CharField(
+        label="Password",
+        widget=forms.PasswordInput,
+        help_text="At least 15 characters.",
+    )
     project_title = forms.CharField(
         label="Project title",
         max_length=120,

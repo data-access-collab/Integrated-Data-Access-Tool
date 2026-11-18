@@ -41,7 +41,9 @@
       <c-button variant="secondary" label="{% translate 'Cancel' %}" href="{% url 'mfa_index' %}" />
     </div>
   </form>
+{% endblock content %}
 
+{% block extra_body %}
   {% include "mfa/webauthn/snippets/scripts.html" %}
   {{ js_data|json_script:"js_data" }}
   <script data-allauth-onload="allauth.webauthn.forms.addForm" type="application/json">
@@ -54,4 +56,4 @@
       }
     }
   </script>
-{% endblock content %}
+{% endblock extra_body %}

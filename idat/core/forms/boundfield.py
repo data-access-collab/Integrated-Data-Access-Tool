@@ -18,7 +18,8 @@ WIDGET_COMPONENTS: dict[type[forms.Widget], str] = {
     forms.NullBooleanSelect: "yes-no",
     forms.Select: "select",
     forms.FileInput: "file-plain",
-    # text, email, url, number, password, search … (c-text-field reads input_type)
+    forms.PasswordInput: "password",
+    # text, email, url, number, search … (c-text-field reads input_type)
     Input: "text",
 }
 

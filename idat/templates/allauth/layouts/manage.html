@@ -3,8 +3,13 @@
 {% comment %}
   allauth's layout for signed-in pages (e-mail, password, 2FA, sign out).
   Pages fill {% block content %}; account/base_manage.html wraps it with a back link
-  through {% block manage_body %}.
+  through {% block manage_body %}. Scripts go in {% block extra_body %}, after the
+  content.
 {% endcomment %}
+
+{% block sidebar %}
+  {% with in_account_area=True %}{{ block.super }}{% endwith %}
+{% endblock sidebar %}
 
 {% block title %}
   {% block head_title %} {% endblock head_title %}
@@ -16,4 +21,5 @@
   {% block manage_body %}
     {% block content %}{% endblock content %}
   {% endblock manage_body %}
+  {% block extra_body %}{% endblock extra_body %}
 {% endblock page %}
