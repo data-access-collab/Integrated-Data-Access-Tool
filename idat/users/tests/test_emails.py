@@ -86,6 +86,7 @@ def test_text_only_email_is_wrapped_in_the_layout(client: Client):
     )
     [msg] = mail.outbox
     assert msg.body.startswith("Hi Ada,")
+    assert "The change was made on" in msg.body
     signature = "\n--\nIDAT (Integrated Data Access Tool)"
     assert signature in msg.body  # the text version keeps its signature
     html = html_of(msg)

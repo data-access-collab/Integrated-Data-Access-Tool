@@ -10,6 +10,6 @@
 {% block notification_message %}{% endblock notification_message %}
 
 {% blocktranslate trimmed with when=timestamp|date:"j M Y, H:i e" %}
-  If you didn't do this, reset your password right away. The change
-  came from IP address {{ ip }} ({{ user_agent }}) on {{ when }}.
+  The change was made on {{ when }}. If you didn't do this, reset your password
+  right away.
 {% endblocktranslate %}{% endautoescape %}{% endblock content %}

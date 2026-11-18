@@ -8,8 +8,7 @@
 {% autoescape off %}
 {% include "account/email/_greeting.txt" %}
 
-{% block content %}{% endblock content %}
-{% if not without_signature %}
+{% block content %}{% endblock content %}{% if not without_signature %}
 
 --
 {% translate "IDAT (Integrated Data Access Tool)" %}
