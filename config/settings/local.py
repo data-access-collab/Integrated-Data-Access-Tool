@@ -36,7 +36,7 @@ EMAIL_BACKEND = env(
     default="django.core.mail.backends.console.EmailBackend",
 )
 
-if DEBUG and env("DJANGO_USE_MAILPIT", default=False):
+if DEBUG and env.bool("DJANGO_USE_MAILPIT", default=False):
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = "mailpit"
     EMAIL_PORT = 1025
