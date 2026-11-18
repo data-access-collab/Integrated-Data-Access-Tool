@@ -100,10 +100,8 @@ def password_length_help() -> str:
 
 
 class UserSignupForm(SignupFieldsMixin, SignupForm):
-    """
-    Form that will be rendered on a user sign up section/screen.
+    """Form that will be rendered on a user sign up section/screen.
     Default fields will be added automatically.
-    Check UserSocialSignupForm for accounts created from social.
     """
 
     def __init__(self, *args, **kwargs) -> None:
