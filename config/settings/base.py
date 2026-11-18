@@ -88,7 +88,6 @@ THIRD_PARTY_APPS = [
     "allauth",
     "allauth.account",
     "allauth.mfa",
-    "allauth.socialaccount",
     "corsheaders",
     "django_htmx",
     "django_cotton",
@@ -309,7 +308,6 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "account_email"
 # Requesting (or cancelling) an e-mail change asks for the password or a 2FA code
 # ("Confirm it's you", unless signed in within ACCOUNT_REAUTHENTICATION_TIMEOUT).
-# Only affects e-mail management here (phone numbers and social accounts are unused).
 ACCOUNT_REAUTHENTICATION_REQUIRED = True
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_ADAPTER = "idat.users.adapters.AccountAdapter"
@@ -323,10 +321,6 @@ ACCOUNT_FORMS = {
     "reset_password_from_key": "idat.users.forms.UserResetPasswordKeyForm",
     "change_password": "idat.users.forms.UserChangePasswordForm",
 }
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_ADAPTER = "idat.users.adapters.SocialAccountAdapter"
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_FORMS = {"signup": "idat.users.forms.UserSocialSignupForm"}
 
 
 # MFA

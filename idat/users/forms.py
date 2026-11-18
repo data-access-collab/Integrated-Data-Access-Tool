@@ -9,7 +9,6 @@ from allauth.account.forms import (
 )
 from allauth.mfa.base.forms import AuthenticateForm
 from allauth.mfa.base.forms import ReauthenticateForm as MFAReauthenticateForm
-from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from django import forms
 from django.contrib.auth import forms as admin_forms
 from django.contrib.auth.password_validation import (
@@ -31,7 +30,7 @@ class UserAdminChangeForm(admin_forms.UserChangeForm):
 class UserAdminCreationForm(admin_forms.AdminUserCreationForm):
     """
     Form for User Creation in the Admin Area.
-    To change user signup, see UserSignupForm and UserSocialSignupForm.
+    To change user signup, see UserSignupForm.
     """
 
     class Meta(admin_forms.UserCreationForm.Meta):
@@ -42,11 +41,30 @@ class UserAdminCreationForm(admin_forms.AdminUserCreationForm):
         }
 
 
-class SignupFieldsMixin(forms.Form):
-    """
-    Profile fields asked for at signup, shared by both signup forms.
+def min_password_length() -> int | None:
+    """min_length of the MinimumLengthValidator setting, if there is one."""
+    for validator in get_default_password_validators():
+        if isinstance(validator, MinimumLengthValidator):
+            return validator.min_length
+    return None
+
+
+def password_length_help() -> str:
+    """'At least n characters.' from the MinimumLengthValidator setting."""
+    n = min_password_length()
+    if n is None:
+        return ""
+    return ngettext(
+        "At least %(n)d character.",
+        "At least %(n)d characters.",
+        n,
+    ) % {"n": n}
+
+
+class UserSignupForm(SignupForm):
+    """The sign-up form, with the profile fields on top of allauth's.
     allauth's AccountAdapter.save_user stores first_name and last_name;
-    our AccountAdapter adds orcid.
+    IDAT's AccountAdapter adds orcid.
     """
 
     first_name = forms.CharField(label=_("First name"), max_length=150)
@@ -72,38 +90,6 @@ class SignupFieldsMixin(forms.Form):
         "terms",
     ]
 
-    def clean_orcid(self) -> str | None:
-        orcid = self.cleaned_data["orcid"] or None
-        if orcid and User.objects.filter(orcid=orcid).exists():
-            raise forms.ValidationError(_("This ORCID iD is already registered."))
-        return orcid
-
-
-def min_password_length() -> int | None:
-    """min_length of the MinimumLengthValidator setting, if there is one."""
-    for validator in get_default_password_validators():
-        if isinstance(validator, MinimumLengthValidator):
-            return validator.min_length
-    return None
-
-
-def password_length_help() -> str:
-    """'At least n characters.' from the MinimumLengthValidator setting."""
-    n = min_password_length()
-    if n is None:
-        return ""
-    return ngettext(
-        "At least %(n)d character.",
-        "At least %(n)d characters.",
-        n,
-    ) % {"n": n}
-
-
-class UserSignupForm(SignupFieldsMixin, SignupForm):
-    """Form that will be rendered on a user sign up section/screen.
-    Default fields will be added automatically.
-    """
-
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.fields["email"].label = _("Institutional e-mail")
@@ -111,6 +97,12 @@ class UserSignupForm(SignupFieldsMixin, SignupForm):
             "Platforms use this to verify your affiliation.",
         )
         self.fields["password1"].help_text = password_length_help()
+
+    def clean_orcid(self) -> str | None:
+        orcid = self.cleaned_data["orcid"] or None
+        if orcid and User.objects.filter(orcid=orcid).exists():
+            raise forms.ValidationError(_("This ORCID iD is already registered."))
+        return orcid
 
 
 class UserLoginForm(LoginForm):
@@ -204,11 +196,3 @@ class UserMFAAuthenticateForm(MFACodeFieldMixin, AuthenticateForm):
 
 class UserMFAReauthenticateForm(MFACodeFieldMixin, MFAReauthenticateForm):
     pass
-
-
-class UserSocialSignupForm(SignupFieldsMixin, SocialSignupForm):
-    """
-    Renders the form when user has signed up using social accounts.
-    Default fields will be added automatically.
-    See UserSignupForm otherwise.
-    """

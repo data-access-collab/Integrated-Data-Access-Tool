@@ -6,7 +6,6 @@ from typing import Any
 import css_inline
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.models import EmailAddress
-from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.contrib import messages
 from django.core.mail import EmailAlternative, EmailMessage, EmailMultiAlternatives
@@ -18,7 +17,6 @@ from idat.users.middleware import MFA_REQUIRED_MESSAGE, has_second_factor
 
 if typing.TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
-    from allauth.socialaccount.models import SocialLogin
     from django.forms import BaseForm
     from django.http import HttpRequest, HttpResponse
 
@@ -124,10 +122,7 @@ class AccountAdapter(DefaultAccountAdapter):
         form: BaseForm,
         commit: bool = True,  # noqa: FBT002
     ) -> User:
-        """
-        allauth stores email, first_name, last_name and the password; adds the ORCID iD.
-        Also used by the social signup form (SocialAccountAdapter.save_user calls it).
-        """
+        """allauth stores email, names and the password; adds the ORCID iD."""
         user = super().save_user(request, user, form, commit=False)
         user.orcid = form.cleaned_data.get("orcid") or None
         if commit:
@@ -152,6 +147,7 @@ class AccountAdapter(DefaultAccountAdapter):
             and not request.user.is_authenticated
         ):
             return
+
         # After a password reset (signed out), the "Password changed" page says it
         # already. A password change while signed in keeps the message.
         if (
@@ -197,12 +193,3 @@ class AccountAdapter(DefaultAccountAdapter):
             messages.warning(request, MFA_REQUIRED_MESSAGE)
             return redirect("mfa_index")
         return response
-
-
-class SocialAccountAdapter(DefaultSocialAccountAdapter):
-    def is_open_for_signup(
-        self,
-        request: HttpRequest,
-        sociallogin: SocialLogin,
-    ) -> bool:
-        return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
