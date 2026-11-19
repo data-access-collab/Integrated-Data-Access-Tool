@@ -33,18 +33,13 @@ CSS_INLINER = css_inline.CSSInliner(keep_style_tags=True)
 def is_email_change(address: EmailAddress) -> bool:
     """Whether the address is a requested e-mail change rather than an activation.
 
-    Considered a change when a different primary address exists. If no primary
-    address exists, it's considered an activation.
+    Considered a change when it isn't the account's e-mail (User.email).
+    Otherwise it's an activation.
 
     Note: Not `not address.primary`: allauth adds non-primary addresses for users made
-    outside it (createsuperuser, the admin) when they sign in, also after their
-    e-mail was edited in the admin, so a user can have several and none primary.
+    outside it when they sign in, and an admin edit leaves the old address primary.
     """
-    return (
-        EmailAddress.objects.filter(user_id=address.user_id, primary=True)
-        .exclude(pk=address.pk)
-        .exists()
-    )
+    return address.email.casefold() != address.user.email.casefold()
 
 
 class AccountAdapter(DefaultAccountAdapter):

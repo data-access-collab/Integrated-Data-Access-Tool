@@ -277,6 +277,30 @@ class TestConfirmEmailChangeView:
         assert address.verified
         assert address.primary
 
+    def test_email_edited_in_admin_after_activation_can_confirm(
+        self, client: Client, owner: User
+    ):
+        """An admin changed a verified account's address: the account's e-mail is the
+        new one already, so its link needs no sign-in and replaces the old address.
+        """
+        owner.email = "edited@example.com"
+        owner.save()
+        client.post(
+            reverse("account_login"),
+            {"login": "edited@example.com", "password": PASSWORD},
+        )
+        [msg] = mail.outbox
+        assert msg.subject == "Confirm your e-mail address"
+        key = re.search(r"/accounts/confirm-email/([^/]+)/", msg.body).group(1)
+
+        client.post(reverse("account_confirm_email", args=[key]))
+        address = EmailAddress.objects.get(user=owner)
+        assert address.email == "edited@example.com"
+        assert address.verified
+        assert address.primary
+        sign_in(client, User.objects.get(pk=owner.pk))
+        assert "_auth_user_id" in client.session
+
 
 def test_mfa_allow_unverified_email_needs_mandatory_verification():
     """
