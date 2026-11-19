@@ -3,6 +3,7 @@ from django.urls import path
 
 
 def _404(request, *args, **kwargs):  # noqa: ANN202, ANN001
+    # FIXME: #64, #63
     """Temporary helper to return 404 page"""
     raise Http404
 

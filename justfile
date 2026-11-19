@@ -22,7 +22,7 @@ up:
 # down: Stop containers.
 down:
     @echo "Stopping containers..."
-    @docker compose down
+    @docker compose --profile default --profile dev-tools down
 
 # restart: Restart a service (default: django).
 restart service="django":
