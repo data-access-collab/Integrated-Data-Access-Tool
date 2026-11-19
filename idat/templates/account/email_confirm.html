@@ -16,7 +16,7 @@
 {% load i18n %}
 
 {% block head_title %}
-  {% if confirmation and can_confirm and confirmation.email_address.primary %}
+  {% if confirmation and can_confirm and not is_email_change %}
     {% translate "Activate your account" %}
   {% elif confirmation and can_confirm %}
     {% translate "Confirm your new e-mail address" %}
@@ -37,8 +37,7 @@
 
 {% block content %}
   {% if confirmation and can_confirm %}
-    {# primary = the address the account signed up with; otherwise a change requested on /accounts/email/ #}
-    {% if confirmation.email_address.primary %}
+    {% if not is_email_change %}
       <h1 class="type-headline-sm text-primary">{% translate "Activate your account" %}</h1>
       <p class="type-body-md text-secondary">
         {% blocktranslate trimmed with email=confirmation.email_address.email %}

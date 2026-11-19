@@ -12,7 +12,7 @@ from django.http import Http404
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, UpdateView
 
-from idat.users.adapters import VERIFICATION_EMAIL_KEY
+from idat.users.adapters import VERIFICATION_EMAIL_KEY, is_email_change
 from idat.users.models import User
 
 if TYPE_CHECKING:
@@ -80,14 +80,14 @@ class ConfirmEmailChangeView(ConfirmEmailView):
     """
     allauth's confirm page for verification links, stricter for e-mail changes.
 
-    A link proves only control of the mailbox. For a change (the address isn't the
-    account's primary one: ACCOUNT_CHANGE_EMAIL adds the new address next to it),
-    the switch also needs the account itself:
+    A link proves only control of the mailbox. For a change (is_email_change:
+    ACCOUNT_CHANGE_EMAIL adds the new address next to the current one), the switch
+    also needs the account itself:
     - signed in to the account the address belongs to: otherwise sign in first
       (with 2FA) and come back.
     - a recent password or 2FA confirmation (allauth's reauthentication_required,
       ACCOUNT_REAUTHENTICATION_TIMEOUT).
-    Signup links (the primary address) are unchanged: no sign-in needed.
+    Activation links (the account's only address) are unchanged: no sign-in needed.
     This is what lets MFA_ALLOW_UNVERIFIED_EMAIL lift allauth.mfa's block.
     """
 
@@ -98,7 +98,7 @@ class ConfirmEmailChangeView(ConfirmEmailView):
             # expired, invalid or used: allauth's view shows that state
             return super().dispatch(request, *args, **kwargs)
         address = confirmation.email_address
-        if address.primary:
+        if not is_email_change(address):
             return super().dispatch(request, *args, **kwargs)
 
         if request.user.is_authenticated and request.user.pk != address.user_id:
@@ -108,6 +108,14 @@ class ConfirmEmailChangeView(ConfirmEmailView):
             return redirect_to_login(request.get_full_path())
         view = reauthentication_required(super().dispatch)
         return view(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        confirmation = context.get("confirmation")
+        context["is_email_change"] = bool(
+            confirmation and is_email_change(confirmation.email_address)
+        )
+        return context
 
 
 confirm_email_change_view = ConfirmEmailChangeView.as_view()

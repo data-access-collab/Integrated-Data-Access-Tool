@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
@@ -11,19 +12,20 @@ from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.core import mail
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from idat.users.forms import UserAdminChangeForm
+from idat.users.models import User
 from idat.users.tests.factories import UserFactory
 from idat.users.views import UserUpdateView, user_detail_view
 
 if TYPE_CHECKING:
     from django.test import Client, RequestFactory
 
-    from idat.users.models import User
 
 pytestmark = pytest.mark.django_db
 
@@ -232,6 +234,48 @@ class TestConfirmEmailChangeView:
         client.post(url)
         address.refresh_from_db()
         assert address.verified
+
+    def test_user_created_outside_allauth_can_activate(self, client: Client):
+        """createsuperuser makes no EmailAddress; allauth adds a non-primary one
+        on the first sign-in. Ensure first sign in sends an activation email.
+        """
+        User.objects.create_superuser(email="admin@example.com", password=PASSWORD)
+        client.post(
+            reverse("account_login"),
+            {"login": "admin@example.com", "password": PASSWORD},
+        )
+        [msg] = mail.outbox
+        assert msg.subject == "Confirm your e-mail address"
+        key = re.search(r"/accounts/confirm-email/([^/]+)/", msg.body).group(1)
+
+        client.post(reverse("account_confirm_email", args=[key]))
+        address = EmailAddress.objects.get(email="admin@example.com")
+        assert address.verified
+        assert address.primary
+
+    def test_email_edited_in_admin_before_activation_can_activate(self, client: Client):
+        """The address was edited in the admin before the first one was confirmed:
+        allauth adds a second non-primary address. With no primary one it's still an
+        activation, else the link would need a sign-in that verification blocks.
+        """
+        user = User.objects.create_superuser(email="old@example.com", password=PASSWORD)
+        EmailAddress.objects.create(
+            user=user, email=user.email, verified=False, primary=False
+        )
+        user.email = "admin@example.com"
+        user.save()
+        client.post(
+            reverse("account_login"),
+            {"login": "admin@example.com", "password": PASSWORD},
+        )
+        [msg] = mail.outbox
+        assert msg.subject == "Confirm your e-mail address"
+        key = re.search(r"/accounts/confirm-email/([^/]+)/", msg.body).group(1)
+
+        client.post(reverse("account_confirm_email", args=[key]))
+        address = EmailAddress.objects.get(email="admin@example.com")
+        assert address.verified
+        assert address.primary
 
 
 def test_mfa_allow_unverified_email_needs_mandatory_verification():
