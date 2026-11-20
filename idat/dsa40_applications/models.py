@@ -33,7 +33,7 @@ class ResearchProject(models.Model):
     def __str__(self) -> str:
         return f"{self.title}"
 
-    answers: QuerySet[ProjectAnswers]
+    answers: QuerySet[ProjectAnswer]
     applications: QuerySet[PlatformApplication]
 
 
@@ -109,16 +109,16 @@ class BaseAnswer(models.Model):
         return f"{self.key}={self.value}"
 
 
-class ProjectAnswers(BaseAnswer):
-    access_application = models.ForeignKey(
+class ProjectAnswer(BaseAnswer):
+    project = models.ForeignKey(
         ResearchProject, on_delete=models.CASCADE, related_name="answers"
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["access_application", "key"],
-                name="unique_answer_per_questionaire_question",
+                fields=["project", "key"],
+                name="unique_answer_per_project_question",
             )
         ]
 
