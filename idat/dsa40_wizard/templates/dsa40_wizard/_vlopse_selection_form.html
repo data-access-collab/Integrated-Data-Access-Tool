@@ -33,17 +33,21 @@
           </div>
         </div>
 
-        {% for choice in field %}
-          <c-platform-row
-            :name="choice.data.value.instance.name"
-            :logo="choice.data.value.instance.logo"
-            channel="{{ choice.data.value.instance.get_modality_display }}"
-            operator="{{ choice.data.value.instance.operator }}"
-            :input-name="choice.data.name"
-            :value="choice.data.value"
-            :selected="choice.data.selected"
-            id="{{ choice.id_for_label }}"
-          />
+        {% for group in form.platform_groups %}
+          <c-platform-group :label="group.label" :members="group.members" :expanded="group.open">
+            {% for choice in group.choices %}
+              <c-platform-row
+                :name="choice.data.value.instance.name"
+                :logo="choice.data.value.instance.logo"
+                channel="{{ choice.data.value.instance.get_modality_display }}"
+                operator="{{ choice.data.value.instance.operator }}"
+                :input-name="choice.data.name"
+                :value="choice.data.value"
+                :selected="choice.data.selected"
+                id="{{ choice.id_for_label }}"
+              />
+            {% endfor %}
+          </c-platform-group>
         {% endfor %}
       </div>
       {% if field.errors %}

@@ -30,6 +30,7 @@ from idat.vlopse.models import Vlopse
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
+    from django.forms.boundfield import BoundWidget
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +68,26 @@ def has_mapping(vlopse: Vlopse) -> bool:
     return True
 
 
+class PlatformGroup(NamedTuple):
+    """One group of the platform picker: a Vlopse.PlatformType and its choices."""
+
+    type: str
+    label: str
+    choices: list[BoundWidget]  # the field's subwidgets, one checkbox each
+    members: str  # platform names, shown while the group is collapsed
+    open: bool
+
+
+# Groups that start expanded even without a selection
+OPEN_PLATFORM_TYPES = {
+    Vlopse.PlatformType.SOCIAL_MEDIA,
+    Vlopse.PlatformType.SEARCH_ENGINE,
+}
+
+
 class VlopseSelectionForm(forms.Form):
     vlopses = forms.ModelMultipleChoiceField(
-        queryset=Vlopse.objects.all(),
+        queryset=Vlopse.objects.order_by("name"),
         widget=forms.CheckboxSelectMultiple,
         required=True,
         error_messages={"required": "Please select at least one VLOPSE"},
@@ -89,6 +107,30 @@ class VlopseSelectionForm(forms.Form):
                 params={"names": ", ".join(unavailable)},
             )
         return vlopses
+
+    @cached_property
+    def platform_groups(self) -> list[PlatformGroup]:
+        """The checkboxes grouped by platform type, in Vlopse.PlatformType order; empty
+        groups are left out. A group starts open when one of its platforms is selected
+        or its type is in OPEN_PLATFORM_TYPES."""
+        by_type = defaultdict(list)
+        for choice in self["vlopses"]:
+            by_type[choice.data["value"].instance.platform_type].append(choice)
+        groups = []
+        for value, label in Vlopse.PlatformType.choices:
+            if not (choices := by_type.get(value)):
+                continue
+            groups.append(
+                PlatformGroup(
+                    type=value,
+                    label=label,
+                    choices=choices,
+                    members=", ".join(c.data["value"].instance.name for c in choices),
+                    open=value in OPEN_PLATFORM_TYPES
+                    or any(c.data["selected"] for c in choices),
+                )
+            )
+        return groups
 
 
 class ClientFileWidget(forms.Widget):
