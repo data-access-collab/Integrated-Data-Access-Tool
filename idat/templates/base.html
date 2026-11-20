@@ -36,11 +36,11 @@
   >
     {% block body %}
       {% block header_wrapper %}
-        <header id="header">
+        <div id="header">
           {% block header %}
             {% include "partials/_header.html" %}
           {% endblock header %}
-        </header>
+        </div>
       {% endblock header_wrapper %}
 
       <main id="main" class="flex flex-1 flex-col">
