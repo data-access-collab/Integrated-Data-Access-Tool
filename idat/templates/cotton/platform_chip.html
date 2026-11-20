@@ -1,21 +1,30 @@
 {% comment %}
   Props:
     name     platform name, e.g. "TikTok"
+    logo     icon name of the platform logo (Vlopse.logo), e.g. "logo-tiktok"; without it,
+             or when the icon file no longer exists, the circle shows a letter
     initial  letter in the circle; defaults to the first letter of name
 
   Usage:
-    <c-platform-chip name="TikTok" />
+    <c-platform-chip name="TikTok" logo="logo-tiktok" />
+    <c-platform-chip :name="vlopse.name" :logo="vlopse.logo" />
     <c-platform-chip name="X (Twitter)" initial="X" />
 {% endcomment %}
 
-<c-vars name="" initial="" class="" />
+<c-vars name="" logo="" initial="" class="" />
 <span
   class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-default bg-surface py-0.75 pl-1 pr-2.5 type-label-md text-secondary {{ class }}"
   {{ attrs }}
 >
-  <span
-    class="inline-flex size-4.5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-on-brand"
-    aria-hidden="true"
-  >{{ initial|default:name|slice:":1" }}</span>
+  {% if logo|has_icon %}
+    <span class="inline-flex size-4.5 shrink-0 items-center justify-center text-primary">
+      <c-icon :name="logo" class="size-4" />
+    </span>
+  {% else %}
+    <span
+      class="inline-flex size-4.5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-on-brand"
+      aria-hidden="true"
+    >{{ initial|default:name|slice:":1" }}</span>
+  {% endif %}
   {{ name }}
 </span>

@@ -5,6 +5,8 @@
 
   Props:
     name        platform name, e.g. "TikTok"
+    logo        icon name of the platform logo (Vlopse.logo), e.g. "logo-tiktok"; without
+                it, or when the icon file no longer exists, the tile shows a letter
     initial     letter in the logo tile; defaults to the first letter of name
     operator    legal entity, e.g. "TikTok Technology Ltd."; omitted when empty
     questions   number of platform-specific questions ("+14 questions")
@@ -23,7 +25,7 @@
   Usage:
     <div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
       {% for vlopse in vlopses %}
-        <c-platform-row :name="vlopse.name" :operator="vlopse.operator" questions="14"
+        <c-platform-row :name="vlopse.name" :logo="vlopse.logo" :operator="vlopse.operator" questions="14"
           channel="Web form" response="4–6 weeks" input-name="vlopses" :value="vlopse.pk" />
       {% endfor %}
     </div>
@@ -32,6 +34,7 @@
 {% load i18n %}
 <c-vars
   name=""
+  logo=""
   initial=""
   operator=""
   questions=""
@@ -47,10 +50,16 @@
   class="@container flex min-h-14 cursor-pointer items-center gap-md border-b border-default bg-surface px-md py-xs has-checked:bg-selected {{ class }}"
 >
   <c-checkbox.control :name="input_name" :value="value" :checked="selected" :attrs="attrs" />
-  <span
-    class="flex size-8 shrink-0 items-center justify-center rounded-sm bg-brand type-label-lg text-on-brand"
-    aria-hidden="true"
-  >{{ initial|default:name|slice:":1" }}</span>
+  {% if logo|has_icon %}
+    <span class="flex size-8 shrink-0 items-center justify-center text-primary">
+      <c-icon :name="logo" class="size-6" />
+    </span>
+  {% else %}
+    <span
+      class="flex size-8 shrink-0 items-center justify-center rounded-sm bg-brand type-label-lg text-on-brand"
+      aria-hidden="true"
+    >{{ initial|default:name|slice:":1" }}</span>
+  {% endif %}
   <span class="flex min-w-0 flex-1 flex-col">
     <span class="truncate type-label-lg text-primary">{{ name }}</span>
     {% if operator %}<span class="truncate type-body-sm text-tertiary">{{ operator }}</span>{% endif %}

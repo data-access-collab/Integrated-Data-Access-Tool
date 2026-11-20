@@ -1,9 +1,13 @@
+import logging
 import re
 from typing import Any
 
 from django import template
+from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 from django.utils.safestring import SafeString, mark_safe
+
+logger = logging.getLogger(__name__)
 
 register = template.Library()
 
@@ -39,3 +43,24 @@ def icon_content(name: str) -> SafeString:
         msg = f"icons/{name}.svg has no <svg> root element"
         raise ValueError(msg)
     return mark_safe(_XML_COMMENT.sub("", match["content"]).strip())  # noqa: S308 (trusted project file)
+
+
+@register.filter
+def has_icon(name: str) -> bool:
+    """Whether idat/templates/icons/<name>.svg exists. For icon names that come from
+    data (e.g. Vlopse.logo), which can outlive their file: check before <c-icon>, which
+    raises on unknown names, and fall back. A missing file is logged as a warning.
+
+    Example:
+        {% if vlopse.logo|has_icon %}
+          <c-icon :name="vlopse.logo" />
+        {% else %}…{% endif %}
+    """
+    if not name:
+        return False
+    try:
+        get_template(f"icons/{name}.svg")
+    except TemplateDoesNotExist:
+        logger.warning("Icon %r does not exist (idat/templates/icons/)", name)
+        return False
+    return True
