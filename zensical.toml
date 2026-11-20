@@ -29,6 +29,7 @@ nav = [
     { "Users" = "apps/users.md" },
     { "VLOPSE" = "apps/vlopse.md" },
     { "Form handler" = "apps/form-handler.md" },
+    { "Application Wizard" = "apps/wizard.md" },
   ] },
   { "Reference" = [
     "reference/index.md",

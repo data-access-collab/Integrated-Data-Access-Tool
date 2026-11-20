@@ -7,9 +7,10 @@ the application forms of each selected Very Large Online Platform or Search Engi
 
 ## Django apps
 
-| App                             | Package                    | Responsibility                                          |
-|---------------------------------|----------------------------|---------------------------------------------------------|
-| [Core](core.md)                 | `idat.core`                | Shared forms, template tags, dev views                  |
-| [Users](users.md)               | `idat.users`               | Custom user model, accounts (allauth)                   |
-| [VLOPSE](vlopse.md)             | `idat.vlopse`              | The platforms and how to apply to them                  |
-| [Form handler](form-handler.md) | `idat.dsa40_form_handler`  | Questions, mapping, validation and transformation       |
+| App                             | Package                   | Responsibility                                                      |
+|---------------------------------|---------------------------|---------------------------------------------------------------------|
+| [Core](core.md)                 | `idat.core`               | Shared forms, template tags, dev views                              |
+| [Users](users.md)               | `idat.users`              | Custom user model, accounts (allauth), authentication, registration |
+| [VLOPSE](vlopse.md)             | `idat.vlopse`             | The platforms and how to apply to them                              |
+| [Form handler](form-handler.md) | `idat.dsa40_form_handler` | Questions, mapping, validation and transformation                   |
+| [Application Wizard](wizard.md) | `idat.dsa40_wizard`       | Application create wizard                                           |
