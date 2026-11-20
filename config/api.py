@@ -60,7 +60,6 @@ def retrieve_health(request: HttpRequest) -> HealthOut:
     )
 
 
-api.add_router("/users/", "idat.users.api.views.router")
 api.add_router("/v1/health", health_router)
 api.add_router("/v1/vlopse", "idat.vlopse.api.views.router")
 api.add_router(

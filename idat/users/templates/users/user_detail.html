@@ -1,0 +1,95 @@
+{% extends "layouts/app.html" %}
+
+{% comment %}
+  My account: title row with avatar, then tabs. One URL per tab (users:detail,
+  users:affiliations, users:account); the view passes `tab`. Profile and
+  Affiliations are placeholders for now; Account links to allauth's e-mail, password,
+  2FA and sign-out pages.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block title %}
+  {% if tab == "affiliations" %}
+    {% translate "Affiliations" %}
+  {% elif tab == "account" %}
+    {% translate "Account" %}
+  {% else %}
+    {% translate "Profile" %}
+  {% endif %}
+  · {% translate "My account" %}
+{% endblock title %}
+
+{% block sidebar %}
+  {% with in_account_area=True %}{{ block.super }}{% endwith %}
+{% endblock sidebar %}
+
+{% block content %}
+  {% include "users/partials/_account_header.html" with heading=True %}
+
+  <c-tabs label="{% translate 'Account sections' %}">
+    <c-tabs.tab
+      label="{% translate 'Profile' %}"
+      href="{% url 'users:detail' %}"
+      current="{% if tab == 'profile' %}true{% endif %}"
+    />
+    <c-tabs.tab
+      label="{% translate 'Affiliations' %}"
+      href="{% url 'users:affiliations' %}"
+      current="{% if tab == 'affiliations' %}true{% endif %}"
+    />
+    <c-tabs.tab
+      label="{% translate 'Account' %}"
+      href="{% url 'users:account' %}"
+      current="{% if tab == 'account' %}true{% endif %}"
+    />
+  </c-tabs>
+
+  <div class="flex max-w-180 flex-col gap-lg">
+    {% if tab == "account" %}
+      <section class="flex flex-col gap-sm" aria-labelledby="sign-in-heading">
+        <h2 id="sign-in-heading" class="type-title-lg text-primary">{% translate "Sign-in and security" %}</h2>
+        <ul class="divide-y divide-default overflow-hidden rounded-lg border border-default bg-surface">
+          <c-link-row
+            href="{% url 'account_email' %}"
+            icon="mail"
+            title="{% translate 'E-mail address' %}"
+            description="{{ object.email }}"
+          />
+          <c-link-row
+            href="{% url 'account_change_password' %}"
+            icon="eye-off"
+            title="{% translate 'Password' %}"
+            description="{% translate 'Change your password.' %}"
+          />
+          <c-link-row
+            href="{% url 'mfa_index' %}"
+            icon="shield"
+            title="{% translate 'Two-factor authentication' %}"
+            description="{% translate 'Authenticator app, passkeys and recovery codes.' %}"
+          >
+            {% if object.authenticator_set.exists %}
+              <c-badge tone="success" label="{% translate 'On' %}" />
+            {% else %}
+              <c-badge tone="neutral" label="{% translate 'Off' %}" />
+            {% endif %}
+          </c-link-row>
+        </ul>
+      </section>
+
+      <section class="flex flex-col gap-sm" aria-labelledby="session-heading">
+        <h2 id="session-heading" class="type-title-lg text-primary">{% translate "Session" %}</h2>
+        <ul class="divide-y divide-default overflow-hidden rounded-lg border border-default bg-surface">
+          <c-link-row
+            href="{% url 'account_logout' %}"
+            icon="arrow-right"
+            title="{% translate 'Sign out' %}"
+            description="{% translate 'Sign out on this device.' %}"
+          />
+        </ul>
+      </section>
+    {% else %}
+      <c-empty-state icon="wrench" title="{% translate 'Not implemented yet' %}" />
+    {% endif %}
+  </div>
+{% endblock content %}

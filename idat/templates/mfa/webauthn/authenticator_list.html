@@ -1,0 +1,87 @@
+{% extends "mfa/webauthn/base.html" %}
+
+{% comment %}
+  The user's security keys and passkeys: one row each (like the 2FA overview), with
+  its type, when it was added and last used, and Rename / Remove.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Security keys and passkeys" %}
+{% endblock head_title %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "Security keys and passkeys" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% translate "A hardware key or your device's fingerprint, face or screen lock." %}
+    </p>
+  </div>
+
+  {% if authenticators %}
+    <ul class="flex flex-col rounded-lg border border-default bg-surface px-md sm:px-lg">
+      {% for authenticator in authenticators %}
+        <li class="flex flex-wrap items-center gap-md border-b border-default py-lg last:border-b-0">
+          <div class="flex min-w-60 flex-1 items-start gap-md">
+            <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
+              <c-icon name="shield" class="size-5 text-icon-default" />
+            </span>
+            <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+              <div class="flex flex-wrap items-center gap-xs">
+                <h2 class="type-title-md text-primary">{{ authenticator }}</h2>
+                {% if authenticator.wrap.is_passwordless is True %}
+                  <c-badge tone="info" label="{% translate 'Passkey' %}" :dot="False" />
+                {% elif authenticator.wrap.is_passwordless is False %}
+                  <c-badge tone="neutral" label="{% translate 'Security key' %}" :dot="False" />
+                {% else %}
+                  <c-badge
+                    tone="warning"
+                    label="{% translate 'Unspecified' %}"
+                    :dot="False"
+                    title="{% translate 'This key does not say whether it is a passkey.' %}"
+                  />
+                {% endif %}
+              </div>
+              <p class="type-body-sm text-tertiary">
+                {% blocktranslate trimmed with created_at=authenticator.created_at|date:"SHORT_DATE_FORMAT" %}
+                  Added on {{ created_at }}
+                {% endblocktranslate %}
+                ·
+                {% if authenticator.last_used_at %}
+                  {% blocktranslate trimmed with since=authenticator.last_used_at|timesince %}
+                    last used {{ since }} ago
+                  {% endblocktranslate %}
+                {% else %}
+                  {% translate "not used yet" %}
+                {% endif %}
+              </p>
+            </div>
+          </div>
+          {# on narrow screens the buttons wrap below the text; align them with it #}
+          <div class="flex flex-wrap gap-xs pl-14 sm:pl-0">
+            <c-button
+              variant="secondary"
+              label="{% translate 'Rename' %}"
+              href="{% url 'mfa_edit_webauthn' pk=authenticator.pk %}"
+            />
+            <c-button
+              variant="secondary"
+              label="{% translate 'Remove' %}"
+              href="{% url 'mfa_remove_webauthn' pk=authenticator.pk %}"
+            />
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="type-body-md text-secondary">{% translate "No security keys or passkeys added yet." %}</p>
+  {% endif %}
+
+  <c-button
+    leading-icon="plus"
+    label="{% translate 'Add a key or passkey' %}"
+    href="{% url 'mfa_add_webauthn' %}"
+    class="self-start"
+  />
+{% endblock content %}

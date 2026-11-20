@@ -12,17 +12,17 @@ default:
 # build: Build python image.
 build *args:
     @echo "Building python image..."
-    @docker compose build {{args}}
+    @docker compose --profile default build {{args}}
 
 # up: Start up containers.
 up:
     @echo "Starting up containers..."
-    @docker compose up -d --remove-orphans
+    @docker compose --profile default up -d --remove-orphans
 
 # down: Stop containers.
 down:
     @echo "Stopping containers..."
-    @docker compose down
+    @docker compose --profile default --profile dev-tools down
 
 # restart: Restart a service (default: django).
 restart service="django":
@@ -44,3 +44,13 @@ manage +args:
 # pytest: Run tests with pytest.
 pytest *args:
     @docker compose run --rm django pytest {{args}}
+
+# mailpit: Start only the mailpit service.
+mailpit:
+    @echo "Starting Mailpit..."
+    @docker compose --profile dev-tools up -d
+
+# stop-mailpit: Stop only the mailpit service.
+stop-mailpit:
+    @echo "Stopping Mailpit..."
+    @docker compose --profile dev-tools stop

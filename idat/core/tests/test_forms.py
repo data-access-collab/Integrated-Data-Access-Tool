@@ -34,6 +34,7 @@ class _AllFieldsForm(forms.Form):
     )
     time = forms.TimeField()
     secret = forms.CharField(widget=forms.HiddenInput)
+    password = forms.CharField(widget=forms.PasswordInput)
 
 
 EXPECTED_COMPONENTS = {
@@ -53,6 +54,7 @@ EXPECTED_COMPONENTS = {
     "radio": "fallback",
     "time": "fallback",
     "secret": "hidden",
+    "password": "password",
 }
 
 

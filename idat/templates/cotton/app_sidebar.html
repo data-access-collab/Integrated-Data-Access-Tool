@@ -11,11 +11,16 @@
     user-name     e.g. "Jana D."
     initials      e.g. "JD"
     account-href  "Account & settings" link
+    in-account-area  boolean attribute: the page belongs to My account (its tabs, e-mail,
+                     password …); highlights the user block like a current nav item.
+                     aria-current is "page" on account-href itself, else "true".
 
   Slots (each holds <c-nav.app-item> items):
     slot    main navigation: Home, Tasks (count), My applications, Community
     admin   Administration group; omitted (with its heading) when empty
-    drafts  IN PROGRESS: one item per draft, icon "pencil", count-tone="muted" with progress
+    drafts  IN PROGRESS: one item per draft, icon "pencil", count-tone="muted" with progress.
+            The IN PROGRESS group (heading and plus) is left out when neither drafts nor
+            new-href is given.
 
   Usage:
     <c-app-sidebar new-href="{% url … %}" user-name="Jana D." initials="JD" account-href="{% url … %}">
@@ -28,7 +33,7 @@
 {% endcomment %}
 
 {% load i18n %}
-<c-vars home-href="/" new-href="" user-name="" initials="" account-href="" class="" />
+<c-vars home-href="/" new-href="" user-name="" initials="" account-href="" :in-account-area="False" class="" />
 <aside class="flex h-full w-75 shrink-0 flex-col gap-2xs bg-nav px-2.5 py-md {{ class }}" {{ attrs }}>
   <a
     href="{{ home_href }}"
@@ -53,30 +58,40 @@
     </nav>
   {% endif %}
 
-  <hr class="my-xs border-on-nav" />
-  <nav aria-label="{% translate "In progress" %}" class="flex flex-col gap-2xs">
-    <div class="flex items-center justify-between py-2xs pr-xs pl-md">
-      <h2 class="type-overline text-on-nav-muted">{% translate "In progress" %}</h2>
-      {% if new_href %}
-        <a
-          href="{{ new_href }}"
-          aria-label="{% translate "New application" %}"
-          title="{% translate "New application" %}"
-          class="flex size-6 items-center justify-center rounded-sm text-icon-on-nav transition-colors hover:bg-nav-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-        >
-          <c-icon name="plus" class="size-4" />
-        </a>
-      {% endif %}
-    </div>
-    {% if drafts %}<ul class="flex flex-col gap-2xs">{{ drafts }}</ul>{% endif %}
-  </nav>
+  {% if drafts or new_href %}
+    <hr class="my-xs border-on-nav" />
+    <nav aria-label="{% translate "In progress" %}" class="flex flex-col gap-2xs">
+      <div class="flex items-center justify-between py-2xs pr-xs pl-md">
+        <h2 class="type-overline text-on-nav-muted">{% translate "In progress" %}</h2>
+        {% if new_href %}
+          <a
+            href="{{ new_href }}"
+            aria-label="{% translate "New application" %}"
+            title="{% translate "New application" %}"
+            class="flex size-6 items-center justify-center rounded-sm text-icon-on-nav transition-colors hover:bg-nav-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <c-icon name="plus" class="size-4" />
+          </a>
+        {% endif %}
+      </div>
+      {% if drafts %}<ul class="flex flex-col gap-2xs">{{ drafts }}</ul>{% endif %}
+    </nav>
+  {% endif %}
 
   <div class="flex-1"></div>
 
   {% if user_name %}
     <a
       href="{{ account_href }}"
-      class="flex items-center gap-sm border-t border-on-nav px-sm pt-sm pb-2xs focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+      {% if in_account_area %}
+        aria-current="{% if request.path == account_href %}page{% else %}true{% endif %}"
+      {% endif %}
+      class="
+        flex items-center gap-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus
+        {% if in_account_area %}rounded-md border-t border-on-nav bg-nav-hover p-sm
+        {% else %}border-t border-on-nav px-sm pt-sm pb-2xs
+        {% endif %}
+      "
     >
       <span
         class="flex size-8 shrink-0 items-center justify-center rounded-full bg-nav-hover type-label-md text-on-nav"

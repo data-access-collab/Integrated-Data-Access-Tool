@@ -1,0 +1,155 @@
+{% comment %}
+  HTML layout of every e-mail: brand, a white card with the title and
+  the content, footer. allauth sends it next to the text version.
+  - Designed e-mails (verification, password reset) extend it with an own
+    …_message.html: blocks title and content.
+  - All other allauth e-mails have only a text version; AccountAdapter.render_mail
+    renders this layout for them with `title` (the subject) and `body` (the text,
+    without its signature), links made clickable.
+  Styles live in the style block below, hex values based on the light design tokens (input.css).
+  AccountAdapter.render_mail copies them into style="" attributes when sending (for
+  clients that drop style blocks); @media rules stay in the block.
+  Buttons are a one-cell table, which Outlook renders with padding.
+{% endcomment %}
+
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block head_title %}{{ title }}{% endblock head_title %}</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f7f8fa;
+      }
+      .wrapper {
+        width: 100%;
+        padding: 24px 0;
+        background: #f7f8fa;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+      .card {
+        padding: 32px 40px;
+        border: 1px solid #dde1e7;
+        border-radius: 16px;
+        background: #ffffff;
+      }
+      .brand-mark {
+        color: #ffc03d;
+        font-weight: 700;
+        font-family: Montserrat, Arial, sans-serif;
+        letter-spacing: -0.02em;
+      }
+      .mark-dsa {
+        font-size: 17px;
+        line-height: 14px;
+      }
+      .mark-40 {
+        font-size: 28px;
+        line-height: 22px;
+      }
+      .brand-name {
+        padding-left: 12px;
+        color: #1c2230;
+        font-weight: 600;
+        font-size: 15px;
+        font-family: 'Open Sans', Arial, sans-serif;
+      }
+      h1 {
+        margin: 20px 0;
+        color: #1c2230;
+        font-weight: 600;
+        font-size: 24px;
+        line-height: 32px;
+        font-family: Montserrat, Arial, sans-serif;
+      }
+      .content p {
+        margin: 0 0 20px;
+        color: #4b4f58;
+        font-size: 15px;
+        line-height: 24px;
+        font-family: 'Open Sans', Arial, sans-serif;
+      }
+      .content p.small {
+        color: #646b78;
+        font-size: 13px;
+        line-height: 20px;
+      }
+      .content a {
+        color: #1d4ed8;
+      }
+      .button {
+        border-radius: 10px;
+        background: #ffc03d;
+      }
+      .button a {
+        display: inline-block;
+        padding: 12px 24px;
+        color: #212d45;
+        font-weight: 600;
+        font-size: 15px;
+        line-height: 20px;
+        font-family: 'Open Sans', Arial, sans-serif;
+        text-decoration: none;
+      }
+      .footer {
+        padding: 16px 40px 0;
+        color: #646b78;
+        font-size: 12px;
+        line-height: 18px;
+        font-family: 'Open Sans', Arial, sans-serif;
+      }
+      .footer strong,
+      .footer a {
+        color: #4b4f58;
+      }
+      .button-table {
+        margin: 0 0 20px;
+      }
+      @media (max-width: 480px) {
+        .card {
+          padding: 24px 20px;
+        }
+        .footer {
+          padding: 16px 20px 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="container">
+        <div class="card">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+            <tr>
+              <td class="brand-mark">
+                <div class="mark-dsa">DSA</div>
+                <div class="mark-40">40</div>
+              </td>
+              <td class="brand-name">IDAT</td>
+            </tr>
+          </table>
+          <h1>
+            {% block title %}{{ title }}{% endblock title %}
+          </h1>
+          <div class="content">
+            {% block content %}{{ body|urlize|linebreaks }}{% endblock content %}
+          </div>
+        </div>
+        <div class="footer">
+          <strong>{% translate "DSA40 Data Access Collaboratory" %} · <a href="https://dsa40collaboratory.eu"
+            >dsa40collaboratory.eu</a></strong>
+          <br />
+          {% translate "You get this e-mail because of an account with IDAT (Integrated Data Access Tool)." %}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

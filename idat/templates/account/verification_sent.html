@@ -1,0 +1,35 @@
+{% extends "account/base_entrance.html" %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Check your inbox" %}
+{% endblock head_title %}
+
+{% block entrance_aside %}
+  <p class="type-headline-lg text-on-nav">{% translate "One more step" %}</p>
+  <p class="type-body-lg text-on-nav-muted">
+    {% translate "We verify your e-mail before you can save applications." %}
+  </p>
+  {% include "account/partials/_benefits.html" %}
+{% endblock entrance_aside %}
+
+{% block content %}
+  <h1 class="type-headline-sm text-primary">{% translate "Check your inbox" %}</h1>
+  <p class="type-body-md text-secondary">
+    {% if email %}
+      {% blocktranslate trimmed %}
+        We sent a verification link to {{ email }}. Open it within {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours to
+        activate your account.
+      {% endblocktranslate %}
+    {% else %}
+      {% blocktranslate trimmed %}
+        We sent you a verification link. Open it within {{ EMAIL_CONFIRMATION_EXPIRE_HOURS }} hours to activate your
+        account.
+      {% endblocktranslate %}
+    {% endif %}
+  </p>
+  <p class="type-body-md text-tertiary">
+    {% translate "Nothing there? Check your spam folder or ask your IT department whether external e-mails are filtered." %}
+  </p>
+{% endblock content %}

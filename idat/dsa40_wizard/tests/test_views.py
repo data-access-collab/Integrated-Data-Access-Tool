@@ -4,6 +4,7 @@ import json
 import time
 from http import HTTPStatus
 from unittest import mock
+from urllib.parse import quote
 
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
@@ -151,6 +152,17 @@ class WizardViewTests(TestCase):
 
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertContains(response, f'hx-post="{get_step_url("choose-vlopses")}"')
+
+    def test_signup_and_login_links_return_to_the_wizard(self):
+        """The top bar's sign-up and sign-in links come back here (?next=)."""
+        url = reverse("dsa40_wizard:create")
+        response = self.client.get(url)
+
+        next_ = quote(url)  # like Django's urlencode: "/" stays
+        self.assertContains(
+            response, f'href="{reverse("account_signup")}?next={next_}"'
+        )
+        self.assertContains(response, f'href="{reverse("account_login")}?next={next_}"')
 
     def test_non_htmx_step_request_returns_shell_that_refetches_step_via_htmx(self):
         response = self.client.get(get_step_url("enter-details"))

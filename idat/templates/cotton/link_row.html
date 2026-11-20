@@ -1,0 +1,36 @@
+{% comment %}
+  A row that links to a settings page: icon, title, description, an optional status on
+  the right, and a chevron. Stack rows in a card with dividers (divide-y divide-default).
+  Not in Figma; built from the Settings Row spacing and type.
+
+  Props:
+    href         link target
+    title        e.g. "E-mail address"
+    description  e.g. the current address; omitted when empty
+    icon         icon name, e.g. "mail"; omitted when empty
+
+  Slot: status on the right, e.g. <c-badge>; omitted when empty.
+
+  Usage:
+    <ul class="divide-y divide-default rounded-lg border border-default bg-surface">
+      <c-link-row href="{% url 'mfa_index' %}" icon="shield" title="Two-factor authentication">
+        <c-badge tone="success" label="On" />
+      </c-link-row>
+    </ul>
+{% endcomment %}
+
+<c-vars href="" title="" description="" icon="" class="" />
+<li class="list-none {{ class }}" {{ attrs }}>
+  <a
+    href="{{ href }}"
+    class="flex items-center gap-md p-md transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus sm:px-lg"
+  >
+    {% if icon %}<c-icon :name="icon" class="size-5 shrink-0 text-icon-default" />{% endif %}
+    <span class="flex min-w-0 flex-1 flex-col gap-2xs">
+      <span class="type-label-lg text-primary">{{ title }}</span>
+      {% if description %}<span class="truncate type-body-sm text-secondary">{{ description }}</span>{% endif %}
+    </span>
+    {% if slot %}<span class="shrink-0">{{ slot }}</span>{% endif %}
+    <c-icon name="chevron-right" class="size-4.5 shrink-0 text-icon-default" />
+  </a>
+</li>

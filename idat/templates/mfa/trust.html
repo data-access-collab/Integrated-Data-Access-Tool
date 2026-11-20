@@ -1,0 +1,59 @@
+{% extends "mfa/base_entrance.html" %}
+
+{% comment %}
+  Optional step after the 2FA code (allauth TrustView, only with MFA_TRUST_ENABLED):
+  skip the code on this browser for a while.
+  Both choices post action=trust|skip; Cancel ends the sign-in
+  (logout-from-stage).
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Trust this browser?" %}
+{% endblock head_title %}
+
+{% block entrance_aside %}
+  <p class="type-headline-lg text-on-nav">{% translate "Almost there" %}</p>
+  <p class="type-body-lg text-on-nav-muted">
+    {% translate "A second step keeps your drafts and access cases safe, even if your password leaks." %}
+  </p>
+  {% include "account/partials/_benefits.html" %}
+{% endblock entrance_aside %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "Trust this browser?" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% blocktranslate trimmed with period=trust_until|timeuntil:trust_from %}
+        We won't ask for a code on this browser for {{ period }}. Only choose this on a device you don't share.
+      {% endblocktranslate %}
+    </p>
+  </div>
+
+  <form class="flex flex-col gap-xs" method="post" action="{% url 'mfa_trust' %}">
+    {% csrf_token %}
+    {{ form }}
+    {% blocktranslate trimmed with period=trust_until|timeuntil:trust_from asvar trust_label %}
+      Trust for {{ period }}
+    {% endblocktranslate %}
+    {% translate "Don't trust" as skip_label %}
+    <c-button type="submit" name="action" value="trust" :label="trust_label" class="w-full" />
+    <c-button
+      variant="secondary"
+      type="submit"
+      name="action"
+      value="skip"
+      :label="skip_label"
+      class="w-full"
+    />
+    <c-button
+      variant="ghost"
+      type="submit"
+      form="logout-from-stage"
+      label="{% translate 'Cancel' %}"
+      class="w-full"
+    />
+  </form>
+  {% include "mfa/partials/_logout_from_stage.html" %}
+{% endblock content %}

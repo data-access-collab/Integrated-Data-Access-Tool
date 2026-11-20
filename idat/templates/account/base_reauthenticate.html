@@ -1,0 +1,43 @@
+{% extends "account/base_entrance.html" %}
+
+{% comment %}
+  "Confirm it's you" before a sensitive change (allauth reauthentication: 2FA setup,
+  e-mail changes …). Extended by account/reauthenticate.html (password),
+  mfa/reauthenticate.html (code) and mfa/webauthn/reauthenticate.html (security key),
+  which fill {% block reauthenticate_content %}. The other methods the account has
+  (reauthentication_alternatives) follow as secondary buttons.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Confirm it's you" %}
+{% endblock head_title %}
+
+{% block entrance_aside %}
+  <p class="type-headline-lg text-on-nav">{% translate "Confirm it's you" %}</p>
+  <p class="type-body-lg text-on-nav-muted">
+    {% translate "Security changes need a fresh check, even while you're signed in." %}
+  </p>
+  {% include "account/partials/_benefits.html" %}
+{% endblock entrance_aside %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "Confirm it's you" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% translate "This change affects your account's security, so we need to check it's really you." %}
+    </p>
+  </div>
+
+  {% block reauthenticate_content %}{% endblock reauthenticate_content %}
+
+  {% if reauthentication_alternatives %}
+    <div class="flex flex-col gap-xs">
+      <h2 class="type-label-lg text-secondary">{% translate "Or confirm another way" %}</h2>
+      {% for alt in reauthentication_alternatives %}
+        <c-button variant="secondary" href="{{ alt.url }}" :label="alt.description" class="w-full" />
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock content %}

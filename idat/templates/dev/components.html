@@ -79,9 +79,11 @@
         <li><a class="text-link hover:underline" href="#breadcrumb">Breadcrumb</a></li>
         <li class="mt-sm type-overline text-tertiary">Form fields</li>
         <li><a class="text-link hover:underline" href="#text-field">Text Field</a></li>
+        <li><a class="text-link hover:underline" href="#password-field">Password Field</a></li>
         <li><a class="text-link hover:underline" href="#textarea">Textarea</a></li>
         <li><a class="text-link hover:underline" href="#select">Select</a></li>
         <li><a class="text-link hover:underline" href="#date-field">Date Field</a></li>
+        <li><a class="text-link hover:underline" href="#password-requirements">Password Requirements</a></li>
         <li><a class="text-link hover:underline" href="#multi-select">Multi-select</a></li>
         <li><a class="text-link hover:underline" href="#country-select">Country Select</a></li>
         <li><a class="text-link hover:underline" href="#file-upload">File Upload</a></li>
@@ -92,6 +94,7 @@
         <li><a class="text-link hover:underline" href="#nav-app-item">Nav / App Item</a></li>
         <li><a class="text-link hover:underline" href="#lifecycle-step">Lifecycle Step</a></li>
         <li><a class="text-link hover:underline" href="#overview-tab">Overview Tab</a></li>
+        <li><a class="text-link hover:underline" href="#tabs">Tabs</a></li>
         <li><a class="text-link hover:underline" href="#help-accordion">Help / Accordion</a></li>
         <li><a class="text-link hover:underline" href="#help-insight-card">Help / Insight Card</a></li>
         <li><a class="text-link hover:underline" href="#forms-section-header">Form / Section Header</a></li>
@@ -110,6 +113,8 @@
         <li><a class="text-link hover:underline" href="#document-card">Document Card</a></li>
         <li><a class="text-link hover:underline" href="#notification-item">Notification Item</a></li>
         <li><a class="text-link hover:underline" href="#settings-row">Settings Row</a></li>
+        <li><a class="text-link hover:underline" href="#link-row">Link Row</a></li>
+        <li><a class="text-link hover:underline" href="#action-row">Action Row</a></li>
         <li><a class="text-link hover:underline" href="#empty-state">Empty State</a></li>
         <li class="mt-sm type-overline text-tertiary">Community, profile &amp; submission</li>
         <li><a class="text-link hover:underline" href="#vote-button">Vote Button</a></li>
@@ -155,9 +160,11 @@
 
       {# Tier 2 · Form fields #}
       {% include "dev/_section.html" with slug="text-field" title="Text Field" node="4:158" tag="c-text-field" demo="dev/components/_text_field.html" %}
+      {% include "dev/_section.html" with slug="password-field" title="Password Field" node="" tag="c-password-field" demo="dev/components/_password_field.html" %}
       {% include "dev/_section.html" with slug="textarea" title="Textarea" node="4:206" tag="c-textarea" demo="dev/components/_textarea.html" %}
       {% include "dev/_section.html" with slug="select" title="Select" node="4:255" tag="c-select" demo="dev/components/_select.html" %}
       {% include "dev/_section.html" with slug="date-field" title="Date Field" node="24:585" tag="c-date-field" demo="dev/components/_date_field.html" %}
+      {% include "dev/_section.html" with slug="password-requirements" title="Forms / Password Requirements" node="66:4804" tag="c-forms.password-requirements" demo="dev/components/_forms_password_requirements.html" %}
       {% include "dev/_section.html" with slug="multi-select" title="Multi-select" node="24:677" tag="c-multi-select" demo="dev/components/_multi_select.html" %}
       {% include "dev/_section.html" with slug="country-select" title="Country Select" node="24:733" tag="c-country-select" demo="dev/components/_country_select.html" %}
       {% include "dev/_section.html" with slug="file-upload" title="File Upload" node="23:587" tag="c-file-upload" demo="dev/components/_file_upload.html" %}
@@ -170,6 +177,7 @@
       {% include "dev/_section.html" with slug="nav-app-item" title="Nav / App Item" node="31:616" tag="c-nav.app-item" demo="dev/components/_nav_app_item.html" %}
       {% include "dev/_section.html" with slug="lifecycle-step" title="Lifecycle Step" node="31:630" tag="c-lifecycle-step" demo="dev/components/_lifecycle_step.html" %}
       {% include "dev/_section.html" with slug="overview-tab" title="Overview Tab" node="36:680" tag="c-overview-tab" demo="dev/components/_overview_tab.html" %}
+      {% include "dev/_section.html" with slug="tabs" title="Tabs" node="34:653" tag="c-tabs" demo="dev/components/_tabs.html" %}
       {% include "dev/_section.html" with slug="help-accordion" title="Help / Accordion" node="5:196" tag="c-help.accordion" demo="dev/components/_help_accordion.html" %}
       {% include "dev/_section.html" with slug="help-insight-card" title="Help / Insight Card" node="5:224" tag="c-help.insight-card" demo="dev/components/_help_insight_card.html" %}
       {% include "dev/_section.html" with slug="forms-section-header" title="Form / Section Header" node="5:239" tag="c-forms.section-header" demo="dev/components/_forms_section_header.html" %}
@@ -189,6 +197,8 @@
       {% include "dev/_section.html" with slug="document-card" title="Document Card" node="41:1042" tag="c-document-card" wide=True demo="dev/components/_document_card.html" %}
       {% include "dev/_section.html" with slug="notification-item" title="Notification Item" node="41:1332" tag="c-notification-item" demo="dev/components/_notification_item.html" %}
       {% include "dev/_section.html" with slug="settings-row" title="Settings Row" node="41:1467" tag="c-settings-row" demo="dev/components/_settings_row.html" %}
+      {% include "dev/_section.html" with slug="link-row" title="Link Row" node="" tag="c-link-row" demo="dev/components/_link_row.html" %}
+      {% include "dev/_section.html" with slug="action-row" title="Action Row" node="" tag="c-action-row" demo="dev/components/_action_row.html" %}
       {% include "dev/_section.html" with slug="empty-state" title="Empty State" node="41:1357" tag="c-empty-state" demo="dev/components/_empty_state.html" %}
 
       {# Community, profile & submission #}

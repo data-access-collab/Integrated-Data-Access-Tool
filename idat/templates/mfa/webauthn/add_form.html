@@ -1,0 +1,60 @@
+{% extends "mfa/webauthn/base.html" %}
+
+{% comment %}
+  Add a security key or passkey. allauth's script (addForm) takes over the "Add"
+  button (#mfa_webauthn_add): it runs the browser's WebAuthn prompt, fills the hidden
+  credential field and submits the form. Keep those ids and the scripts below.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Add a security key or passkey" %}
+{% endblock head_title %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "Add a security key or passkey" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% translate "Give it a name you'll recognise, then follow your browser's prompt." %}
+    </p>
+  </div>
+
+  <form
+    class="flex flex-col gap-lg rounded-lg border border-default bg-surface p-md sm:p-lg"
+    method="post"
+    action="{% url 'mfa_add_webauthn' %}"
+  >
+    {% csrf_token %}
+    {% if form.non_field_errors or form.credential.errors %}
+      <c-field-message>{{ form.non_field_errors|join:" " }} {{ form.credential.errors|join:" " }}</c-field-message>
+    {% endif %}
+    <c-mfa.webauthn-error />
+    <c-text-field :field="form.name" label="{% translate 'Name' %}" />
+    {% if form.passwordless %}
+      <c-checkbox :field="form.passwordless">
+        {% translate "Use it as a passkey: sign in with it alone, without your password" %}
+      </c-checkbox>
+    {% endif %}
+    {{ form.credential }}
+    <div class="flex flex-wrap gap-sm">
+      <c-button id="mfa_webauthn_add" label="{% translate 'Add' %}" />
+      <c-button variant="secondary" label="{% translate 'Cancel' %}" href="{% url 'mfa_index' %}" />
+    </div>
+  </form>
+{% endblock content %}
+
+{% block extra_body %}
+  {% include "mfa/webauthn/snippets/scripts.html" %}
+  {{ js_data|json_script:"js_data" }}
+  <script data-allauth-onload="allauth.webauthn.forms.addForm" type="application/json">
+    {
+      "ids": {
+        "add": "mfa_webauthn_add",
+        "passwordless": "{{ form.passwordless.auto_id }}",
+        "credential": "{{ form.credential.auto_id }}",
+        "data": "js_data"
+      }
+    }
+  </script>
+{% endblock extra_body %}

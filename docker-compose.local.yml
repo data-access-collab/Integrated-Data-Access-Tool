@@ -18,11 +18,14 @@ services:
     env_file:
       - path: ./.envs/.local/.django
         required: false
+      - path: ./.envs/.local/.dev-local
+        required: false
       - path: ./.envs/.local/.postgres
         required: false
     ports:
       - '8000:8000'
     command: /start
+    profiles: ["default"]
 
   postgres:
     build:
@@ -36,3 +39,17 @@ services:
     env_file:
       - path: ./.envs/.local/.postgres
         required: false
+    profiles: ["default"]
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: django_mailpit
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP server
+    environment:
+      - MP_MAX_MESSAGES=5000
+      - MP_DATA_FILE=/tmp/mailpit.db
+      - MP_SMTP_AUTH_ACCEPT_ANY=1
+      - MP_SMTP_AUTH_ALLOW_INSECURE=1
+    profiles: ["dev-tools"]

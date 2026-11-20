@@ -4,9 +4,8 @@ from django.contrib import admin
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import gettext_lazy as _
 
-from .forms import UserAdminChangeForm
-from .forms import UserAdminCreationForm
-from .models import User
+from idat.users.forms import UserAdminChangeForm, UserAdminCreationForm
+from idat.users.models import User
 
 if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # Force the `admin` sign in process to go through the `django-allauth` workflow:
@@ -20,8 +19,8 @@ class UserAdmin(auth_admin.UserAdmin):
     form = UserAdminChangeForm
     add_form = UserAdminCreationForm
     fieldsets = (
-        (None, {"fields": ("username", "password")}),
-        (_("Personal info"), {"fields": ("name", "email")}),
+        (None, {"fields": ("email", "password")}),
+        (_("Personal info"), {"fields": ("first_name", "last_name", "orcid")}),
         (
             _("Permissions"),
             {
@@ -36,5 +35,15 @@ class UserAdmin(auth_admin.UserAdmin):
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
-    list_display = ["username", "name", "is_superuser"]
-    search_fields = ["name"]
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "usable_password", "password1", "password2"),
+            },
+        ),
+    )
+    list_display = ["email", "first_name", "last_name", "is_superuser"]
+    search_fields = ["email", "first_name", "last_name", "orcid"]
+    ordering = ["email"]

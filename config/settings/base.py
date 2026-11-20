@@ -88,7 +88,6 @@ THIRD_PARTY_APPS = [
     "allauth",
     "allauth.account",
     "allauth.mfa",
-    "allauth.socialaccount",
     "corsheaders",
     "django_htmx",
     "django_cotton",
@@ -119,7 +118,7 @@ AUTHENTICATION_BACKENDS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "users:redirect"
+LOGIN_REDIRECT_URL = "users:detail"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "account_login"
 
@@ -133,12 +132,18 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
 ]
+# Password reset links (allauth uses Django's token generator) expire after 1 hour
+# https://docs.djangoproject.com/en/dev/ref/settings/#password-reset-timeout
+PASSWORD_RESET_TIMEOUT = 60 * 60
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 15},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -158,6 +163,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "idat.users.middleware.StaffSecurityMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
 ]
 
@@ -248,7 +254,7 @@ ADMINS = ['"Luis Glaser" <l.glaser@comprensio.ai>']
 MANAGERS = ADMINS
 # https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
 # Force the `admin` sign in process to go through the `django-allauth` workflow
-DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=False)
+DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=True)
 
 # LOGGING
 # ------------------------------------------------------------------------------
@@ -281,20 +287,61 @@ REDIS_SSL = REDIS_URL.startswith("rediss://")
 # ------------------------------------------------------------------------------
 ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_LOGIN_METHODS = {"username"}
+ACCOUNT_LOGIN_METHODS = {"email"}
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
+# https://docs.allauth.org/en/latest/account/advanced.html#custom-user-models
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+# One address per account: /accounts/email/ changes it (the new address replaces the
+# old one once verified) instead of managing several.
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_CHANGE_EMAIL = True
+# Tell the old address when the e-mail or password changes (alarm on takeover)
+ACCOUNT_EMAIL_NOTIFICATIONS = True
+# Plain subjects ("Reset your password"); allauth's default prepends "[<site name>] "
+ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
+# After confirming a changed address while signed in, back to the e-mail page
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "account_email"
+# Requesting (or cancelling) an e-mail change asks for the password or a 2FA code
+# ("Confirm it's you", unless signed in within ACCOUNT_REAUTHENTICATION_TIMEOUT).
+ACCOUNT_REAUTHENTICATION_REQUIRED = True
+# https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_ADAPTER = "idat.users.adapters.AccountAdapter"
 # https://docs.allauth.org/en/latest/account/forms.html
-ACCOUNT_FORMS = {"signup": "idat.users.forms.UserSignupForm"}
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_ADAPTER = "idat.users.adapters.SocialAccountAdapter"
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_FORMS = {"signup": "idat.users.forms.UserSocialSignupForm"}
+ACCOUNT_FORMS = {
+    "login": "idat.users.forms.UserLoginForm",
+    "signup": "idat.users.forms.UserSignupForm",
+    "reauthenticate": "idat.users.forms.UserReauthenticateForm",
+    "add_email": "idat.users.forms.UserAddEmailForm",
+    "reset_password": "idat.users.forms.UserResetPasswordForm",
+    "reset_password_from_key": "idat.users.forms.UserResetPasswordKeyForm",
+    "change_password": "idat.users.forms.UserChangePasswordForm",
+}
 
 
-# Your stuff...
-# ------------------------------------------------------------------------------
+# MFA
+MFA_SUPPORTED_TYPES = ["totp", "webauthn", "recovery_codes"]
+MFA_PASSKEY_LOGIN_ENABLED = True
+# Lifts two allauth.mfa guards:
+# - no new e-mail address on a 2FA account while verification is by link (a link
+#   proves only control of the mailbox): here the change link must be opened signed
+#   in to the same account with a recent password or 2FA confirmation
+#   (idat.users.views.ConfirmEmailChangeView).
+# - no 2FA while an address is unverified (an attacker could sign up with someone
+#   else's address and lock its owner out): ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+#   keeps unverified accounts from signing in at all. Keep it mandatory; a test
+#   checks this.
+MFA_ALLOW_UNVERIFIED_EMAIL = True
+# https://docs.allauth.org/en/latest/mfa/forms.html
+MFA_FORMS = {
+    "authenticate": "idat.users.forms.UserMFAAuthenticateForm",
+    "reauthenticate": "idat.users.forms.UserMFAReauthenticateForm",
+}
+
+# Staff are logged out after this many seconds without a request
+# (see idat.users.middleware.StaffSecurityMiddleware)
+STAFF_SESSION_IDLE_TIMEOUT = 60 * 60 * 8

@@ -1,29 +1,31 @@
 from __future__ import annotations
 
+import re
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
+from allauth.account.models import EmailAddress, EmailConfirmationHMAC
+from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.http import HttpRequest
-from django.http import HttpResponseRedirect
+from django.core import mail
+from django.core.cache import cache
+from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from idat.users.forms import UserAdminChangeForm
+from idat.users.models import User
 from idat.users.tests.factories import UserFactory
-from idat.users.views import UserRedirectView
-from idat.users.views import UserUpdateView
-from idat.users.views import user_detail_view
+from idat.users.views import UserUpdateView, user_detail_view
 
 if TYPE_CHECKING:
-    from django.test import RequestFactory
+    from django.test import Client, RequestFactory
 
-    from idat.users.models import User
 
 pytestmark = pytest.mark.django_db
 
@@ -46,7 +48,7 @@ class TestUserUpdateView:
         request.user = user
 
         view.request = request
-        assert view.get_success_url() == f"/users/{user.username}/"
+        assert view.get_success_url() == "/users/my-account/"
 
     def test_get_object(self, user: User, rf: RequestFactory):
         view = UserUpdateView()
@@ -78,30 +80,246 @@ class TestUserUpdateView:
         assert messages_sent == [_("Information successfully updated")]
 
 
-class TestUserRedirectView:
-    def test_get_redirect_url(self, user: User, rf: RequestFactory):
-        view = UserRedirectView()
-        request = rf.get("/fake-url")
-        request.user = user
-
-        view.request = request
-        assert view.get_redirect_url() == f"/users/{user.username}/"
-
-
 class TestUserDetailView:
     def test_authenticated(self, user: User, rf: RequestFactory):
         request = rf.get("/fake-url/")
-        request.user = UserFactory.create()
-        response = user_detail_view(request, username=user.username)
+        request.user = user
+        response = user_detail_view(request)
 
         assert response.status_code == HTTPStatus.OK
 
-    def test_not_authenticated(self, user: User, rf: RequestFactory):
+    def test_not_authenticated(self, rf: RequestFactory):
         request = rf.get("/fake-url/")
         request.user = AnonymousUser()
-        response = user_detail_view(request, username=user.username)
+        response = user_detail_view(request)
         login_url = reverse(settings.LOGIN_URL)
 
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == f"{login_url}?next=/fake-url/"
+
+
+PASSWORD = "a-long-test-passphrase-for-views"
+
+
+@pytest.fixture
+def _clear_rate_limits() -> None:
+    # allauth keeps its rate limits in the cache
+    cache.clear()
+
+
+@pytest.fixture
+def owner() -> User:
+    owner = UserFactory.create(email="owner@example.com", password=PASSWORD)
+    EmailAddress.objects.create(
+        user=owner,
+        email=owner.email,
+        verified=True,
+        primary=True,
+    )
+    return owner
+
+
+def sign_in(client: Client, user: User) -> Client:
+    """A real sign-in: allauth records it, so it counts as a recent authentication."""
+    response = client.post(
+        reverse("account_login"),
+        {"login": user.email, "password": PASSWORD},
+    )
+    assert response.status_code == HTTPStatus.FOUND
+    return client
+
+
+@pytest.mark.usefixtures("_clear_rate_limits")
+class TestEmailChange:
+    """Requesting an e-mail change on /accounts/email/ (allauth, change mode)."""
+
+    def test_change_needs_recent_authentication(self, client: Client, owner: User):
+        client.force_login(owner)  # not recorded by allauth: not "recent"
+        response = client.post(
+            reverse("account_email"),
+            {"email": "new@example.com", "action_add": ""},
+        )
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url.startswith(reverse("account_reauthenticate"))
+        assert not EmailAddress.objects.filter(email="new@example.com").exists()
+
+    def test_mfa_user_can_request_change(self, client: Client, owner: User):
+        """allauth.mfa's block is lifted (MFA_ALLOW_UNVERIFIED_EMAIL)."""
+        sign_in(client, owner)
+        Authenticator.objects.create(
+            user=owner,
+            type=Authenticator.Type.TOTP,
+            data={"secret": "x"},
+        )
+        client.post(
+            reverse("account_email"),
+            {"email": "new@example.com", "action_add": ""},
+        )
+        assert EmailAddress.objects.filter(
+            user=owner,
+            email="new@example.com",
+            verified=False,
+        ).exists()
+
+
+@pytest.mark.usefixtures("_clear_rate_limits")
+class TestConfirmEmailChangeView:
+    """The link of an e-mail change only works signed in, with a recent confirmation."""
+
+    @pytest.fixture
+    def change_url(self, owner: User) -> str:
+        address = EmailAddress.objects.create(
+            user=owner,
+            email="new@example.com",
+            verified=False,
+            primary=False,
+        )
+        key = EmailConfirmationHMAC(address).key
+        return reverse("account_confirm_email", args=[key])
+
+    def test_signed_out_is_sent_to_sign_in(self, client: Client, change_url: str):
+        response = client.get(change_url)
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url.startswith(reverse("account_login"))
+        assert "next=" in response.url
+        response = client.post(change_url)
+        assert not EmailAddress.objects.get(email="new@example.com").verified
+
+    def test_other_account_is_signed_out(
+        self,
+        client: Client,
+        change_url: str,
+    ):
+        other = UserFactory.create(password=PASSWORD)
+        client.force_login(other)
+        response = client.post(change_url)
+        assert response.url.startswith(reverse("account_login"))
+        assert "_auth_user_id" not in client.session
+        assert not EmailAddress.objects.get(email="new@example.com").verified
+
+    def test_owner_without_recent_authentication_reauthenticates(
+        self,
+        client: Client,
+        owner: User,
+        change_url: str,
+    ):
+        client.force_login(owner)
+        response = client.post(change_url)
+        assert response.url.startswith(reverse("account_reauthenticate"))
+        assert not EmailAddress.objects.get(email="new@example.com").verified
+
+    def test_owner_signed_in_recently_switches(
+        self,
+        client: Client,
+        owner: User,
+        change_url: str,
+    ):
+        sign_in(client, owner).post(change_url)
+        owner.refresh_from_db()
+        assert owner.email == "new@example.com"
+        assert EmailAddress.objects.get(email="new@example.com").primary
+
+    def test_signup_link_needs_no_sign_in(self, client: Client):
+        user = UserFactory.create(email="signup@example.com", password=PASSWORD)
+        address = EmailAddress.objects.create(
+            user=user,
+            email=user.email,
+            verified=False,
+            primary=True,
+        )
+        url = reverse(
+            "account_confirm_email", args=[EmailConfirmationHMAC(address).key]
+        )
+        client.post(url)
+        address.refresh_from_db()
+        assert address.verified
+
+    def test_user_created_outside_allauth_can_activate(self, client: Client):
+        """createsuperuser makes no EmailAddress; allauth adds a non-primary one
+        on the first sign-in. Ensure first sign in sends an activation email.
+        """
+        User.objects.create_superuser(email="admin@example.com", password=PASSWORD)
+        client.post(
+            reverse("account_login"),
+            {"login": "admin@example.com", "password": PASSWORD},
+        )
+        [msg] = mail.outbox
+        assert msg.subject == "Confirm your e-mail address"
+        key = re.search(r"/accounts/confirm-email/([^/]+)/", msg.body).group(1)
+
+        client.post(reverse("account_confirm_email", args=[key]))
+        address = EmailAddress.objects.get(email="admin@example.com")
+        assert address.verified
+        assert address.primary
+
+    def test_email_edited_in_admin_before_activation_can_activate(self, client: Client):
+        """The address was edited in the admin before the first one was confirmed:
+        allauth adds a second non-primary address. With no primary one it's still an
+        activation, else the link would need a sign-in that verification blocks.
+        """
+        user = User.objects.create_superuser(email="old@example.com", password=PASSWORD)
+        EmailAddress.objects.create(
+            user=user, email=user.email, verified=False, primary=False
+        )
+        user.email = "admin@example.com"
+        user.save()
+        client.post(
+            reverse("account_login"),
+            {"login": "admin@example.com", "password": PASSWORD},
+        )
+        [msg] = mail.outbox
+        assert msg.subject == "Confirm your e-mail address"
+        key = re.search(r"/accounts/confirm-email/([^/]+)/", msg.body).group(1)
+
+        client.post(reverse("account_confirm_email", args=[key]))
+        address = EmailAddress.objects.get(email="admin@example.com")
+        assert address.verified
+        assert address.primary
+
+    def test_email_edited_in_admin_after_activation_can_confirm(
+        self, client: Client, owner: User
+    ):
+        """An admin changed a verified account's address: the account's e-mail is the
+        new one already, so its link needs no sign-in and replaces the old address.
+        """
+        owner.email = "edited@example.com"
+        owner.save()
+        client.post(
+            reverse("account_login"),
+            {"login": "edited@example.com", "password": PASSWORD},
+        )
+        [msg] = mail.outbox
+        assert msg.subject == "Confirm your e-mail address"
+        key = re.search(r"/accounts/confirm-email/([^/]+)/", msg.body).group(1)
+
+        client.post(reverse("account_confirm_email", args=[key]))
+        address = EmailAddress.objects.get(user=owner)
+        assert address.email == "edited@example.com"
+        assert address.verified
+        assert address.primary
+        sign_in(client, User.objects.get(pk=owner.pk))
+        assert "_auth_user_id" in client.session
+
+
+def test_mfa_allow_unverified_email_needs_mandatory_verification():
+    """
+    MFA_ALLOW_UNVERIFIED_EMAIL also lets 2FA be turned on while an address is
+    unverified; only safe while unverified accounts can't sign in.
+    """
+    assert settings.MFA_ALLOW_UNVERIFIED_EMAIL
+    assert settings.ACCOUNT_EMAIL_VERIFICATION == "mandatory"
+
+
+@pytest.mark.usefixtures("_clear_rate_limits")
+def test_webauthn_add_page_explains_browser_errors(client: Client, owner: User):
+    """The add-passkey page renders IDAT's template override, which includes the
+    Alpine listener for allauth's "allauth.error" event and the "already added"
+    message.
+    """
+    sign_in(client, owner)
+    response = client.get(reverse("mfa_add_webauthn"))
+    assert response.status_code == HTTPStatus.OK
+    html = response.content.decode()
+    assert "x-on:allauth-error.dot.document.prevent" in html
+    assert "already added to your account" in html

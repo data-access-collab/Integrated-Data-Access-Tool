@@ -1,5 +1,5 @@
 from .base import *  # noqa: F403
-from .base import INSTALLED_APPS, MIDDLEWARE, env
+from .base import INSTALLED_APPS, MIDDLEWARE, TEMPLATES, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -36,6 +36,12 @@ EMAIL_BACKEND = env(
     default="django.core.mail.backends.console.EmailBackend",
 )
 
+if DEBUG and env.bool("DJANGO_USE_MAILPIT", default=False):
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "mailpit"
+    EMAIL_PORT = 1025
+    EMAIL_USE_TLS = False
+
 # WhiteNoise
 # ------------------------------------------------------------------------------
 # http://whitenoise.evans.io/en/latest/django.html#using-whitenoise-in-development
@@ -70,6 +76,15 @@ if env("USE_DOCKER") == "yes":
 # ------------------------------------------------------------------------------
 # https://django-extensions.readthedocs.io/en/latest/installation_instructions.html#configuration
 INSTALLED_APPS += ["django_extensions"]
+
+# Templates
+# ------------------------------------------------------------------------------
+# prevent html caching in development
+TEMPLATES[0]["APP_DIRS"] = False
+TEMPLATES[0]["OPTIONS"]["loaders"] = [
+    "django.template.loaders.filesystem.Loader",
+    "django.template.loaders.app_directories.Loader",
+]
 
 # Your stuff...
 # ------------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 {% load i18n %}
 
+{# signed out, the top bar adds "Sign in"; signed in, the avatar #}
 <c-top-bar>
   <c-slot name="nav">
     <a
@@ -9,10 +10,13 @@
     <a
       class="rounded-sm type-label-lg text-secondary hover:text-primary"
       href="#top-bar"
-    >{% translate "Community" %}</a>
+    >{% translate "Community insights" %}</a>
+    <a
+      class="rounded-sm type-label-lg text-secondary hover:text-primary"
+      href="#top-bar"
+    >{% translate "Issues" %}</a>
   </c-slot>
   <c-slot name="actions">
     <c-button variant="ghost" label="{% translate 'Why are we doing this?' %}" />
-    <c-button variant="secondary" label="{% translate 'Sign in' %}" href="#top-bar" />
   </c-slot>
 </c-top-bar>

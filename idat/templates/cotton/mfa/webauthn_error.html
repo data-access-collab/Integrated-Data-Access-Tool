@@ -1,0 +1,35 @@
+{% comment %}
+  MFA / WebAuthn Error
+  Shows why the browser's security key or passkey prompt failed. allauth's webauthn.js
+  catches the error and dispatches "allauth.error" on document.
+
+  This listens and shows a message by the DOMException's name:
+    InvalidStateError  the key or passkey is already added (excludeCredentials)
+    NotAllowedError    the prompt was cancelled or timed out
+    anything else      a generic failure
+  Use it once per page, on pages that run allauth's WebAuthn script, next to the
+  form's server-side errors.
+
+  Usage:
+    <c-mfa.webauthn-error />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars class="" />
+<div
+  x-data="{ error: '' }"
+  x-on:allauth-error.dot.document.prevent="error = { InvalidStateError: 'already-added', NotAllowedError: 'cancelled' }[$event.detail.exception?.name] ?? 'failed'"
+  role="alert"
+  class="{{ class }}"
+  {{ attrs }}
+>
+  <c-field-message x-cloak x-show="error === 'already-added'">
+    {% translate "This security key or passkey is already added to your account. Use a different one." %}
+  </c-field-message>
+  <c-field-message x-cloak x-show="error === 'cancelled'">
+    {% translate "The browser prompt was cancelled or timed out. Try again." %}
+  </c-field-message>
+  <c-field-message x-cloak x-show="error === 'failed'">
+    {% translate "Your browser couldn't use the security key or passkey. Try again, or use another one." %}
+  </c-field-message>
+</div>

@@ -1,0 +1,27 @@
+{% extends "mfa/webauthn/base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Rename security key" %}
+{% endblock head_title %}
+
+{% block content %}
+  <h1 class="type-headline-sm text-primary">{% translate "Rename security key" %}</h1>
+
+  <form
+    class="flex flex-col gap-lg rounded-lg border border-default bg-surface p-md sm:p-lg"
+    method="post"
+    action="{{ request.path }}"
+  >
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
+    {% endif %}
+    <c-text-field :field="form.name" label="{% translate 'Name' %}" />
+    <div class="flex flex-wrap gap-sm">
+      <c-button type="submit" label="{% translate 'Save' %}" />
+      <c-button variant="secondary" label="{% translate 'Cancel' %}" href="{% url 'mfa_list_webauthn' %}" />
+    </div>
+  </form>
+{% endblock content %}

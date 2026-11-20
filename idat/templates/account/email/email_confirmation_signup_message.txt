@@ -1,0 +1,13 @@
+{% extends "account/email/base_message.txt" %}
+{% load i18n %}
+
+{% block content %}{% autoescape off %}{% translate "You created an account for IDAT (Integrated Data Access Tool). Please confirm that this is your e-mail address so you can save applications and track access cases." %}
+
+{% translate "Confirm your e-mail address:" %}
+{{ activate_url }}
+
+{% blocktranslate trimmed count hours=EMAIL_CONFIRMATION_EXPIRE_HOURS %}
+  The link is valid for {{ hours }} hour. If you didn't create an account, ignore this e-mail — nothing happens.
+{% plural %}
+  The link is valid for {{ hours }} hours. If you didn't create an account, ignore this e-mail — nothing happens.
+{% endblocktranslate %}{% endautoescape %}{% endblock content %}

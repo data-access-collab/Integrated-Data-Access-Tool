@@ -1,0 +1,29 @@
+{% extends "mfa/webauthn/base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Remove security key" %}
+{% endblock head_title %}
+
+{% block content %}
+  <form
+    class="flex flex-col gap-lg rounded-lg border border-default bg-surface p-md sm:p-lg"
+    method="post"
+    action="{% url 'mfa_remove_webauthn' pk=authenticator.pk %}"
+  >
+    {% csrf_token %}
+    <div class="flex flex-col gap-xs">
+      <h1 class="type-headline-sm text-primary">{% translate "Remove this security key?" %}</h1>
+      <p class="type-body-md text-secondary">
+        {% blocktranslate trimmed %}
+          {{ authenticator }} will no longer work for signing in.
+        {% endblocktranslate %}
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-sm">
+      <c-button variant="danger" type="submit" label="{% translate 'Remove' %}" />
+      <c-button variant="secondary" label="{% translate 'Cancel' %}" href="{% url 'mfa_list_webauthn' %}" />
+    </div>
+  </form>
+{% endblock content %}

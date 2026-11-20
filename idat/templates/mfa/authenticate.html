@@ -1,0 +1,88 @@
+{% extends "mfa/base_entrance.html" %}
+
+{% comment %}
+  Second sign-in step for accounts with two-factor authentication (allauth
+  AuthenticateView).
+  The code field takes an authenticator code or a recovery code. With security keys
+  enabled, "Use a security key" runs allauth's WebAuthn script, which fills and
+  submits the hidden #webauthn_form. Cancel ends the sign-in (logout-from-stage).
+  Keep allauth's ids (mfa_webauthn_authenticate, webauthn_form, js_data).
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Two-factor authentication" %}
+{% endblock head_title %}
+
+{% block entrance_aside %}
+  <p class="type-headline-lg text-on-nav">{% translate "Almost there" %}</p>
+  <p class="type-body-lg text-on-nav-muted">
+    {% translate "A second step keeps your drafts and access cases safe, even if your password leaks." %}
+  </p>
+  {% include "account/partials/_benefits.html" %}
+{% endblock entrance_aside %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "Two-factor authentication" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% translate "Enter the code from your authenticator app to finish signing in." %}
+    </p>
+  </div>
+
+  <form class="flex flex-col gap-md" method="post" action="{% url 'mfa_authenticate' %}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
+    {% endif %}
+    {% if "webauthn" in MFA_SUPPORTED_TYPES %}<c-mfa.webauthn-error />{% endif %}
+    {{ form.code.as_field_group }}
+    <c-button type="submit" label="{% translate 'Sign in' %}" class="w-full" />
+  </form>
+
+  <div class="flex flex-col gap-xs">
+    {% if "webauthn" in MFA_SUPPORTED_TYPES %}
+      <c-button
+        variant="secondary"
+        form="webauthn_form"
+        id="mfa_webauthn_authenticate"
+        leading-icon="shield"
+        label="{% translate 'Use a security key or passkey' %}"
+        class="w-full"
+      />
+    {% endif %}
+    <c-button
+      variant="ghost"
+      type="submit"
+      form="logout-from-stage"
+      label="{% translate 'Cancel' %}"
+      class="w-full"
+    />
+  </div>
+
+  {% if "webauthn" in MFA_SUPPORTED_TYPES %}
+    <form id="webauthn_form" method="post" action="{% url 'mfa_authenticate' %}" hidden>
+      {% csrf_token %}
+      {{ webauthn_form }}
+    </form>
+  {% endif %}
+  {% include "mfa/partials/_logout_from_stage.html" %}
+{% endblock content %}
+
+{% block extra_body %}
+  {{ block.super }}
+  {% if "webauthn" in MFA_SUPPORTED_TYPES %}
+    {{ js_data|json_script:"js_data" }}
+    {% include "mfa/webauthn/snippets/scripts.html" %}
+    <script data-allauth-onload="allauth.webauthn.forms.authenticateForm" type="application/json">
+      {
+        "ids": {
+          "authenticate": "mfa_webauthn_authenticate",
+          "credential": "{{ webauthn_form.credential.auto_id }}",
+          "data": "js_data"
+        }
+      }
+    </script>
+  {% endif %}
+{% endblock extra_body %}

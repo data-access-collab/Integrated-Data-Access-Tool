@@ -1,0 +1,46 @@
+{% comment %}
+  One row of a settings card: icon tile, title with a status, description, and actions
+  on the right. On narrow screens the actions wrap below the text, lined up with it.
+  Stack rows in a card: <ul class="flex flex-col rounded-lg border border-default
+  bg-surface px-md sm:px-lg">; rows divide themselves, the last one has no divider.
+
+  Props:
+    icon           icon name, e.g. "shield"
+    title          e.g. "Authenticator app"
+    actions-below  boolean attribute: actions always below the text (e.g. three buttons)
+
+  Slots:
+    status   next to the title, e.g. <c-badge>; omitted when empty
+    slot     description: one or more <p> (type-body-md text-secondary)
+    actions  buttons; omitted when empty
+
+  Usage:
+    <ul class="flex flex-col rounded-lg border border-default bg-surface px-md sm:px-lg">
+      <c-action-row icon="shield" title="Security keys">
+        <c-slot name="status"><c-badge tone="neutral" label="Not set up" /></c-slot>
+        <p class="type-body-md text-secondary">A hardware key or your device's screen lock.</p>
+        <c-slot name="actions"><c-button variant="secondary" label="Add" href="…" /></c-slot>
+      </c-action-row>
+    </ul>
+{% endcomment %}
+
+<c-vars icon="" title="" :actions-below="False" class="" />
+<li class="flex flex-wrap items-center gap-md border-b border-default py-lg last:border-b-0 {{ class }}" {{ attrs }}>
+  <div class="flex min-w-60 flex-1 items-start gap-md">
+    <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-muted">
+      <c-icon :name="icon" class="size-5 text-icon-default" />
+    </span>
+    <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+      <div class="flex flex-wrap items-center gap-xs">
+        <h2 class="type-title-md text-primary">{{ title }}</h2>
+        {{ status }}
+      </div>
+      {{ slot }}
+    </div>
+  </div>
+  {% if actions %}
+    <div class="flex flex-wrap gap-xs pl-14 {% if actions_below %}w-full{% else %}sm:pl-0{% endif %}">
+      {{ actions }}
+    </div>
+  {% endif %}
+</li>
