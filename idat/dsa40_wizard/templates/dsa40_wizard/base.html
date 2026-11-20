@@ -10,8 +10,6 @@
 {% block header %}
   <c-top-bar
     context="anonymous"
-    case-meta="{% translate 'Application' %}"
-    case-title="{% translate 'New Application' %}"
     save-status="{% blocktranslate with max_age=state_ttl %}Not saved · kept in this tab for {{ max_age }} hours{% endblocktranslate %}"
   >
     <c-slot name="actions">
@@ -21,10 +19,6 @@
         x-data
         x-on:click="$dispatch('wizard-discard', { href: '{% url 'dsa40_wizard:create' %}' })"
       />
-      <c-button label="{% translate 'Create account to save' %}" href="#top-bar" />
-      <a class="rounded-sm type-label-lg text-link hover:underline" href="#top-bar">
-        {% translate 'Sign in' %}
-      </a>
     </c-slot>
   </c-top-bar>
 {% endblock header %}
