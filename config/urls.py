@@ -41,6 +41,10 @@ urlpatterns = [
         "applications/",
         include("idat.dsa40_wizard.urls", namespace="dsa40_wizard"),
     ),
+    path(
+        "applications/",
+        include("idat.dsa40_applications.urls", namespace="dsa40_applications"),
+    ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
