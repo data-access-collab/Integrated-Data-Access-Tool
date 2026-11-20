@@ -346,3 +346,14 @@ def test_platform_groups_open_with_selection_or_default_type():
         "marketplace": True,
         "knowledge": False,
     }
+
+
+@pytest.mark.django_db
+def test_platform_groups_open_the_only_group():
+    Vlopse.objects.all().delete()
+    VlopseFactory.create(name="Wikipedia", platform_type=Vlopse.PlatformType.KNOWLEDGE)
+    VlopseFactory.create(name="Other", platform_type=Vlopse.PlatformType.OTHER)
+    assert [g.open for g in VlopseSelectionForm().platform_groups] == [False, False]
+
+    Vlopse.objects.filter(name="Wikipedia").delete()
+    assert [g.open for g in VlopseSelectionForm().platform_groups] == [True]

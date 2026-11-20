@@ -111,8 +111,8 @@ class VlopseSelectionForm(forms.Form):
     @cached_property
     def platform_groups(self) -> list[PlatformGroup]:
         """The checkboxes grouped by platform type, in Vlopse.PlatformType order; empty
-        groups are left out. A group starts open when one of its platforms is selected
-        or its type is in OPEN_PLATFORM_TYPES."""
+        groups are left out. A group starts open when one of its platforms is selected,
+        its type is in OPEN_PLATFORM_TYPES, or it is the only group."""
         by_type = defaultdict(list)
         for choice in self["vlopses"]:
             by_type[choice.data["value"].instance.platform_type].append(choice)
@@ -130,6 +130,8 @@ class VlopseSelectionForm(forms.Form):
                     or any(c.data["selected"] for c in choices),
                 )
             )
+        if len(groups) == 1:
+            groups[0] = groups[0]._replace(open=True)
         return groups
 
 
