@@ -1,0 +1,19 @@
+{% comment %}
+  Tabs: a row of <c-tabs.tab> links (Figma "Overview Tab" 34:653, used as plain page
+  tabs, e.g. on My account). Each tab is its own URL; the server marks the open one
+  with `current`. The content below the row belongs to the page, not to this component.
+
+  Props:
+    label  accessible name of the <nav>, e.g. "Account sections"
+
+  Usage:
+    <c-tabs label="{% translate 'Account sections' %}">
+      <c-tabs.tab label="{% translate 'Profile' %}" href="{% url 'users:detail' %}" current />
+      <c-tabs.tab label="{% translate 'Account' %}" href="{% url 'users:account' %}" />
+    </c-tabs>
+{% endcomment %}
+
+<c-vars label="" class="" />
+<nav aria-label="{{ label }}" class="{{ class }}" {{ attrs }}>
+  <ul class="flex gap-2xs overflow-x-auto border-b border-default">{{ slot }}</ul>
+</nav>

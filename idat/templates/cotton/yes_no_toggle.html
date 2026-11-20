@@ -7,17 +7,22 @@
     label  accessible name of the group, without a form
     name   input name without a form
     value  "" (unset, default) · "yes" · "no", without a form
+    hide-errors  boolean: an enclosing <c-field-layout inline> shows the field's errors
+           (with the same {id}-error id), so the toggle doesn't repeat them
 
   Submits "true" / "false"; nothing is sent while unset.
   {{ attrs }} go on the radiogroup (two inputs) — use x-on:change, it bubbles.
 
   Usage:
     <c-yes-no-toggle :field="form.has_ethics_approval" />
+    <c-field-layout :field="form.has_ethics_approval" :input-id="form.has_ethics_approval.id_for_label" inline>
+      <c-yes-no-toggle :field="form.has_ethics_approval" hide-errors />
+    </c-field-layout>
     <c-yes-no-toggle name="is_affiliated" label="Are you affiliated with a research organisation?" value="yes" />
 {% endcomment %}
 
 {% load i18n %}
-<c-vars field="" label="" name="" value="" class="" />
+<c-vars field="" label="" name="" value="" :hide-errors="False" class="" />
 {# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
 {% with input_id=field.id_for_label|default:name input_name=field.html_name|default:name group_label=field.label|default:label current=field.value|stringformat:"s"|lower %}
   <div class="flex flex-col items-start gap-xs {{ class }}">
@@ -41,7 +46,7 @@
           {% if current == "true" or value == "yes" %}checked{% endif %}
           {% if field.field.required %}required{% endif %}
         />
-        <c-icon name="check" class="hidden size-4 group-has-checked:block" />
+        <c-icon name="check" class="size-4 group-has-checked:block" />
         {% translate "Yes" %}
       </label>
       <label
@@ -54,11 +59,11 @@
           value="false"
           {% if current == "false" or value == "no" %}checked{% endif %}
         />
-        <c-icon name="check" class="hidden size-4 group-has-checked:block" />
+        <c-icon name="x" class="size-4 group-has-checked:block" />
         {% translate "No" %}
       </label>
     </div>
-    {% if field.errors %}<c-field-message
+    {% if field.errors and not hide_errors %}<c-field-message
         id="{{ input_id }}-error"
       >{{ field.errors|join:" " }}</c-field-message>{% endif %}
   </div>

@@ -1,0 +1,17 @@
+{% comment %}
+  Call-to-action button of the HTML e-mails (one-cell table: Outlook keeps the padding),
+  followed by the link as text for clients that block buttons.
+  Usage: {% include "account/email/_button.html" with href=activate_url label=_("Confirm e-mail address") %}
+{% endcomment %}
+
+{% load i18n %}
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" class="button-table">
+  <tr>
+    <td class="button"><a href="{{ href }}">{{ label }}</a></td>
+  </tr>
+</table>
+<p class="small">
+  {% translate "Button not working? Paste this link into your browser:" %}
+  <br />
+  <a href="{{ href }}">{{ href }}</a>
+</p>

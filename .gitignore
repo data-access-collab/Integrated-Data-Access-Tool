@@ -282,3 +282,6 @@ node_modules
 
 # Local files only
 .local_docs/
+
+# Ignore local dev env
+.envs/.local/.dev-local

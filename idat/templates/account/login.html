@@ -1,0 +1,65 @@
+{% extends "account/base_entrance.html" %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Sign in" %}
+{% endblock head_title %}
+
+{% block entrance_aside %}
+  <p class="type-headline-lg text-on-nav">{% translate "Welcome back" %}</p>
+  <p class="type-body-lg text-on-nav-muted">
+    {% translate "Sign in to continue your drafts and keep track of every access case." %}
+  </p>
+  {% include "account/partials/_benefits.html" %}
+{% endblock entrance_aside %}
+
+{% block content %}
+  <h1 class="type-headline-sm text-primary">{% translate "Sign in" %}</h1>
+
+  <form class="flex flex-col gap-md" method="post" action="{% url 'account_login' %}">
+    {% csrf_token %}
+    {{ redirect_field }}
+    {% if form.non_field_errors %}
+      <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
+    {% endif %}
+    {% if PASSKEY_LOGIN_ENABLED %}<c-mfa.webauthn-error />{% endif %}
+    {{ form.login.as_field_group }}
+    {{ form.password.as_field_group }}
+    <div class="flex flex-wrap items-center justify-between gap-sm">
+      {% if form.remember %}{{ form.remember.as_field_group }}{% endif %}
+      <a
+        href="{% url 'account_reset_password' %}"
+        class="type-label-lg text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >{% translate "Forgot password?" %}</a>
+    </div>
+    <c-button type="submit" label="{% translate 'Sign in' %}" class="w-full" />
+  </form>
+
+  {% if PASSKEY_LOGIN_ENABLED %}
+    {# Not in Figma: passkeys are enabled (MFA_PASSKEY_LOGIN_ENABLED); the button submits allauth's #mfa_login form #}
+    <c-button
+      variant="secondary"
+      type="submit"
+      form="mfa_login"
+      id="passkey_login"
+      label="{% translate 'Sign in with a passkey' %}"
+      class="w-full"
+    />
+  {% endif %}
+
+  <p class="flex flex-wrap gap-1.5 type-body-md text-secondary">
+    {% translate "New here?" %}
+    <a
+      href="{{ signup_url }}"
+      class="type-label-lg text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >{% translate "Create account" %}</a>
+  </p>
+{% endblock content %}
+
+{% block extra_body %}
+  {{ block.super }}
+  {% if PASSKEY_LOGIN_ENABLED %}
+    {% include "mfa/webauthn/snippets/login_script.html" with button_id="passkey_login" %}
+  {% endif %}
+{% endblock extra_body %}

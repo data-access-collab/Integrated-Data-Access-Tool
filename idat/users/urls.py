@@ -1,12 +1,14 @@
 from django.urls import path
 
-from .views import user_detail_view
-from .views import user_redirect_view
-from .views import user_update_view
+from idat.users.views import (
+    user_account_view,
+    user_affiliations_view,
+    user_detail_view,
+)
 
 app_name = "users"
 urlpatterns = [
-    path("~redirect/", view=user_redirect_view, name="redirect"),
-    path("~update/", view=user_update_view, name="update"),
-    path("<str:username>/", view=user_detail_view, name="detail"),
+    path("my-account/affiliations/", view=user_affiliations_view, name="affiliations"),
+    path("my-account/account/", view=user_account_view, name="account"),
+    path("my-account/", view=user_detail_view, name="detail"),
 ]

@@ -1,0 +1,44 @@
+{% extends "account/base_reauthenticate.html" %}
+
+{% comment %}
+  Confirm access with a security key or passkey (allauth ReauthenticateWebAuthnView).
+  The button runs allauth's WebAuthn script, which fills the hidden credential field
+  and submits the form; keep the ids (mfa_webauthn_reauthenticate, js_data).
+  Layout and the alternative methods: account/base_reauthenticate.html.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block reauthenticate_content %}
+  <form method="post" action="{% url 'mfa_reauthenticate_webauthn' %}">
+    {% csrf_token %}
+    {{ redirect_field }}
+    {% if form.non_field_errors %}
+      <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
+    {% endif %}
+    <c-mfa.webauthn-error />
+    {{ form.credential }}
+    <c-button
+      type="submit"
+      id="mfa_webauthn_reauthenticate"
+      leading-icon="shield"
+      label="{% translate 'Use a security key or passkey' %}"
+      class="w-full"
+    />
+  </form>
+{% endblock reauthenticate_content %}
+
+{% block extra_body %}
+  {{ block.super }}
+  {{ js_data|json_script:"js_data" }}
+  {% include "mfa/webauthn/snippets/scripts.html" %}
+  <script data-allauth-onload="allauth.webauthn.forms.authenticateForm" type="application/json">
+    {
+      "ids": {
+        "authenticate": "mfa_webauthn_reauthenticate",
+        "credential": "{{ form.credential.auto_id }}",
+        "data": "js_data"
+      }
+    }
+  </script>
+{% endblock extra_body %}

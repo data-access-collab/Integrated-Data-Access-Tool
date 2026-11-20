@@ -1,0 +1,358 @@
+/*
+ * DSA40 application wizard (idat/dsa40_wizard)
+ *
+ * Served as a static ES module (imported with type="module"), only on the wizard page.
+ * The server keeps no state: the encrypted wizard state is kept in the tab-bound
+ * sessionStorage, sent as the wizard_state POST parameter and re-issued in the
+ * X-Wizard-State response header.
+ * Files never leave the browser. They are encrypted with a per-draft key the
+ * server sends with every step (X-Wizard-File-Key, kept in memory only) and
+ * stored in IndexedDB; only their metadata is submitted.
+ * IndexedDB is shared by all tabs, each of which has its own draft: stored files
+ * expire like the token (X-Wizard-Max-Age, sliding), not when another tab starts.
+ */
+
+const DB_NAME = "dsa40-wizard";
+const STORE = "files";
+
+// mirrored in dsa40_wizard.state
+const STATE_POST_FIELD = "wizard_state";
+const STATE_REQUEST_HEADER = "X-Wizard-State";
+const WIZARD_ID_HEADER = "X-Wizard-Id";
+const FILE_KEY_HEADER = "X-Wizard-File-Key";
+const MAX_STATE_AGE_HEADER = "X-Wizard-Max-Age";
+const DRAFT_UNAVAILABLE_HEADER = "X-Wizard-Draft-Unavailable";
+
+/*
+ * Draft state of this tab
+ *
+ * In sessionStorage (per tab, survives reloads):
+ * - STATE_KEY: the encrypted state token, sent with every request.
+ * - WIZARD_ID_KEY: the draft ID, i.e. which stored files are this tab's. It is kept
+ *   so that a draft found unavailable right after a reload (before any step response
+ *   named it again) can still delete its files. No secret: it is in IndexedDB anyway,
+ *   and the server never accepts it from the browser.
+ * In memory only, set from each step response:
+ * - fileKey: Promise<CryptoKey> of the draft's file key; never persisted.
+ * - maxAgeMs: the token TTL, after which stored files expire.
+ * The draft ID and file key change only in rememberDraft / forgetDraft.
+ */
+const STATE_KEY = "dsa40-wizard-state";
+const WIZARD_ID_KEY = "dsa40-wizard-id";
+
+let wizardId = readSession(WIZARD_ID_KEY);
+let fileKey = null;
+let maxAgeMs = 0;
+
+function readSession(key) {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    // possible errors: SecurityError (sessionStorage disabled) or `TypeError`/`ReferenceError`
+    //  (undefined sessionStorage)
+    return null;
+  }
+}
+
+/** Take the draft ID and file key of a step response (re-importing the key after a reload). */
+function rememberDraft(id, encodedKey) {
+  if (id === wizardId && fileKey) return;
+  wizardId = id;
+  fileKey = importKey(encodedKey);
+  sessionStorage.setItem(WIZARD_ID_KEY, id);
+}
+
+/** Drop the token, draft ID and file key; the caller deletes the stored files first. */
+function forgetDraft() {
+  try {
+    sessionStorage.removeItem(STATE_KEY);
+    sessionStorage.removeItem(WIZARD_ID_KEY);
+  } catch {}
+  wizardId = null;
+  fileKey = null;
+}
+
+/* IndexedDB */
+
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(STORE, { keyPath: "id" });
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function withStore(mode, fn) {
+  const db = await openDb();
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, mode);
+      const result = fn(tx.objectStore(STORE));
+      tx.oncomplete = () => resolve(result?.result);
+      tx.onerror = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
+const storedFileId = (question) => `${wizardId}:${question}`;
+
+const getStoredFile = (question) => withStore("readonly", (store) => store.get(storedFileId(question)));
+
+const deleteStoredFile = (question) => withStore("readwrite", (store) => store.delete(storedFileId(question)));
+
+/**
+ * Refresh the last-seen time of the current draft's files and delete files of
+ * drafts not seen for longer than the token TTL: their token has expired, so
+ * the server won't hand out their key anymore.
+ */
+function touchStoredFiles() {
+  // without the TTL every other draft's files would count as expired
+  if (!maxAgeMs) return Promise.resolve();
+  const now = Date.now();
+  return withStore("readwrite", (store) => {
+    store.openCursor().onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (!cursor) return;
+      const storedFile = cursor.value;
+      if (storedFile.wizardId === wizardId) cursor.update({ ...storedFile, lastSeen: now });
+      // negated, so stored files without lastSeen are deleted too
+      else if (!(now - storedFile.lastSeen <= maxAgeMs)) cursor.delete();
+      cursor.continue();
+    };
+  });
+}
+
+/** Delete all files of the current draft. */
+function deleteDraftStoredFiles() {
+  return withStore("readwrite", (store) => {
+    store.openCursor().onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (!cursor) return;
+      if (cursor.value.wizardId === wizardId) cursor.delete();
+      cursor.continue();
+    };
+  });
+}
+
+/* Crypto */
+
+/**
+ * Turn the X-Wizard-File-Key header (base64url, unpadded) into a non-extractable
+ * AES-GCM CryptoKey for encrypting and decrypting this draft's stored files.
+ */
+function importKey(encoded) {
+  const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+  const raw = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+
+async function sha256(buffer) {
+  const digest = await crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function storeFile(question, buffer) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await fileKey, buffer);
+  await withStore("readwrite", (store) =>
+    store.put({ id: storedFileId(question), wizardId, lastSeen: Date.now(), iv, ciphertext }),
+  );
+}
+
+/** Decrypted files of the current draft, keyed by question (for saving the application). */
+export async function getDecryptedFiles() {
+  const storedFiles = await withStore("readonly", (store) => store.getAll());
+  const files = {};
+  for (const { id, wizardId: storedFileWizardId, iv, ciphertext } of storedFiles) {
+    if (storedFileWizardId !== wizardId) continue;
+    const question = id.slice(wizardId.length + 1);  // cut of wizardId + :
+    files[question] = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, await fileKey, ciphertext);
+  }
+  return files;
+}
+
+/* Validation */
+
+/**
+ * Check a selected file against the widget's allowed types (extension) and max.
+ * size, and that it isn't empty. Returns its contents and the metadata to submit;
+ * throws an Error with a user-facing message otherwise.
+ */
+async function validateFile(file, { maxSize, types }) {
+  const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase() : "";
+  if (!(extension in types)) {
+    throw new Error(`Only these file types are allowed: ${Object.keys(types).join(", ")}.`);
+  }
+  if (file.size > maxSize) {
+    throw new Error(`The file must not be larger than ${Math.round(maxSize / 1024 / 1024)} MB.`);
+  }
+  if (file.size === 0) throw new Error("The file is empty.");
+
+  // the content isn't checked here; that happens on the server when it is saved
+  const buffer = await file.arrayBuffer();
+  return { buffer, metadata: { name: file.name, size: file.size, type: types[extension], sha256: await sha256(buffer) } };
+}
+
+/* Draft lifecycle */
+
+async function discardDraft() {
+  if (wizardId) await deleteDraftStoredFiles();
+  forgetDraft();
+}
+
+/**
+ * Listen on document.body for:
+ * - htmx:configRequest: send the state token as a POST parameter (never on GET, so
+ *   it can't end up in a URL)
+ * - htmx:beforeSwap: take the draft id, file key and TTL from step responses and
+ *   refresh/expire stored files
+ * - htmx:afterRequest: keep the re-issued state token in sessionStorage; if the
+ *   draft can't be loaded (X-Wizard-Draft-Unavailable), discard it and go to that URL
+ * - wizard-done: discard the draft (once saved; not dispatched yet)
+ * - wizard-discard: discard the draft and go to event.detail.href ("Discard draft")
+ * - click on a sidebar step link while the questions form is shown: save the answers
+ *   and show that step (the save URL's ?next=), instead of loading the page and
+ *   losing what wasn't saved yet
+ */
+function registerListeners() {
+  document.body.addEventListener("htmx:configRequest", (e) => {
+    const token = sessionStorage.getItem(STATE_KEY);
+    if (token && e.detail.verb !== "get") e.detail.parameters[STATE_POST_FIELD] = token;
+  });
+
+  // before the swap, so file widgets in the new content find the key
+  document.body.addEventListener("htmx:beforeSwap", (e) => {
+    const xhr = e.detail.xhr;
+    const id = xhr.getResponseHeader(WIZARD_ID_HEADER);
+    const key = xhr.getResponseHeader(FILE_KEY_HEADER);
+    if (!id || !key) return;
+    rememberDraft(id, key);
+    maxAgeMs = Number(xhr.getResponseHeader(MAX_STATE_AGE_HEADER)) * 1000;
+    // on every step response, as the server re-issues the token on each
+    touchStoredFiles().catch(console.error);
+  });
+
+  document.body.addEventListener("htmx:afterRequest", async (e) => {
+    const xhr = e.detail.xhr;
+    const unavailableUrl = xhr.getResponseHeader(DRAFT_UNAVAILABLE_HEADER);
+    if (unavailableUrl) {
+      maxAgeMs = Number(xhr.getResponseHeader(MAX_STATE_AGE_HEADER)) * 1000;
+      // this draft's files, then those of drafts that expired meanwhile
+      await discardDraft()
+        .then(touchStoredFiles)
+        .catch(console.error);
+      window.location.assign(unavailableUrl);
+      return;
+    }
+    const token = xhr.getResponseHeader(STATE_REQUEST_HEADER);
+    if (token) sessionStorage.setItem(STATE_KEY, token);
+  });
+
+  document.body.addEventListener("wizard-done", () => discardDraft().catch(console.error));
+
+  document.body.addEventListener("wizard-discard", async (e) => {
+    await discardDraft().catch(console.error);
+    window.location.assign(e.detail.href);
+  });
+
+  document.body.addEventListener("click", (e) => {
+    const link = e.target.closest("#wizard-sidebar [data-wizard-step] > a[href]");
+    const form = document.querySelector("form[data-wizard-save-url]");
+    if (!link || !form || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    const step = link.parentElement.dataset.wizardStep;
+    const url = `${form.dataset.wizardSaveUrl}?next=${encodeURIComponent(step)}`;
+    window.htmx.ajax("POST", url, { source: form, target: "#application-wizard-body" });
+  });
+}
+
+/* Alpine component for ClientFileWidget */
+
+function sizeLabel(size) {
+  if (size < 1024) return `${size} bytes`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/**
+ * State and behaviour of one ClientFileWidget (x-data="clientFile"). It reads
+ * the field's config from data-* attributes and keeps `metadata` in sync with the
+ * submitted hidden input (x-ref="metadataInput"). <c-file-upload> uses the same
+ * state names with plainFile (assets/js/components/plain_file.js):
+ * - metadata: {name, size, type, sha256} of the selected file, or null
+ * - missing: metadata is set, but the file isn't stored in this browser
+ * - busy: a selected file is being validated and encrypted
+ * - pending: name of the file being encrypted (while busy)
+ * - error: user-facing validation error
+ * - sizeLabel / label: "2.0 KB" / "cv.pdf (2.0 KB)" of the stored file
+ */
+function clientFile() {
+  return {
+    metadata: null,
+    missing: false,
+    busy: false,
+    pending: "",
+    error: "",
+
+    get question() {
+      return this.$root.dataset.question;
+    },
+
+    get sizeLabel() {
+      return this.metadata ? sizeLabel(this.metadata.size) : "";
+    },
+
+    get label() {
+      return this.metadata ? `${this.metadata.name} (${this.sizeLabel})` : "";
+    },
+
+    async init() {
+      const value = this.$refs.metadataInput.value;
+      this.metadata = value ? JSON.parse(value) : null;
+      if (this.metadata && wizardId) this.missing = !(await getStoredFile(this.question));
+    },
+
+    async select(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      this.error = "";
+      this.pending = file.name;
+      this.busy = true;
+      try {
+        const { buffer, metadata } = await validateFile(file, {
+          maxSize: Number(this.$root.dataset.maxSize),
+          types: JSON.parse(this.$root.dataset.types),
+        });
+        if (!fileKey) throw new Error("Please reload the page and try again.");
+        await storeFile(this.question, buffer);
+        this.metadata = metadata;
+        this.missing = false;
+        this.$refs.metadataInput.value = JSON.stringify(metadata);
+        // save now: a file stored in the browser without saved metadata is lost on reload
+        this.$dispatch("wizard-save");
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.busy = false;
+        this.pending = "";
+        event.target.value = ""; // the file input is never submitted
+      }
+    },
+
+    async remove() {
+      if (wizardId) await deleteStoredFile(this.question);
+      this.metadata = null;
+      this.missing = false;
+      this.$refs.metadataInput.value = "";
+      this.$dispatch("wizard-save");
+    },
+  };
+}
+
+registerListeners();
+
+// fired by Alpine.start() in main.js, which runs after this deferred module
+document.addEventListener("alpine:init", () => window.Alpine.data("clientFile", clientFile));

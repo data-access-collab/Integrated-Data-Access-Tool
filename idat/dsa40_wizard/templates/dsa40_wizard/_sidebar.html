@@ -1,0 +1,24 @@
+{% comment %}
+  Wizard sidebar. Rendered in the page shell, and sent again with every step (oob=True:
+  out-of-band swap) so the current step and the Enter details sections follow the step.
+  The sections switch the `section` Alpine state of the shell (base.html), which shows one
+  section of the questions form at a time.
+{% endcomment %}
+
+<div id="wizard-sidebar" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <c-wizard.sidebar :current-step="current_step" :hrefs="wizard_urls">
+    {% if current_step == "enter-details" %}
+      {% for section in form.sections %}
+        <c-wizard.section-item
+          state="{% if section.has_errors %}blocking{% elif section.complete %}complete{% else %}incomplete{% endif %}"
+          :icon="section.icon"
+          :label="section.label"
+          count="{{ section.answered }}/{{ section.total }}"
+          href="#section-{{ section.category }}"
+          current-when="section === '{{ section.category }}'"
+          x-on:click.prevent="section = '{{ section.category }}'; window.scrollTo({ top: 0 })"
+        />
+      {% endfor %}
+    {% endif %}
+  </c-wizard.sidebar>
+</div>

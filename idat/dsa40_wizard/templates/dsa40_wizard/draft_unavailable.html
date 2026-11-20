@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block main %}
+  <div class="flex flex-1 items-start justify-center p-xl">
+    <section class="flex w-full max-w-150 flex-col items-start gap-lg rounded-lg border border-default bg-surface p-2xl">
+      <span class="flex size-14 shrink-0 items-center justify-center rounded-md bg-warning-subtle">
+        <c-icon name="clock" class="size-7 text-warning" />
+      </span>
+
+      <div class="flex flex-col gap-xs">
+        <h1 class="type-headline-sm text-primary">{% translate "This draft is no longer available" %}</h1>
+        <p class="type-body-md text-secondary">
+          {% blocktranslate trimmed %}
+            Drafts without an account live only in the browser tab where you started them. We could not open this one,
+            most likely because:
+          {% endblocktranslate %}
+        </p>
+      </div>
+
+      <ul class="flex flex-col gap-sm">
+        <li class="flex items-center gap-sm type-body-md text-primary">
+          <c-icon name="clock" class="size-4.5 text-icon-default" />
+          {% blocktranslate trimmed with hours=state_ttl %}
+            It was inactive for more than {{ hours }} hours
+          {% endblocktranslate %}
+        </li>
+        <li class="flex items-center gap-sm type-body-md text-primary">
+          <c-icon name="layout-grid" class="size-4.5 text-icon-default" />
+          {% translate "It was started in a different tab or browser" %}
+        </li>
+        <li class="flex items-center gap-sm type-body-md text-primary">
+          <c-icon name="shield" class="size-4.5 text-icon-default" />
+          {% translate "It could not be verified, e.g. after a security update on our side" %}
+        </li>
+      </ul>
+
+      <div class="flex w-full items-start gap-sm rounded-md bg-surface-muted p-md">
+        <c-icon name="info" class="size-4.5 text-icon-default" />
+        <p class="flex-1 type-body-sm text-secondary">
+          {% blocktranslate trimmed %}
+            Your answers and files were never sent to our servers, so we can’t restore them. Files you added have been
+            removed from this browser.
+          {% endblocktranslate %}
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-sm">
+        <c-button
+          label="{% translate 'Start a new application' %}"
+          icon="arrow-right"
+          href="{% url 'dsa40_wizard:create' %}"
+        />
+        <c-button variant="secondary" label="{% translate 'Create account' %}" href="{% url 'account_signup' %}" />
+      </div>
+
+      <p class="type-body-sm text-tertiary">
+        {% translate "With an account, drafts are saved automatically and you can continue on any device." %}
+      </p>
+    </section>
+  </div>
+{% endblock main %}

@@ -1,14 +1,13 @@
 # ruff: noqa: E501
 from .base import *  # noqa: F403
-from .base import DATABASES
-from .base import INSTALLED_APPS
-from .base import REDIS_URL
-from .base import env
+from .base import DATABASES, INSTALLED_APPS, REDIS_URL, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
+# Secret for encrypting the DSA40 application wizard state
+WIZARD_SECRET = env("DJANGO_WIZARD_SECRET")
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = env.list(
     "DJANGO_ALLOWED_HOSTS",
@@ -38,6 +37,11 @@ CACHES = {
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-proxy-ssl-header
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Traefik is the only proxy: allauth takes the client IP (per-IP rate limits) from
+# the last X-Forwarded-For entry instead of Traefik's own address.
+# Must equal the number of proxies; one too many lets clients fake their IP.
+# https://docs.allauth.org/en/latest/common/configuration.html
+ALLAUTH_TRUSTED_PROXY_COUNT = 1
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-ssl-redirect
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-secure
@@ -64,6 +68,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
     "DJANGO_SECURE_CONTENT_TYPE_NOSNIFF",
     default=True,
 )
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 2  # 48h
 
 # STATIC & MEDIA
 # ------------------------
@@ -90,7 +95,6 @@ EMAIL_SUBJECT_PREFIX = env(
     "DJANGO_EMAIL_SUBJECT_PREFIX",
     default="[Integrated Data Access Tool] ",
 )
-ACCOUNT_EMAIL_SUBJECT_PREFIX = EMAIL_SUBJECT_PREFIX
 
 # ADMIN
 # ------------------------------------------------------------------------------
@@ -151,7 +155,3 @@ LOGGING = {
         },
     },
 }
-
-
-# Your stuff...
-# ------------------------------------------------------------------------------

@@ -44,12 +44,13 @@ shadow-md, rounded-xl … generate NO CSS.
 ### django-cotton components
 - One component per file in idat/templates/cotton/; snake_case file → kebab-case tag,
   subfolders → dots: button.html → <c-button>, user_card.html → <c-user-card>,
-  nav/section_item.html → <c-nav.section-item>. Folders follow the Figma prefix (Nav / …
-  → nav/, Help / … → help/, Form / … → forms/), at most one level deep.
+  wizard/section_item.html → <c-wizard.section-item>. Folders follow the Figma prefix
+  (Wizard / … → wizard/, Nav / … → nav/, Help / … → help/, Form / … → forms/), at most one
+  level deep.
 - File order: the {% comment %} block first (behaviour rules, props, usage only), a blank
   line, {% load %}, <c-vars>, then the markup. Never <c-vars> above the comment:
     {% comment %}
-      Nav / Section Item
+      Wizard / Section Item
       …
     {% endcomment %}
 
@@ -88,6 +89,14 @@ shadow-md, rounded-xl … generate NO CSS.
   <c-table :rows="orders" :striped="True" />.
 
 ### Form field components (reference: cotton/checkbox/index.html, cotton/text_field.html)
+- New forms need no wiring: FORM_RENDERER (idat/core/forms/renderers.py) renders
+  {{ form }} and {{ field.as_field_group }} with the components. IdatBoundField.component
+  (idat/core/forms/boundfield.py) picks one from the widget class; a custom widget sets
+  `ui_component = "…"`. templates/forms/field.html is the only place a field is wired to
+  a component: a new field component gets its branch there. Shared fields and widgets
+  live in idat/core/forms/ (fields.py, widgets.py).
+- Write a component tag by hand only to pass extra props (help-tip, warning …) or for a
+  page-specific layout.
 - Labelled fields (Text Field, Textarea, Select, Date Field …) wrap their control in
   <c-field-layout> (label row, asterisk, help icon, helper; errors replace the helper);
   never rebuild the label row per field.

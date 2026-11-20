@@ -1,25 +1,50 @@
+{% comment %}
+  Django messages (messages.success / warning / error / info), one row each.
+  Not in Figma yet: a basic style from the tokens (subtle tone fill, tone border and
+  icon, like Field Message). Errors and warnings are announced (role="alert"),
+  success and info politely (role="status"). The close button removes the row
+  (main.js, data-dismiss-message).
+  Pass class for the outer spacing: {% include "partials/_messages.html" with class="px-md pt-md" %}
+{% endcomment %}
+
 {% load i18n %}
 {% if messages %}
-  <div class="flex flex-col gap-2 my-4">
+  <div class="flex flex-col gap-xs {{ class }}">
     {% for message in messages %}
+      {% if message.level_tag == "success" %}
+        {% define "border-success bg-success-subtle" as tone_class %}
+        {% define "check" as icon_name %}
+        {% define "text-success" as icon_class %}
+      {% elif message.level_tag == "warning" %}
+        {% define "border-warning bg-warning-subtle" as tone_class %}
+        {% define "alert-triangle" as icon_name %}
+        {% define "text-warning" as icon_class %}
+      {% elif message.level_tag == "error" %}
+        {% define "border-danger bg-danger-subtle" as tone_class %}
+        {% define "alert-circle" as icon_name %}
+        {% define "text-danger" as icon_class %}
+      {% else %}
+        {% define "border-info bg-info-subtle" as tone_class %}
+        {% define "info" as icon_name %}
+        {% define "text-info" as icon_class %}
+      {% endif %}
       <div
-        role="alert"
-        class="
-          flex items-start justify-between gap-4 rounded border px-4 py-3
-          {% if message.level_tag == 'success' %}bg-success
-          {% elif message.level_tag == 'warning' %}bg-warning
-          {% elif message.level_tag == 'error' %}bg-danger
-          {% else %}bg-blue-500{% endif %}
-        "
+        role="{% if message.level_tag == "error" or message.level_tag == "warning" %}alert{% else %}status{% endif %}"
+        class="flex items-start gap-sm rounded-md border px-md py-sm {{ tone_class }}"
+        data-message
       >
-        <span>{{ message }}</span>
+        {# h-5.5 = the text's 22px line, so the icon centres on the first line #}
+        <span class="flex h-5.5 shrink-0 items-center">
+          <c-icon :name="icon_name" class="size-4 {{ icon_class }}" />
+        </span>
+        <p class="min-w-0 flex-1 type-body-md text-primary">{{ message }}</p>
         <button
           type="button"
-          data-dismiss-alert
-          class="shrink-0 leading-none opacity-60 hover:opacity-100"
-          aria-label="Close"
+          class="flex shrink-0 cursor-pointer rounded-sm text-icon-default hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          aria-label="{% translate "Dismiss" %}"
+          data-dismiss-message
         >
-          &times<span aria-hidden="true">×</span>
+          <c-icon name="x" class="size-4" />
         </button>
       </div>
     {% endfor %}

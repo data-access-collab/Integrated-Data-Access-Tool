@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% comment %}
+  Signed-in app shell: the App Sidebar on the left, the page on the
+  canvas to its right, no footer.
+
+  Blocks:
+    sidebar       the App Sidebar; pages of My account (and the allauth pages) set
+                  in_account_area around it to highlight the user block:
+                    {% block sidebar %}{% with in_account_area=True %}{{ block.super }}{% endwith %}{% endblock sidebar %}
+    sidebar_nav   <c-nav.app-item> items, default: Home
+    content       the page; messages are shown above it
+    page          wraps content; override it to put a frame around content (the
+                  allauth pages: account/base_manage.html)
+{% endcomment %}
+
+{% load i18n %}
+
+{% block header_wrapper %}
+  <div id="header" class="lg:hidden">
+    {% include "partials/_header.html" %}
+  </div>
+{% endblock header_wrapper %}
+{% block footer_wrapper %}{% endblock footer_wrapper %}
+{% block messages %}{% endblock messages %}
+
+{% block main %}
+  <div class="flex flex-1 bg-canvas">
+    {# sticky, full viewport height: the user block stays at the bottom while the page scrolls #}
+    {% block sidebar %}
+      <div class="sticky top-0 hidden h-screen self-start lg:block">
+        <c-app-sidebar
+          user-name="{{ user.display_name }}"
+          initials="{{ user.initials }}"
+          account-href="{% url 'users:detail' %}"
+          in-account-area="{% if in_account_area %}true{% endif %}"
+        >
+          {% block sidebar_nav %}
+            <c-nav.app-item label="{% translate 'Home' %}" icon="layout-grid" href="{% url 'home' %}" />
+          {% endblock sidebar_nav %}
+        </c-app-sidebar>
+      </div>
+    {% endblock sidebar %}
+
+    <div class="flex min-w-0 flex-1 flex-col gap-lg px-md py-lg sm:px-2xl sm:py-xl">
+      {% include "partials/_messages.html" %}
+      {% block page %}
+        {% block content %}{% endblock content %}
+      {% endblock page %}
+    </div>
+  </div>
+{% endblock main %}

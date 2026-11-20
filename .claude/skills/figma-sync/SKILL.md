@@ -30,6 +30,20 @@ fixes it in Figma.
   Figma, unchanged), wait for the user's go, then work through the list in order.
 - No mode given: infer it from the request; ask if it is unclear.
 
+## Renamed in code, not yet in Figma
+The code name wins; match by node id. Treat these as the same component (not "new in
+Figma" or "missing"), keep the code name, and drop a row once Figma uses the new name.
+
+| Node  | Figma name now     | Code name             | Code                                             |
+|-------|--------------------|-----------------------|--------------------------------------------------|
+| 7:464 | Wizard Sidebar     | Wizard / Sidebar      | wizard/sidebar.html → c-wizard.sidebar           |
+| 5:128 | Nav / Phase Step   | Wizard / Step Item    | wizard/step_item.html → c-wizard.step-item       |
+| 5:175 | Nav / Section Item | Wizard / Section Item | wizard/section_item.html → c-wizard.section-item |
+| 5:181 | Nav / Sub Item     | Wizard / Sub Item     | wizard/sub_item.html → c-wizard.sub-item         |
+
+"Phase" in Figma (component names, props, descriptions) is "step" in code
+(current-step prop, current_step context).
+
 ## Per component
 1. One Figma component (set) at a time. Call get_design_context with a screenshot; if the
    result is sparse, request the child nodes individually.

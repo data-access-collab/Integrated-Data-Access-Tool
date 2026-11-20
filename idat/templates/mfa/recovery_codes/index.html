@@ -1,0 +1,51 @@
+{% extends "mfa/recovery_codes/base.html" %}
+
+{% comment %}
+  Shows the unused recovery codes. MFA_RECOVERY_CODES_SHOW_ONCE is off; allauth's
+  "I have saved my codes" checkbox and script for that mode are not included here.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Recovery codes" %}
+{% endblock head_title %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "Recovery codes" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% blocktranslate trimmed with unused_count=unused_codes|length %}
+        {{ unused_count }} of {{ total_count }} codes left. Each code works once, when you can't use your app or key.
+        Keep them somewhere safe, like a password manager.
+      {% endblocktranslate %}
+    </p>
+  </div>
+
+  <div class="flex flex-col gap-lg rounded-lg border border-default bg-surface p-md sm:p-lg">
+    {% if can_view_codes %}
+      <ol class="grid grid-cols-2 gap-xs sm:grid-cols-3">
+        {% for code in unused_codes %}
+          <li class="rounded-sm bg-surface-muted px-sm py-xs text-center type-label-lg text-primary">{{ code }}</li>
+        {% endfor %}
+      </ol>
+    {% endif %}
+    <div class="flex flex-wrap gap-sm">
+      {% if can_download_codes %}
+        <c-button
+          variant="secondary"
+          leading-icon="download"
+          label="{% translate 'Download' %}"
+          href="{% url 'mfa_download_recovery_codes' %}"
+        />
+      {% endif %}
+      {% if can_generate_codes %}
+        <c-button
+          variant="secondary"
+          label="{% translate 'Generate new codes' %}"
+          href="{% url 'mfa_generate_recovery_codes' %}"
+        />
+      {% endif %}
+    </div>
+  </div>
+{% endblock content %}

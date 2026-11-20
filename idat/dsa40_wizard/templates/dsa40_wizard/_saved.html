@@ -1,0 +1,9 @@
+{% comment %}
+  Response to a save of the questions form: only out-of-band updates (section headers and
+  sidebar with the new answered counts); the form itself stays as it is.
+{% endcomment %}
+
+{% for section in form.sections %}
+  {% include "dsa40_wizard/_section_header.html" with oob=True %}
+{% endfor %}
+{% include "dsa40_wizard/_sidebar.html" with oob=True %}

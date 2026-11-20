@@ -6,7 +6,7 @@
     name     checkbox name
     value    option value
     label    option label
-    checked  "1" when selected on page load
+    checked  "1" when selected on page load; x-model.fill adds it to selected on init
 {% endcomment %}
 
 <c-vars name="" value="" label="" checked="" />
@@ -18,7 +18,7 @@
       type="checkbox"
       {% if name %}name="{{ name }}"{% endif %}
       value="{{ value|stringformat:"s" }}"
-      x-model="selected"
+      x-model.fill="selected"
       {% if checked %}checked{% endif %}
       class="peer absolute inset-0 size-full cursor-pointer opacity-0"
     />

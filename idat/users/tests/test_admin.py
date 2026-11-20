@@ -3,6 +3,7 @@ from http import HTTPStatus
 from importlib import reload
 
 import pytest
+from allauth.mfa.models import Authenticator
 from django.contrib import admin
 from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
@@ -12,6 +13,18 @@ from idat.users.models import User
 
 
 class TestUserAdmin:
+    @pytest.fixture(autouse=True)
+    def _admin_has_mfa(self, request):
+        """Give admin_user a dummy TOTP authenticator for tests using admin_client,
+        so StaffSecurityMiddleware doesn't block them from the admin."""
+        if "admin_client" in request.fixturenames:
+            admin_user = request.getfixturevalue("admin_user")
+            Authenticator.objects.create(
+                user=admin_user,
+                type=Authenticator.Type.TOTP,
+                data={"secret": "test"},
+            )
+
     def test_changelist(self, admin_client):
         url = reverse("admin:users_user_changelist")
         response = admin_client.get(url)
@@ -30,17 +43,16 @@ class TestUserAdmin:
         response = admin_client.post(
             url,
             data={
-                "username": "test",
+                "email": "test@example.com",
                 "password1": "My_R@ndom-P@ssw0rd",
                 "password2": "My_R@ndom-P@ssw0rd",
             },
         )
         assert response.status_code == HTTPStatus.FOUND
-        assert User.objects.filter(username="test").exists()
+        assert User.objects.filter(email="test@example.com").exists()
 
-    def test_view_user(self, admin_client):
-        user = User.objects.get(username="admin")
-        url = reverse("admin:users_user_change", kwargs={"object_id": user.pk})
+    def test_view_user(self, admin_client, admin_user):
+        url = reverse("admin:users_user_change", kwargs={"object_id": admin_user.pk})
         response = admin_client.get(url)
         assert response.status_code == HTTPStatus.OK
 

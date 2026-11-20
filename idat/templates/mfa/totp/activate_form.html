@@ -1,0 +1,53 @@
+{% extends "mfa/totp/base.html" %}
+
+{% comment %}
+  Set up an authenticator app: scan the QR code (or type the setup key), then enter
+  the code the app shows. allauth's QR SVG has its own white background, so it
+  stays scannable in dark mode.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block head_title %}
+  {% translate "Set up an authenticator app" %}
+{% endblock head_title %}
+
+{% block content %}
+  <div class="flex flex-col gap-xs">
+    <h1 class="type-headline-sm text-primary">{% translate "Set up an authenticator app" %}</h1>
+    <p class="type-body-md text-secondary">
+      {% translate "Scan the QR code with your authenticator app, then enter the 6-digit code it shows." %}
+    </p>
+  </div>
+
+  <form
+    class="flex flex-col gap-lg rounded-lg border border-default bg-surface p-md sm:p-lg"
+    method="post"
+    action="{% url 'mfa_activate_totp' %}"
+  >
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
+    {% endif %}
+    <div class="flex flex-wrap items-start gap-lg">
+      <img
+        src="{{ totp_svg_data_uri }}"
+        alt="{% translate 'QR code for your authenticator app' %}"
+        class="size-44 shrink-0 rounded-md border border-default bg-surface p-xs"
+      />
+      <c-text-field
+        class="min-w-60 flex-1"
+        id="authenticator_secret"
+        label="{% translate 'Setup key' %}"
+        value="{{ form.secret }}"
+        help-text="{% translate "Can't scan the code? Enter this key in your app instead." %}"
+        readonly
+      />
+    </div>
+    {{ form.code.as_field_group }}
+    <div class="flex flex-wrap gap-sm">
+      <c-button type="submit" label="{% translate 'Activate' %}" />
+      <c-button variant="secondary" label="{% translate 'Cancel' %}" href="{% url 'mfa_index' %}" />
+    </div>
+  </form>
+{% endblock content %}

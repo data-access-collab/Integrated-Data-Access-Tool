@@ -1,29 +1,42 @@
-{% extends "base.html" %}
+{% extends "layouts/two_columns.html" %}
+
+{% comment %}
+  Layout of allauth's entrance pages (sign-up, sign-in, password reset …).
+  Left panel: logo, {% block entrance_aside %} (page-specific pitch), footer line.
+  Right column: messages, then {% block content %}.
+{% endcomment %}
 
 {% load i18n %}
 
-{% block bodyclass %}bg-light{% endblock bodyclass %}
-{% block css %}{{ block.super }}{% endblock css %}
 {% block title %}
   {% block head_title %}
-    {% trans "Sign In" %}
+    {% translate "Sign in" %}
   {% endblock head_title %}
 {% endblock title %}
-{% block body %}
-  <div class="d-flex justify-content-center h-100 py-4">
-    <div class="col-md-4 py-4 my-4 px-4">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-      {% block content %}
-      {% endblock content %}
-      {% block extra_body %}
-      {% endblock extra_body %}
-    </div>
+
+{% block column_left %}
+  <a
+    href="/"
+    class="flex items-center gap-sm self-start rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+  >
+    <c-logo.dsa40-mark label="" />
+    <span>
+      <span class="type-label-lg text-on-nav">IDAT</span>
+      <span class="text-on-nav">· Integrated Data Access Tool</span>
+    </span>
+  </a>
+  <div class="flex flex-1 flex-col justify-center gap-md">
+    {% block entrance_aside %}{% endblock entrance_aside %}
   </div>
-{% endblock body %}
+  <p class="type-body-sm text-on-nav-muted">
+    {% translate "Run by the DSA40 Data Access Collaboratory · data stored in the EU" %}
+  </p>
+{% endblock column_left %}
+
+{% block column_right %}
+  <div class="flex w-full max-w-120 flex-col gap-md">
+    {% include "partials/_messages.html" %}
+    {% block content %}{% endblock content %}
+    {% block extra_body %}{% endblock extra_body %}
+  </div>
+{% endblock column_right %}

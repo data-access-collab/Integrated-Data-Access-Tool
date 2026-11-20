@@ -1,7 +1,5 @@
 from .base import *  # noqa: F403
-from .base import INSTALLED_APPS
-from .base import MIDDLEWARE
-from .base import env
+from .base import INSTALLED_APPS, MIDDLEWARE, TEMPLATES, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -11,6 +9,11 @@ DEBUG = True
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
     default="zppKf5v0c3fv67y3HIzkaBL1wTFpf01RbWVbHydyqXD1LWABHotL5j23F8JNctAs",
+)
+# Secret for encrypting the DSA40 application wizard state
+WIZARD_SECRET = env(
+    "DJANGO_WIZARD_SECRET",
+    default="jEjO5d-Ww3la5aED9jnNBaW7_QfUPkg8RuPIimyaD2ZXearmI_XWT74gTCSip9D9",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]  # noqa: S104
@@ -32,6 +35,12 @@ EMAIL_BACKEND = env(
     "DJANGO_EMAIL_BACKEND",
     default="django.core.mail.backends.console.EmailBackend",
 )
+
+if DEBUG and env.bool("DJANGO_USE_MAILPIT", default=False):
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "mailpit"
+    EMAIL_PORT = 1025
+    EMAIL_USE_TLS = False
 
 # WhiteNoise
 # ------------------------------------------------------------------------------
@@ -67,6 +76,15 @@ if env("USE_DOCKER") == "yes":
 # ------------------------------------------------------------------------------
 # https://django-extensions.readthedocs.io/en/latest/installation_instructions.html#configuration
 INSTALLED_APPS += ["django_extensions"]
+
+# Templates
+# ------------------------------------------------------------------------------
+# prevent html caching in development
+TEMPLATES[0]["APP_DIRS"] = False
+TEMPLATES[0]["OPTIONS"]["loaders"] = [
+    "django.template.loaders.filesystem.Loader",
+    "django.template.loaders.app_directories.Loader",
+]
 
 # Your stuff...
 # ------------------------------------------------------------------------------

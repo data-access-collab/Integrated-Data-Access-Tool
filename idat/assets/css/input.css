@@ -284,18 +284,6 @@
            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus
            disabled:pointer-events-none disabled:opacity-50;
   }
-
-  /*!* Global Django form overrides *!*/
-  /*.idat-form-field { @apply my-4; }*/
-  /*.idat-form-field label, .idat-form-field legend { @apply w-full text-secondary inline-block font-semibold; }*/
-  /*.idat-form-field input[type=text], .idat-form-field select, .idat-form-field input[type=date] { @apply rounded-sm bg-surface-muted p-2 min-w-40 }*/
-  /*.idat-form-field input[type=checkbox] { @apply size-4 rounded border-strong text-primary; }*/
-  /*.idat-form-field input[type=radio] { @apply size-4 border-strong text-primary; }*/
-  /*.idat-form-field label:has(input[type=checkbox]) { @apply cursor-pointer w-auto; }*/
-  /*.idat-form-field .helptext { @apply text-xs text-tertiary; }*/
-  /*.idat-form-field .errorlist { @apply text-xs text-danger; }*/
-  /*.idat-form-field .errorlist.nonfield { @apply mb-4 rounded-md bg-danger-subtle p-3 text-sm text-danger; }*/
-  /*.idat-form-field .required > label::after { content: " *"; @apply text-danger; }*/
 }
 
 /* ------------------------------------------------------------------

@@ -42,6 +42,7 @@
 {% translate "{count} selected" as count_template %}
 {# field.x on the left of |default: fails silently without a field; as a filter argument it would raise. #}
 {% with input_id=field.id_for_label|default:id|default:name input_name=field.html_name|default:name label_text=field.label|default:label help=field.help_text|default:help_text %}
+  {# The checked options fill selected on init (x-model.fill in multi_select/option.html). #}
   <c-field-layout
     :field="field"
     :input-id="input_id"
@@ -50,7 +51,7 @@
     :help-text="help_text"
     :help-tip="help_tip"
     class="{{ class }}"
-    x-data="{ open: false, selected: [{% if field %}{% for option in field.subwidgets %}{% if option.data.selected %}'{{ option.data.value|stringformat:"s"|escapejs }}',{% endif %}{% endfor %}{% else %}{% for option_value, option_label in options %}{% if option_value in value %}'{{ option_value|escapejs }}',{% endif %}{% endfor %}{% endif %}] }"
+    x-data="{ open: false, selected: [] }"
     x-on:keydown.escape="if (open) { open = false; $refs.toggle.focus() }"
     x-on:click.outside="open = false"
   >
@@ -85,11 +86,13 @@
           {{ attrs }}
         >
         </button>
+
         <span
           {% if field.value or value %}hidden{% endif %}
-          x-bind:hidden="selected.length"
+          x-bind:hidden="selected.length > 0"
           class="pointer-events-none relative flex-1 type-body-md text-tertiary group-has-disabled:text-disabled"
         >{{ placeholder|default:default_placeholder }}</span>
+
         <ul
           {% if not field.value and not value %}hidden{% endif %}
           x-bind:hidden="!selected.length"
@@ -115,6 +118,7 @@
             {% endfor %}
           {% endif %}
         </ul>
+
         <c-icon
           name="chevron-down"
           class="pointer-events-none relative size-5 shrink-0 text-icon-default group-has-disabled:text-disabled"
@@ -150,6 +154,7 @@
         {% endif %}
       </div>
     </div>
+
     <c-slot name="helper">
       <span
         {% if not field.value and not value %}hidden{% endif %}

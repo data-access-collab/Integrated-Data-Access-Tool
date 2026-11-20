@@ -23,7 +23,7 @@ the file named there.
 
 - `django_cotton` is in `INSTALLED_APPS`; `idat_base_tags` (`define`, `icon_content`) is a
   template builtin.
-- A file's path sets its tag: `nav/section_item.html` → `<c-nav.section-item>`.
+- A file's path sets its tag: `wizard/section_item.html` → `<c-wizard.section-item>`.
 - Tokens only: Tailwind's default colours, radii and shadows are removed.
 - Build assets on the host: `npm run build` (or `npm run watch`). The output in
   `idat/static/dist/` is loaded by `base.html`.

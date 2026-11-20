@@ -1,0 +1,29 @@
+{% comment %}
+  Top of "My account" and its subpages
+
+  heading=True makes the name the page's <h1> (My account); the allauth pages have
+  their own <h1>, so there it is a paragraph.
+
+  Usage: {% include "users/partials/_account_header.html" with heading=True %}
+{% endcomment %}
+
+{% load i18n %}
+
+<div class="flex flex-col gap-lg">
+  <p class="type-body-sm text-tertiary">{% translate "Account & settings" %}</p>
+  <div class="flex items-center gap-md">
+    <c-avatar size="medium" :initials="user.initials" />
+    <div class="flex min-w-0 flex-1 flex-col gap-2xs">
+      {% if heading %}
+        <h1 class="truncate type-headline-lg text-primary">{{ user.get_full_name|default:user.email }}</h1>
+      {% else %}
+        <p class="truncate type-headline-lg text-primary">{{ user.get_full_name|default:user.email }}</p>
+      {% endif %}
+      <p class="type-body-md text-secondary">
+        {% blocktranslate trimmed with date=user.date_joined|date:"j M Y" %}
+          Researcher account since {{ date }}
+        {% endblocktranslate %}
+      </p>
+    </div>
+  </div>
+</div>
