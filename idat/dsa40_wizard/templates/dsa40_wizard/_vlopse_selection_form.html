@@ -38,7 +38,8 @@
         {% for choice in field %}
           <c-platform-row
             :name="choice.data.value.instance.name"
-            channel="{{ choice.data.value.instance.modality }}"
+            channel="{{ choice.data.value.instance.get_modality_display }}"
+            operator="{{ choice.data.value.instance.operator }}"
             :input-name="choice.data.name"
             :value="choice.data.value"
             :selected="choice.data.selected"

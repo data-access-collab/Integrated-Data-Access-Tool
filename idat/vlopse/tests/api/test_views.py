@@ -55,6 +55,9 @@ def test_get_vlopse_by_name(client: Client, unique_id: str):
     assert response.status_code == 200
     assert response.json() == {
         "name": vlopse.name,
+        "operator": vlopse.operator,
+        "platform_type": vlopse.platform_type,
+        "logo": vlopse.logo,
         "platform_information": vlopse.platform_information,
         "account_required": vlopse.account_required,
         "application_link": vlopse.application_link,
