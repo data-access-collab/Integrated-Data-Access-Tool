@@ -19,8 +19,8 @@ Recreate the Django container for the settings update to apply:
 Then start the Mailpit container:
 
     just mailpit
-    # just stop-mailpit 
+    # just stop-mailpit
 
-The Mailpit client is now accessible at http://localhost:8025/, its SMTP server 
-listens to localhost:1025. It automatically intercepts and displays all emails 
+The Mailpit client is now accessible at http://localhost:8025/, its SMTP server
+listens to localhost:1025. It automatically intercepts and displays all emails
 sent by Django.

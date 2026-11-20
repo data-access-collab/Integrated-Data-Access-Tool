@@ -5,13 +5,9 @@ services:
     build:
       context: .
       dockerfile: ./compose/local/docs/Dockerfile
-    env_file:
-      - path: ./.envs/.local/.django
-        required: false
     volumes:
-      - /app/.venv
-      - ./docs:/docs:z
-      - ./config:/app/config:z
+      - ./zensical.toml:/app/zensical.toml:z
+      - ./docs:/app/docs:z
       - ./idat:/app/idat:z
     ports:
       - '9000:9000'

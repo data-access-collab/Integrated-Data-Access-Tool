@@ -1,9 +1,9 @@
-# UI library
+# UI Library
 
 ## Source of truth
 
 The [Figma file](https://www.figma.com/design/DjAthBSdrd2LHopYz0tGaB), page "Design system",
-defines tokens, components and their behaviour. Code follows Figma;
+defines tokens, components and their behavior. Code follows Figma;
 design changes are made in Figma first and then synced.
 
 If the Figma file or page changes, update its key (`DjAthBSdrd2LHopYz0tGaB`) and page name
