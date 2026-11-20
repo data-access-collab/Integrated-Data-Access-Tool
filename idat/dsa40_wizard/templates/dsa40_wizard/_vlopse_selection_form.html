@@ -1,10 +1,18 @@
 {% load i18n %}
 
+<div class="flex items-center gap-xs">
+  {% blocktranslate asvar step_label %}Step {{ step_number }} of {{ step_count }}{% endblocktranslate %}
+  <c-badge tone="accent" :dot="False" :label="step_label" />
+  <span class="type-label-lg text-secondary">{% translate 'Choose platforms' %}</span>
+</div>
+
 <h1 class="type-headline-lg">{% translate 'Which platforms do you want data from?' %}</h1>
 
 <p class="type-body-lg text-secondary">
-  {% blocktranslate %}
-    Pick every very large online platform or search engine (VLOPSE) you want data from.
+  {% blocktranslate trimmed with n=form.platform_count %}
+    Pick every very large online platform or search engine (VLOPSE) you want data from. {{ n }}
+    services designated as VLOPSE by the European Commission are listed here, grouped by type. Shared questions will be
+    asked only once.
   {% endblocktranslate %}
 </p>
 

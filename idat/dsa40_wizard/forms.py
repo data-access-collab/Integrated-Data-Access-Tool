@@ -134,6 +134,11 @@ class VlopseSelectionForm(forms.Form):
             groups[0] = groups[0]._replace(open=True)
         return groups
 
+    @property
+    def platform_count(self) -> int:
+        """Number of platforms in the picker."""
+        return sum(len(group.choices) for group in self.platform_groups)
+
 
 class ClientFileWidget(forms.Widget):
     """File input whose file stays in the browser.

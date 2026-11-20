@@ -275,6 +275,9 @@ class WizardFormStep(View):
             {
                 "step_template": self.template_name,
                 "current_step": self.step,
+                # "Step 1 of 5"
+                "step_number": list(WizardStep).index(self.step) + 1,
+                "step_count": len(WizardStep),
                 "wizard_urls": get_wizard_urls(),
                 "form": form,
                 **context,
