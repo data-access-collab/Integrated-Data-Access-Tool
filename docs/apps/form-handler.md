@@ -5,11 +5,26 @@ application form.
 
 ## Questions
 
-- **`DSAQuestion`**: a question of the unified questionnaire, identified by `key`, with
-  an `input_type`, optional `config` and a `category`.
-- **`VLOPSEQuestion`**: a field of one platform's form (`key` like `X1`), linked to its
-  `Vlopse`, with its own `input_type`, `required` flag and `category`. Categories are
-  free text, since they come from the platforms.
+There are two kinds of questions: VLOPSEQuestions and DSAQuestions.
+VLOPSEQuestions model the application forms by VLOPSEs, while the DSAQuestions are the
+abstracted questions provided by the admin team.
+
+- **`DSAQuestion`**s are identified by its unique `key`. The keys SHOULD be descriptive.
+  it's fields are:
+  - `input_type`: The type of the input.
+  - `category`: Used to group different DSAQuestions, e.g. all questions related to
+  one's affiliation.
+  - `config`: custom configuration for a question, e.g. in case of selections holds
+    the options given or Text Questions have a maximum length
+
+- **`VLOPSEQuestion`**s are identified by its unique `key` as well. These keys
+  MAY be prefixed by a shorthand for its VLOPSE to ease editing.
+  - `vlopse`: links the question to its VLOPSE
+  - `input_type`: The type of the input.
+  - `required`: Whether the question is ALWAYS required in a VLOPSE questionnaire.
+    For conditional requirement, see the mapping description below.
+  - `category`: Used to group different VLOPSEQuestions, e.g. all questions related to
+  one's affiliation.
 
 Both are seeded by migrations `0002` and `0003` from `migrations/data/`.
 
@@ -41,7 +56,7 @@ Each platform has a mapping file, `fixtures/vlopses/<vlopse>.json`, loaded by
 - **`mappings`**: platform field → DSA question key(s). A plain string copies the answer;
   an object combines one or more answers with an operator.
 - **`conditions`**: when a DSA question applies, depending on other answers
-  (`services/condition_service.py`).
+  (`services/condition_service.py`). Use this to express conditional requirement.
 
 `QuestionMapper` (`validation/mapping.py`) checks that every mapping points to existing
 questions; the `/api/v1/health` endpoint reports the result as `mapping_status`.
@@ -70,5 +85,13 @@ To add an operator:
 `services/form_engine.py` (`FormService`) ties it together: it selects the questions for
 a set of platforms, validates answers against their input types, and uses
 `AnswerTransformer` (`validation/transform.py`) to produce each platform's field values.
+Provides both question specific and general validation guidance.
+Validation may fail for multiple reasons:
+- A DSAQuestion is required but not filled out. Note that _requiredness_ is computed by
+  checking its dependent VLOPSEQuestions
+- An input to a DSAQuestion is invalid in its type (only checks iterable/single value currently)
+- An input to a DSAQuestion violates a specific validation in the `config` attribute (e.g. max_length for free-text)
+- A Mapping is misconfigured (e.g. a target question doesnt exist)
+- a VLOPSE data type is violated by the transformed answer.
 
 Details: [code reference](../reference/code/form-handler.md).
