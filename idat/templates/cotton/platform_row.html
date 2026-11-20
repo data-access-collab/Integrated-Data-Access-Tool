@@ -9,35 +9,33 @@
                 it, or when the icon file no longer exists, the tile shows a letter
     initial     letter in the logo tile; defaults to the first letter of name
     operator    legal entity, e.g. "TikTok Technology Ltd."; omitted when empty
-    questions   number of platform-specific questions ("+14 questions")
-    channel     submission channel, e.g. "Web form"
-    response    typical response time, e.g. "4–6 weeks"
+    channel     how you apply, e.g. "Web form" (Vlopse.get_modality_display)
+    response    typical reply time, e.g. "4–6 weeks"; the column is left out when empty
     selected    boolean attribute: checked
     input-name  checkbox name
     value       submitted value, e.g. the VLOPSE id
 
-  The extra columns keep fixed widths so rows line up as a table; they render empty when
-  their prop is. When the row is narrower than 672px (container query, @2xl) they move into
-  a line under the name ("+14 questions · Web form · 4–6 weeks"), so the name never gets
-  squeezed. {{ attrs }} (x-model, disabled, aria-*) go on the checkbox; class goes on
-  the row.
+  The columns keep fixed widths so rows line up as a table (header: indent w-17, then
+  "How you apply" w-30 and, when used, "Typical reply" w-25). Pass response for every
+  row of a list or for none, else the columns don't line up. When the row is narrower
+  than 672px (container query, @2xl) the columns move into a line under the name
+  ("Web form · 4–6 weeks"), so the name never gets squeezed. {{ attrs }} (x-model,
+  disabled, aria-*) go on the checkbox; class goes on the row.
 
   Usage:
-    <div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
+    <div class="overflow-hidden rounded-lg border border-default bg-surface *:last:border-b-0">
       {% for vlopse in vlopses %}
-        <c-platform-row :name="vlopse.name" :logo="vlopse.logo" :operator="vlopse.operator" questions="14"
-          channel="Web form" response="4–6 weeks" input-name="vlopses" :value="vlopse.pk" />
+        <c-platform-row :name="vlopse.name" :logo="vlopse.logo" :operator="vlopse.operator"
+          :channel="vlopse.get_modality_display" input-name="vlopses" :value="vlopse.pk" />
       {% endfor %}
     </div>
 {% endcomment %}
 
-{% load i18n %}
 <c-vars
   name=""
   logo=""
   initial=""
   operator=""
-  questions=""
   channel=""
   response=""
   selected=""
@@ -45,7 +43,6 @@
   value=""
   class=""
 />
-{% if questions %}{% blocktranslate count n=questions|add:"0" asvar questions_label %}+{{ n }} question{% plural %}+{{ n }} questions{% endblocktranslate %}{% endif %}
 <label
   class="@container flex min-h-14 cursor-pointer items-center gap-md border-b border-default bg-surface px-md py-xs has-checked:bg-selected {{ class }}"
 >
@@ -64,17 +61,16 @@
     <span class="truncate type-label-lg text-primary">{{ name }}</span>
     {% if operator %}<span class="truncate type-body-sm text-tertiary">{{ operator }}</span>{% endif %}
     {# Narrow rows: the columns move into a line under the name. #}
-    {% if questions or channel or response %}
+    {% if channel or response %}
       <span class="flex flex-wrap gap-x-xs type-body-sm text-secondary @2xl:hidden">
-        {% if questions %}<span>{{ questions_label }}</span>{% endif %}
-        {% if channel %}{% if questions %}<span aria-hidden="true">·</span>{% endif %}<span
-          >{{ channel }}</span>{% endif %}
-        {% if response %}{% if questions or channel %}<span aria-hidden="true">·</span>{% endif %}<span
+        {% if channel %}<span>{{ channel }}</span>{% endif %}
+        {% if response %}{% if channel %}<span aria-hidden="true">·</span>{% endif %}<span
           >{{ response }}</span>{% endif %}
       </span>
     {% endif %}
   </span>
-  <span class="hidden w-37.5 shrink-0 type-body-sm text-secondary @2xl:block">{{ questions_label }}</span>
   <span class="hidden w-30 shrink-0 type-body-sm text-secondary @2xl:block">{{ channel|capfirst }}</span>
-  <span class="hidden w-25 shrink-0 type-body-sm text-secondary @2xl:block">{{ response }}</span>
+  {% if response %}
+    <span class="hidden w-25 shrink-0 type-body-sm text-secondary @2xl:block">{{ response }}</span>
+  {% endif %}
 </label>
