@@ -309,3 +309,17 @@ def test_mfa_allow_unverified_email_needs_mandatory_verification():
     """
     assert settings.MFA_ALLOW_UNVERIFIED_EMAIL
     assert settings.ACCOUNT_EMAIL_VERIFICATION == "mandatory"
+
+
+@pytest.mark.usefixtures("_clear_rate_limits")
+def test_webauthn_add_page_explains_browser_errors(client: Client, owner: User):
+    """The add-passkey page renders IDAT's template override, which includes the
+    Alpine listener for allauth's "allauth.error" event and the "already added"
+    message.
+    """
+    sign_in(client, owner)
+    response = client.get(reverse("mfa_add_webauthn"))
+    assert response.status_code == HTTPStatus.OK
+    html = response.content.decode()
+    assert "x-on:allauth-error.dot.document.prevent" in html
+    assert "already added to your account" in html

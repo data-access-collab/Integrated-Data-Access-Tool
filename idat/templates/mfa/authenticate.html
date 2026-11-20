@@ -36,6 +36,7 @@
     {% if form.non_field_errors %}
       <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
     {% endif %}
+    {% if "webauthn" in MFA_SUPPORTED_TYPES %}<c-mfa.webauthn-error />{% endif %}
     {{ form.code.as_field_group }}
     <c-button type="submit" label="{% translate 'Sign in' %}" class="w-full" />
   </form>

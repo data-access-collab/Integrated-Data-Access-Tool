@@ -23,6 +23,7 @@
     {% if form.non_field_errors %}
       <c-field-message>{{ form.non_field_errors|join:" " }}</c-field-message>
     {% endif %}
+    {% if PASSKEY_LOGIN_ENABLED %}<c-mfa.webauthn-error />{% endif %}
     {{ form.login.as_field_group }}
     {{ form.password.as_field_group }}
     <div class="flex flex-wrap items-center justify-between gap-sm">
