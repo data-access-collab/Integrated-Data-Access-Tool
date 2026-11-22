@@ -19,7 +19,7 @@ class WizardInfo(models.Model):
         """Card colors (Figma Help / Insight Card)."""
 
         INFO = "info", "Info (blue)"
-        TARGET = "target", "Target (yellow)"
+        INSIGHT = "insight", "Insight (yellow)"
         DANGER = "danger", "Danger (red)"
         NEUTRAL = "neutral", "Neutral (grey)"
 
