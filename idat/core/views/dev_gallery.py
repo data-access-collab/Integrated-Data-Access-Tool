@@ -15,6 +15,8 @@ from django.conf import settings
 from django.views.generic import TemplateView
 
 from idat.core.forms.fields import country_choices
+from idat.dsa40_wizard.steps import WizardStep
+from idat.dsa40_wizard.views import get_wizard_steps
 
 DPIA_LABEL = "Data-protection impact assessment"
 # File Upload demo config, in the format the DSA40 wizard's ClientFileWidget renders.
@@ -270,10 +272,14 @@ class ComponentGalleryView(TemplateView):
         # Every <c-icon> name: the files in templates/icons/.
         icon_dir = Path(settings.APPS_DIR) / "templates" / "icons"
         context["icon_names"] = sorted(path.stem for path in icon_dir.glob("*.svg"))
-        context["wizard_hrefs"] = dict.fromkeys(
-            ("choose_vlopses", "enter_details", "review", "generate"),
-            "#wizard-sidebar",
-        )
+        # Wizard / Sidebar demos: links stay on the gallery page.
+        context["wizard_steps_demo"] = {
+            step.replace("-", "_"): [
+                s._replace(href="#wizard-sidebar" if s.href else "")
+                for s in get_wizard_steps(step)
+            ]
+            for step in WizardStep
+        }
         return context
 
     @staticmethod

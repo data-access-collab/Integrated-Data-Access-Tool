@@ -1,0 +1,43 @@
+<div class="flex flex-wrap items-start gap-lg">
+  <div class="flex flex-col gap-xs">
+    <p class="type-label-md text-secondary">With context, cards, accordions and footer</p>
+    <div class="h-200 overflow-hidden rounded-md border border-default">
+      <c-help.panel class="h-full">
+        <c-slot name="context">
+          <p class="type-overline text-tertiary">Tips for</p>
+          <p class="type-title-md text-primary">Main research question</p>
+        </c-slot>
+        <c-slot name="cards">
+          <c-help.insight-card
+            eyebrow="Community insight"
+            :sample="11"
+            body="8 of 11 researchers who named a concrete Art. 34 risk category in their question were granted access."
+          />
+          <c-help.insight-card
+            tone="platform"
+            eyebrow="Shared answer"
+            body="All three platforms ask for this. You answer once; the same answer goes into each application unchanged."
+          />
+        </c-slot>
+        <c-help.accordion title="How detailed should my research question be?" expanded>
+          Platforms assess whether your question relates to systemic risks in the EU (Art. 34 DSA). Name the risk
+          category, the platform feature you study and the population concerned.
+        </c-help.accordion>
+        <c-help.accordion title="See an example from an approved application">…</c-help.accordion>
+        <c-help.accordion title="What counts as a systemic risk?">…</c-help.accordion>
+        <c-slot name="footer">
+          <a href="#" class="flex items-start gap-xs type-label-lg text-link hover:underline">
+            <c-icon name="play-circle" class="size-4.5 shrink-0" />
+            Video: Writing a strong research question (3 min)
+          </a>
+        </c-slot>
+      </c-help.panel>
+    </div>
+  </div>
+  <div class="flex flex-col gap-xs">
+    <p class="type-label-md text-secondary">Header only (a step without tips)</p>
+    <div class="h-50 overflow-hidden rounded-md border border-default">
+      <c-help.panel class="h-full" />
+    </div>
+  </div>
+</div>

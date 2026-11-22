@@ -1,0 +1,33 @@
+{% comment %}
+  Help / Rail: the minimised help panel, a 64px column of 44px icon
+  buttons on the right of the wizard.
+
+  - Both buttons dispatch a bubbling "help-panel" event with { open: true };
+    <c-help.region> listens and opens <c-help.panel>.
+
+  Usage:
+    <c-help.rail class="h-full" />
+{% endcomment %}
+
+{% load i18n %}
+<c-vars class="" />
+<div class="flex w-16 flex-col items-center gap-sm border-l border-default bg-surface pt-md {{ class }}" {{ attrs }}>
+  <button
+    type="button"
+    x-data
+    x-on:click="$dispatch('help-panel', { open: true })"
+    aria-label="{% translate 'Show help panel' %}"
+    class="flex size-11 cursor-pointer items-center justify-center rounded-md text-icon-default hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+  >
+    <c-icon name="panel-right" class="size-5" />
+  </button>
+  <button
+    type="button"
+    x-data
+    x-on:click="$dispatch('help-panel', { open: true })"
+    aria-label="{% translate 'Show tips' %}"
+    class="flex size-11 cursor-pointer items-center justify-center rounded-md text-accent hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+  >
+    <c-icon name="lightbulb" class="size-5" />
+  </button>
+</div>

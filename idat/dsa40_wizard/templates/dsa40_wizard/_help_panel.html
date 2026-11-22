@@ -1,0 +1,20 @@
+{% comment %}
+  Help panel content of the current step. Rendered empty in the page shell, and sent again
+  with every step (oob=True: out-of-band swap), like _sidebar.html. Open/minimised state
+  lives in <c-help.region> (base.html).
+{% endcomment %}
+
+{% load i18n %}
+<div id="help-panel" class="h-full" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <c-help.panel class="h-full">
+    {% if current_step %}
+      <c-slot name="context">
+        <p class="type-overline text-tertiary">{% translate "Tips for" %}</p>
+        <p class="type-title-md text-primary">{{ current_step.label }}</p>
+      </c-slot>
+    {% endif %}
+    <p class="border-b border-default px-lg py-md type-body-md text-tertiary">
+      {% translate "No tips for this step yet." %}
+    </p>
+  </c-help.panel>
+</div>

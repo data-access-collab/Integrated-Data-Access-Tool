@@ -7,13 +7,18 @@ one questionnaire, and `AnswerTransformer` maps the answers back to each platfor
 
 ## Steps
 
-| Step             | Slug             | View                  | Does                                                                       |
-|------------------|------------------|-----------------------|----------------------------------------------------------------------------|
-| Choose platforms | `choose-vlopses` | `VlopseSelectionStep` | Select VLOPSEs; drops answers no longer needed                             |
-| Enter details    | `enter-details`  | `QuestionsStep`       | Answer the mapped DSA questions, one section at a time                     |
-| Review           | `review`         | `ReviewStep`          | Stored answers, read-only; continuing re-validates them, submits none      |
-| Generate         | `generate`       | `GenerateStep`        | One read-only preview per VLOPSE, with any mapping errors                  |
-| Submit           | `submit`         | none                  | Planned; its URL returns 404                                               |
+| Step             | Slug       | View                  | Does                                                                       |
+|------------------|------------|-----------------------|----------------------------------------------------------------------------|
+| Choose platforms | `vlopses`  | `VlopseSelectionStep` | Select VLOPSEs; drops answers no longer needed                             |
+| Enter details    | `details`  | `QuestionsStep`       | Answer the mapped DSA questions, one section at a time                     |
+| Review           | `review`   | `ReviewStep`          | Stored answers, read-only; continuing re-validates them, submits none      |
+| Generate         | `generate` | `GenerateStep`        | One read-only preview per VLOPSE, with any mapping errors                  |
+| Submit           | `submit`   | none                  | Planned; its URL returns 404                                               |
+
+`WizardStep` (`steps.py`) is the only place that defines the steps' order, slugs and
+names. Code uses its members, never the slug strings; templates get the enum as
+`WizardStep` and the current step as `current_step` (`get_steps_context` in `views.py`),
+e.g. `{% url 'dsa40_wizard:wizard_step' WizardStep.REVIEW %}`.
 
 Each step subclasses `WizardFormStep` (`views.py`): a form, a template, `next_step` and
 `check_prerequisites`. A step whose prerequisites fail (no valid VLOPSE selected, an

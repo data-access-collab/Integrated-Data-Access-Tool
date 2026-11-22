@@ -3,7 +3,7 @@
 <div class="flex items-center gap-xs">
   {% blocktranslate asvar step_label %}Step {{ step_number }} of {{ step_count }}{% endblocktranslate %}
   <c-badge tone="accent" :dot="False" :label="step_label" />
-  <span class="type-label-lg text-secondary">{% translate 'Choose platforms' %}</span>
+  <span class="type-label-lg text-secondary">{{ current_step.label }}</span>
 </div>
 
 <h1 class="type-headline-lg">{% translate 'Which platforms do you want data from?' %}</h1>
@@ -17,7 +17,7 @@
 </p>
 
 <form
-  hx-post="{% url 'dsa40_wizard:wizard_submit' 'choose-vlopses' %}"
+  hx-post="{% url 'dsa40_wizard:wizard_submit' current_step %}"
   hx-target="#application-wizard-body"
   hx-swap="innerHTML"
   class="flex flex-col gap-lg"

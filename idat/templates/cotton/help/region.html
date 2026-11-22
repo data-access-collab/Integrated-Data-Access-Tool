@@ -1,0 +1,44 @@
+{% comment %}
+  The help column on the right of a page: <c-help.rail> when minimised, <c-help.panel>
+  when open (Figma 43:3880 open, 43:3942 minimised). Place it as the last child of a
+  flex row, after the main content.
+
+  - 1280px and wider (xl): the open panel sits in the flow and replaces the rail; it
+    starts open unless the viewer minimised it before (remembered per browser).
+  - Narrower: only the rail is in the flow; the open panel overlays the main area, and
+    Esc or a click next to it closes it.
+  - Opens on "help-panel" { open: true } (rail buttons) and on a field's help icon
+    ("help-tip" on window); "help-panel" { open: false } (panel's minimise) closes it.
+  - State and behaviour: Alpine.data("helpRegion"), idat/assets/js/components/help_region.js.
+
+  Props:
+    slot  the panel: a <c-help.panel class="h-full">, or an element wrapping one that is
+          swapped per page (e.g. <div id="help-panel" class="h-full">)
+
+  Usage:
+    <div class="flex flex-row">
+      <main class="min-w-0 flex-1">…</main>
+      <c-help.region>{% include "dsa40_wizard/_help_panel.html" %}</c-help.region>
+    </div>
+{% endcomment %}
+
+<c-vars class="" />
+<div
+  x-data="helpRegion"
+  x-on:help-panel="open = $event.detail.open"
+  x-on:help-tip.window="open = true"
+  x-on:keydown.escape.window="dismiss()"
+  class="flex shrink-0 {{ class }}"
+  {{ attrs }}
+>
+  <c-help.rail x-ref="rail" x-bind:class="open && 'xl:hidden'" />
+  <div x-show="open" x-cloak x-on:click="dismiss()" class="fixed inset-0 z-30 xl:hidden"></div>
+  <div
+    x-ref="panel"
+    x-show="open"
+    x-cloak
+    class="fixed inset-y-0 right-0 z-40 flex max-w-full shadow-3 xl:static xl:z-auto xl:shadow-none"
+  >
+    {{ slot }}
+  </div>
+</div>

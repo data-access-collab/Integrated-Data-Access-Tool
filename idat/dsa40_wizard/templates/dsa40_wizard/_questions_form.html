@@ -11,15 +11,15 @@
 {% endcomment %}
 
 {% load i18n %}
-<h1 class="sr-only">{% translate "Enter your details" %}</h1>
+<h1 class="sr-only">{{ current_step.label }}</h1>
 
 <form
-  hx-post="{% url 'dsa40_wizard:wizard_submit' 'enter-details' %}"
+  hx-post="{% url 'dsa40_wizard:wizard_submit' current_step %}"
   hx-target="#application-wizard-body"
   hx-swap="innerHTML"
   hx-sync="this:queue last"
   novalidate
-  data-wizard-save-url="{% url 'dsa40_wizard:wizard_save' 'enter-details' %}"
+  data-wizard-save-url="{% url 'dsa40_wizard:wizard_save' current_step %}"
   x-data="{
     show(name) { this.section = name; window.scrollTo({ top: 0 }) },
     isValid(el) { return [...el.closest('section').querySelectorAll('input, select, textarea')].every((c) => c.reportValidity()) },
@@ -29,7 +29,7 @@
   {% csrf_token %}
   <div
     hidden
-    hx-post="{% url 'dsa40_wizard:wizard_save' 'enter-details' %}"
+    hx-post="{% url 'dsa40_wizard:wizard_save' current_step %}"
     hx-include="closest form"
     hx-swap="none"
     hx-sync="closest form:queue last"
@@ -75,7 +75,7 @@
             variant="secondary"
             leading-icon="arrow-left"
             label="{% translate "Back to platforms" %}"
-            hx-post="{% url 'dsa40_wizard:wizard_save' 'enter-details' %}?next=choose-vlopses"
+            hx-post="{% url 'dsa40_wizard:wizard_save' current_step %}?next={{ WizardStep.CHOOSE_VLOPSES }}"
             hx-target="#application-wizard-body"
             hx-sync="closest form:queue last"
           />
@@ -100,7 +100,7 @@
           variant="secondary"
           leading-icon="arrow-left"
           label="{% translate "Back to platforms" %}"
-          hx-post="{% url 'dsa40_wizard:wizard_save' 'enter-details' %}?next=choose-vlopses"
+          hx-post="{% url 'dsa40_wizard:wizard_save' current_step %}?next={{ WizardStep.CHOOSE_VLOPSES }}"
           hx-target="#application-wizard-body"
           hx-sync="closest form:queue last"
         />

@@ -6,8 +6,8 @@
 {% endcomment %}
 
 <div id="wizard-sidebar" {% if oob %}hx-swap-oob="true"{% endif %}>
-  <c-wizard.sidebar :current-step="current_step" :hrefs="wizard_urls">
-    {% if current_step == "enter-details" %}
+  <c-wizard.sidebar :steps="wizard_steps">
+    {% if current_step == WizardStep.ENTER_DETAILS %}
       {% for section in form.sections %}
         <c-wizard.section-item
           state="{% if section.has_errors %}blocking{% elif section.complete %}complete{% else %}incomplete{% endif %}"
