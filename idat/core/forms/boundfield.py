@@ -47,6 +47,12 @@ class IdatBoundField(forms.BoundField):
         return widget_component(self.field.widget)
 
     @property
+    def help_tip(self) -> str:
+        """Help-panel tip id of the field (`help_tip` attribute on the form field),
+        or "". <c-field-layout> shows a help icon that opens the tip."""
+        return getattr(self.field, "help_tip", "")
+
+    @property
     def display_value(self) -> object:
         """The answer as a person reads it, for read-only views: choice labels
         instead of values, Yes / No for booleans, localized dates and numbers.

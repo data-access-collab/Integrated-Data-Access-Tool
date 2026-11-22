@@ -24,7 +24,9 @@
     show(name) { this.section = name; window.scrollTo({ top: 0 }) },
     isValid(el) { return [...el.closest('section').querySelectorAll('input, select, textarea')].every((c) => c.reportValidity()) },
   }"
-  x-init="section = '{{ form.initial_section }}'; $watch('section', () => $dispatch('wizard-save'))"
+  x-init="section = '{{ form.initial_section }}'; $watch('section', () => { $dispatch('wizard-save'); $dispatch('help-question', { question: '' }) })"
+  {# the help panel shows the focused question's tips; a question without tips, or a new section: the general tips #}
+  x-on:focusin="$dispatch('help-question', { question: $event.target.closest('[data-help-tip]')?.dataset.helpTip ?? '' })"
 >
   {% csrf_token %}
   <div

@@ -8,7 +8,12 @@
  *   moves focus into it; closing while focus is inside returns it to the rail.
  *
  * The rail and panel buttons dispatch "help-panel" { open }; a field's help icon
- * dispatches "help-tip" on window, which opens the panel too.
+ * dispatches "help-tip" { tip }, which opens the panel too.
+ *
+ * `question`: the active question (a help-tip id, e.g. a field name), whose tips the
+ * panel shows instead of the general ones; "" for the general tips. Set by "help-tip"
+ * (help icon) and "help-question" { question } (e.g. a focused field; doesn't open the
+ * panel), both on window.
  */
 const WIDE = "(min-width: 80rem)";
 const STORAGE_KEY = "idat.helpOpen";
@@ -32,6 +37,7 @@ function writeStored(open) {
 export default function helpRegion() {
   return {
     open: false,
+    question: "",
 
     isWide() {
       return window.matchMedia(WIDE).matches;

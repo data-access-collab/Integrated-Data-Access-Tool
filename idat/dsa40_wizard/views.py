@@ -28,6 +28,7 @@ from idat.dsa40_wizard.forms import (
     QuestionsForm,
     VlopseSelectionForm,
 )
+from idat.dsa40_wizard.help import HelpTips, find_help_tips
 from idat.dsa40_wizard.services.preview import build_application_previews
 from idat.dsa40_wizard.state import (
     DRAFT_UNAVAILABLE_HEADER,
@@ -266,6 +267,10 @@ class WizardFormStep(View):
         """Extra template context, applied however the step gets rendered."""
         return {}
 
+    def get_help_tips(self, form: forms.Form) -> HelpTips:
+        """The help panel's tips: those of the step."""
+        return find_help_tips(self.step)
+
     def go_to(self, step_cls: type[WizardFormStep] | None) -> HttpResponse:
         """Render another step with the current state, without its dispatch;
         check_prerequisites still applies.
@@ -290,6 +295,7 @@ class WizardFormStep(View):
                 "step_number": list(WizardStep).index(self.step) + 1,
                 "step_count": len(WizardStep),
                 "form": form,
+                "help_tips": self.get_help_tips(form),
                 **context,
             },
         )
@@ -366,6 +372,13 @@ class QuestionsStep(WizardFormStep):
 
     def update_state(self, form: forms.Form) -> None:
         self.state["answers"] = dict(form.cleaned_data)
+
+    def get_help_tips(self, form: QuestionsForm) -> HelpTips:
+        """The tips of the step and of the form's sections and questions; fields
+        with an accordion tip get a help icon."""
+        tips = find_help_tips(self.step, form)
+        form.set_help_tips(tips)
+        return tips
 
     def save(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         """Store the entered answers without enforcing them, refresh the token and

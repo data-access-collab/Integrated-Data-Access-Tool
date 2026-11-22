@@ -2,19 +2,118 @@
   Help panel content of the current step. Rendered empty in the page shell, and sent again
   with every step (oob=True: out-of-band swap), like _sidebar.html. Open/minimised state
   lives in <c-help.region> (base.html).
+
+  help_tips (HelpTips, dsa40_wizard/help.py), on two levels, switched by `question` (Alpine
+  state of <c-help.region>; the questions form sets it with "help-question"). The region
+  isn't swapped, so new panel content resets it: the previous step's question may not
+  exist here, and would hide every general tip.
+  - general (question ''): section tips, then step tips. A tip with sections shows only with
+    those sections of Enter details (`section`, state of the shell); one without, on the
+    whole step.
+  - question: the tips of the active question, instead of the general ones, with a link
+    back to them. Its accordions start open.
 {% endcomment %}
 
 {% load i18n %}
-<div id="help-panel" class="h-full" {% if oob %}hx-swap-oob="true"{% endif %}>
+<div id="help-panel" class="h-full" x-init="question = ''" {% if oob %}hx-swap-oob="true"{% endif %}>
   <c-help.panel class="h-full">
     {% if current_step %}
       <c-slot name="context">
-        <p class="type-overline text-tertiary">{% translate "Tips for" %}</p>
-        <p class="type-title-md text-primary">{{ current_step.label }}</p>
+        {% if help_tips.questions %}
+          <button
+            type="button"
+            x-show="question"
+            x-cloak
+            x-on:click="question = ''"
+            class="flex cursor-pointer items-center gap-2xs self-start pb-xs type-label-md text-secondary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <c-icon name="arrow-left" class="-ml-2xs size-4" />
+            {% translate "General tips" %}
+          </button>
+        {% endif %}
+        <p class="type-overline text-tertiary" x-show="!question">{% translate "General tips for" %}</p>
+        <p class="type-overline text-tertiary" x-show="question" x-cloak>{% translate "Tips for" %}</p>
+        {% for question in help_tips.questions %}
+          <p
+            class="type-title-md text-primary"
+            title="{{ question.label }}"
+            x-show="question === '{{ question.key|escapejs }}'"
+            x-cloak
+          >
+            {{ question.label|truncatechars:40 }}
+          </p>
+        {% endfor %}
+        {% if current_step == WizardStep.ENTER_DETAILS and form.sections %}
+          {% for section in form.sections %}
+            <p
+              class="type-title-md text-primary"
+              x-show="!question && section === '{{ section.category }}'"
+              {% if section.category != form.initial_section %}x-cloak{% endif %}
+            >
+              {{ section.label }}
+            </p>
+          {% endfor %}
+        {% else %}
+          <p class="type-title-md text-primary" x-show="!question">{{ current_step.label }}</p>
+        {% endif %}
       </c-slot>
     {% endif %}
-    <p class="border-b border-default px-lg py-md type-body-md text-tertiary">
-      {% translate "No tips for this step yet." %}
-    </p>
+
+    {% if help_tips.has_cards %}
+      <c-slot name="cards">
+        {% for tip in help_tips.general.cards %}
+          <div
+            {% if tip.sections is None %}
+              x-show="!question"
+            {% else %}
+              x-show="!question && [{% for s in tip.sections %}'{{ s }}', {% endfor %}].includes(section)"
+              {% if form.initial_section not in tip.sections %}x-cloak{% endif %}
+            {% endif %}
+          >
+            <c-help.insight-card tone="{{ tip.info.tone }}" eyebrow="{{ tip.info.title }}">
+              {{ tip.info.body|linebreaksbr }}
+            </c-help.insight-card>
+          </div>
+        {% endfor %}
+        {% for question in help_tips.questions %}
+          {% for tip in question.tips.cards %}
+            <div x-show="question === '{{ question.key|escapejs }}'" x-cloak>
+              <c-help.insight-card tone="{{ tip.info.tone }}" eyebrow="{{ tip.info.title }}">
+                {{ tip.info.body|linebreaksbr }}
+              </c-help.insight-card>
+            </div>
+          {% endfor %}
+        {% endfor %}
+      </c-slot>
+    {% endif %}
+
+    {% for tip in help_tips.general.accordions %}
+      <div
+        {% if tip.sections is None %}
+          x-show="!question"
+        {% else %}
+          x-show="!question && [{% for s in tip.sections %}'{{ s }}', {% endfor %}].includes(section)"
+          {% if form.initial_section not in tip.sections %}x-cloak{% endif %}
+        {% endif %}
+      >
+        <c-help.accordion title="{{ tip.info.title }}">
+          {{ tip.info.body|linebreaksbr }}
+        </c-help.accordion>
+      </div>
+    {% endfor %}
+    {% for question in help_tips.questions %}
+      {% for tip in question.tips.accordions %}
+        <div x-show="question === '{{ question.key|escapejs }}'" x-cloak>
+          <c-help.accordion title="{{ tip.info.title }}" expanded>
+            {{ tip.info.body|linebreaksbr }}
+          </c-help.accordion>
+        </div>
+      {% endfor %}
+    {% endfor %}
+    {% if not help_tips.general %}
+      <p x-show="!question" class="border-b border-default px-lg py-md type-body-md text-tertiary">
+        {% translate "No tips for this step yet." %}
+      </p>
+    {% endif %}
   </c-help.panel>
 </div>

@@ -32,6 +32,8 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
     from django.forms.boundfield import BoundWidget
 
+    from idat.dsa40_wizard.help import HelpTips
+
 logger = logging.getLogger(__name__)
 
 # Only enforced in the browser
@@ -350,6 +352,12 @@ class QuestionsForm(forms.Form):
             field.help_text = question.help_text
         self.fields[question.key] = field
         self.questions[question.key] = question
+
+    def set_help_tips(self, tips: HelpTips) -> None:
+        """Mark the fields of questions with tips (help_tip = field name): they get a
+        help icon, and the help panel shows their tips while they are active."""
+        for question in tips.questions:
+            self.fields[question.key].help_tip = question.key
 
     @cached_property
     def sections(self) -> list[FormSection]:

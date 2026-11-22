@@ -9,6 +9,9 @@
     Esc or a click next to it closes it.
   - Opens on "help-panel" { open: true } (rail buttons) and on a field's help icon
     ("help-tip" on window); "help-panel" { open: false } (panel's minimise) closes it.
+  - `question` (Alpine, readable in the slot): the active question's help-tip id, "" for
+    the general tips. "help-tip" { tip } sets it; so does "help-question" { question }
+    (on window, e.g. from a focused field), without opening the panel.
   - State and behaviour: Alpine.data("helpRegion"), idat/assets/js/components/help_region.js.
 
   Props:
@@ -26,7 +29,8 @@
 <div
   x-data="helpRegion"
   x-on:help-panel="open = $event.detail.open"
-  x-on:help-tip.window="open = true"
+  x-on:help-tip.window="open = true; question = $event.detail.tip"
+  x-on:help-question.window="question = $event.detail.question"
   x-on:keydown.escape.window="dismiss()"
   class="flex shrink-0 {{ class }}"
   {{ attrs }}
