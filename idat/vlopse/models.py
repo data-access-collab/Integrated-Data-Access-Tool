@@ -1,22 +1,20 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import BooleanField, CharField, TextField, URLField
-from django.template import TemplateDoesNotExist
-from django.template.loader import get_template
 from django.utils.translation import gettext_lazy as _
+
+from idat.core.icons import icons
 
 
 def validate_icon_name(name: str) -> None:
-    """Reject names without an icon file (idat/templates/icons/<name>.svg): <c-icon>
-    raises on unknown names, which would break every page showing the VLOPSE."""
-    try:
-        get_template(f"icons/{name}.svg")
-    except TemplateDoesNotExist as e:
+    """Reject names that are not in idat/assets/icons/allowlist.json: <c-icon> raises
+    on unknown names, which would break every page showing the VLOPSE."""
+    if name not in icons():
         raise ValidationError(
-            _("No icon named %(name)s in idat/templates/icons/."),
+            _("No icon named %(name)s in idat/assets/icons/allowlist.json."),
             code="unknown_icon",
             params={"name": name},
-        ) from e
+        )
 
 
 class Vlopse(models.Model):
@@ -69,8 +67,8 @@ class Vlopse(models.Model):
         blank=True,
         validators=[validate_icon_name],
         help_text=_(
-            "Icon shown as the logo, rendered with <c-icon>: name of a file in "
-            'idat/templates/icons/ without ".svg", e.g. "logo-tiktok". '
+            "Icon shown as the logo, rendered with <c-icon>: a name from "
+            'idat/assets/icons/allowlist.json, e.g. "logo-tiktok". '
             "Empty shows the first letter."
         ),
     )

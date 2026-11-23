@@ -75,7 +75,8 @@ The MCP returns React + Tailwind: a visual reference only, never output JSX.
 - Raw px on the 4px grid → Tailwind numbers (gap-[4px] → gap-1, pl-[16px] → pl-4).
   Canvas widths (w-[280px]) → w-full / flex-1, unless the width is part of the design.
 - Auto layout → flex/grid + gap, not margins or absolute positioning.
-- Icons are Lucide: <c-icon>, never the figma.com/api/mcp/asset URLs.
+- Icons are Lucide: <c-icon>, never the figma.com/api/mcp/asset URLs. An icon not in
+  idat/assets/icons/allowlist.json: add it there and run `npm run build:icons`.
 - Whatever doesn't map cleanly (no token or text style, off-grid value, contradiction) is
   not hard-coded: keep the closest token and report it.
 

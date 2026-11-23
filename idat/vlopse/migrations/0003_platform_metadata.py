@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='vlopse',
             name='logo',
-            field=models.CharField(blank=True, help_text='Icon shown as the logo, rendered with <c-icon>: name of a file in idat/templates/icons/ without ".svg", e.g. "logo-tiktok". Empty shows the first letter.', max_length=50, validators=[idat.vlopse.models.validate_icon_name], verbose_name='Logo'),
+            field=models.CharField(blank=True, help_text='Icon shown as the logo, rendered with <c-icon>: a name from idat/assets/icons/allowlist.json, e.g. "logo-tiktok". Empty shows the first letter.', max_length=50, validators=[idat.vlopse.models.validate_icon_name], verbose_name='Logo'),
         ),
         migrations.AddField(
             model_name='vlopse',

@@ -1,8 +1,8 @@
 {% comment %}
-  Lucide icon, or a platform logo (icons/logo-<platform>.svg: Simple Icons, filled; the
-  fill sits on the file's shapes, so they ignore the stroke set here).
-  Shapes come from idat/templates/icons/<name>.svg (a complete Lucide SVG; its root
-  attributes are ignored, this component sets size, stroke and aria).
+  Lucide icon (stroked), or a platform logo (logo-<platform>: Simple Icons, filled).
+  Only names in idat/assets/icons/allowlist.json exist; their shapes are built into
+  idat/core/icons/icons.json by `npm run build:icons`. This component sets size, stroke
+  and aria.
 
   Usage:
     <c-icon name="check" class="size-4 text-success" />          16px, status colour
@@ -13,25 +13,30 @@
   - Colour comes from the text colour (currentColor). Dark mode works automatically.
   - Size via class (size-4 = 16px, size-4.5 = 18px, size-5 = 20px, size-6 = 24px).
     Passing class replaces the default, so always include a size.
-  - The stroke stays 1.75px at every size.
+  - The stroke stays 1.75px at every size (icon-stroke in input.css overrides Lucide's 2).
   - Without label the icon is decorative (aria-hidden). Inside a button that has no visible
     text, put the label on the icon or use aria-label on the button.
-  - Unknown name → TemplateDoesNotExist (loud on purpose, so typos don't fail silently).
+  - Unknown name → UnknownIconError (loud on purpose, so typos don't fail silently).
 {% endcomment %}
 
 <c-vars name="" label="" class="size-5" />
+{% get_icon name as icon %}
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="1.75"
-  stroke-linecap="round"
-  stroke-linejoin="round"
-  class="shrink-0 {{ class }}"
+  viewBox="{{ icon.view_box }}"
+  {% if icon.filled %}
+    fill="currentColor"
+    stroke="none"
+  {% else %}
+    fill="none"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  {% endif %}
+  class="icon-stroke shrink-0 {{ class }}"
   {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %}
   focusable="false"
   {{ attrs }}
 >
-  {% icon_content name %}
+  {{ icon.body }}
 </svg>
