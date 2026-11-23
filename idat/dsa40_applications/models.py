@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class ResearchProject(models.Model):
-    """Container object for access cases for one or more
+    """A research project applying for data access in multiple cases.
     platforms (PlatformApplication). DSA Question answers are stored here."""
 
     title = models.TextField(blank=True)
@@ -34,42 +34,34 @@ class ResearchProject(models.Model):
         return f"{self.title}"
 
     answers: QuerySet[ProjectAnswer]
-    applications: QuerySet[PlatformApplication]
+    access_cases: QuerySet[AccessCase]
 
 
-class PlatformApplication(models.Model):
-    """The application to one platform (VLOPSE) within a project."""
+class ApplicationState(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    READY = "ready", "Ready"
+    SUBMITTED = "submitted", "Submitted"
 
-    # The application wording is more from the user side while case seems
-    # to be the Weizenbaums perspective but they mean the same object?
-    # Each duplicate created by copied_from builds an application but they
-    # all refer to the same case. Unsure if it warrents a seaprate object in between
 
-    class State(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        READY = "ready", "Ready"
-        SUBMITTED = "submitted", "Submitted"
+class AccessCase(models.Model):
+    """The access case of a research project with one or more platforms
+    targeted"""
 
+    state = models.CharField(
+        max_length=16,
+        choices=ApplicationState,
+        default=ApplicationState.DRAFT,
+    )
     project = models.ForeignKey(
         ResearchProject,
         on_delete=models.PROTECT,
-        related_name="applications",
+        related_name="access_cases",
     )
-    state = models.CharField(max_length=20, choices=State.choices, default=State.DRAFT)
-
-    vlopse = models.ForeignKey(
-        Vlopse, on_delete=models.PROTECT, related_name="platform_applications"
-    )
-    copied_from = models.ForeignKey(
-        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="copies"
-    )
-    submitted_at = models.DateTimeField(null=True, blank=True)
-
-    answers: QuerySet[PlatformSpecificAnswer]
+    vlopse = models.ForeignKey(Vlopse, on_delete=models.PROTECT)
 
     class Meta:
-        verbose_name = _("Application")
-        ordering: ClassVar = ["project", "vlopse__name"]
+        verbose_name = _("AccessCase")
+        ordering: ClassVar = ["vlopse__name"]
         constraints: ClassVar = [
             models.UniqueConstraint(
                 fields=["project", "vlopse"],
@@ -78,17 +70,44 @@ class PlatformApplication(models.Model):
         ]
 
     def __str__(self) -> str:
+        return f"Case: {self.project.title}"
+
+
+class AccessApplication(models.Model):
+    """The application to one platform (VLOPSE) within a project."""
+
+    copied_from = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="copies"
+    )
+    access_case = models.OneToOneField(AccessCase, on_delete=models.CASCADE)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    answers: QuerySet[PlatformSpecificAnswer]
+
+    def __str__(self) -> str:
         return f"{self.vlopse} ({self.project.title})"
 
     @property
-    def is_editable_in_place(self) -> bool:
-        return self.state != self.State.SUBMITTED
+    def state(self) -> ApplicationState:
+        return self.access_case.state
 
-    def copy_as_draft(self) -> PlatformApplication:
+    @property
+    def project(self) -> ResearchProject:
+        return self.access_case.project
+
+    @property
+    def vlopse(self) -> Vlopse:
+        return self.access_case.vlopse
+
+    @property
+    def is_editable_in_place(self) -> bool:
+        return self.state != ApplicationState.SUBMITTED
+
+    def copy_as_draft(self) -> AccessApplication:
         # TODO: COPY from Application
-        new = PlatformApplication.objects.create(
+        new = AccessApplication.objects.create(
             application=self.project,
-            state=self.State.DRAFT,
+            state=ApplicationState.DRAFT,
             copied_from=self,
         )
         PlatformSpecificAnswer.objects.bulk_create(
@@ -125,7 +144,7 @@ class ProjectAnswer(BaseAnswer):
 
 class PlatformSpecificAnswer(BaseAnswer):
     application = models.ForeignKey(
-        PlatformApplication, on_delete=models.CASCADE, related_name="answers"
+        AccessApplication, on_delete=models.CASCADE, related_name="answers"
     )
 
     class Meta:

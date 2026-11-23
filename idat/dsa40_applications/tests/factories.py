@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from factory import Sequence, SubFactory
+from factory import Faker, SubFactory, fuzzy
 from factory.django import DjangoModelFactory
 
 from idat.dsa40_applications.models import (
-    PlatformApplication,
+    AccessApplication,
+    AccessCase,
+    ApplicationState,
     PlatformSpecificAnswer,
     ProjectAnswer,
     ResearchProject,
@@ -14,18 +16,28 @@ from idat.vlopse.tests.factories import VlopseFactory
 
 
 class ResearchProjectFactory(DjangoModelFactory[ResearchProject]):
-    owner = SubFactory(UserFactory, username=Sequence(lambda n: f"owner-{n}"))
+    title = Faker("word")
+    owner = SubFactory(UserFactory)
 
     class Meta:
         model = ResearchProject
 
 
-class PlatformApplicationFactory(DjangoModelFactory[PlatformApplication]):
+class AccessCaseFactory(DjangoModelFactory[AccessCase]):
     project = SubFactory(ResearchProjectFactory)
+    state = fuzzy.FuzzyChoice(ApplicationState.values)
     vlopse = SubFactory(VlopseFactory)
 
     class Meta:
-        model = PlatformApplication
+        model = AccessCase
+
+
+class AccessApplicationFactory(DjangoModelFactory[AccessApplication]):
+    access_case = SubFactory(AccessCaseFactory)
+    submitted_at = Faker("date_time")
+
+    class Meta:
+        model = AccessApplication
 
 
 class ProjectAnswerFactory(DjangoModelFactory[ProjectAnswer]):
@@ -36,7 +48,7 @@ class ProjectAnswerFactory(DjangoModelFactory[ProjectAnswer]):
 
 
 class PlatformSpecificAnswerFactory(DjangoModelFactory[PlatformSpecificAnswer]):
-    application = SubFactory(PlatformApplicationFactory)
+    application = SubFactory(AccessApplicationFactory)
 
     class Meta:
         model = PlatformSpecificAnswer

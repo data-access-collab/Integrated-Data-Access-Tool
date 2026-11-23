@@ -9,7 +9,9 @@ from django.forms import ValidationError
 from django.utils import timezone
 
 from idat.dsa40_applications.models import (
-    PlatformApplication,
+    AccessApplication,
+    AccessCase,
+    ApplicationState,
     PlatformSpecificAnswer,
     ResearchProject,
 )
@@ -22,12 +24,11 @@ if TYPE_CHECKING:
     from idat.users.models import User
 
 
-
 @transaction.atomic
 def update_answers(
-    application: PlatformApplication,
-    answers: dict[str, object],  # WIll this from wizard state as well?
-) -> PlatformApplication:
+    application: AccessApplication,
+    answers: dict[str, object],  # Will this from wizard state as well?
+) -> AccessApplication:
     """
     Apply answers {question_key: value}.
     Returns the application that was actually edited. For a submitted
@@ -35,7 +36,7 @@ def update_answers(
     """
     if not application.is_editable_in_place:
         application = application.copy_as_draft()
-    elif application.state == PlatformApplication.State.READY:
+    elif application.state == ApplicationState.READY:
         _validate(application)
 
     # TODO: Use form_handler here and map questions
@@ -51,33 +52,37 @@ def update_answers(
 
 
 @transaction.atomic
-def mark_ready(application: PlatformApplication) -> PlatformApplication:
-    _require_state(application, PlatformApplication.State.DRAFT)
+def mark_ready(application: AccessApplication) -> AccessApplication:
+    _require_state(application, ApplicationState.DRAFT)
     _validate(application)
-    application.state = PlatformApplication.State.READY
-    application.save(update_fields=["state"])
+    # TODO: create a CaseStatusEvent here
+    case = application.access_case
+    case.state = ApplicationState.READY
+    case.save(update_fields=["state"])
     return application
 
 
 @transaction.atomic
-def submit(application: PlatformApplication) -> PlatformApplication:
-    _require_state(application, PlatformApplication.State.READY)
+def submit(application: AccessApplication) -> AccessApplication:
+    _require_state(application, ApplicationState.READY)
     _validate(application)
-    application.state = PlatformApplication.State.SUBMITTED
+    # TODO: create a CaseStatusEvent here
+    case = application.access_case
+    case.state = ApplicationState.READY
+    case.save(update_fields=["state"])
+
     application.submitted_at = timezone.now()
-    application.save(update_fields=["state", "submitted_at"])
+    application.save(update_fields=["submitted_at"])
     return application
 
 
-def _require_state(
-    application: PlatformApplication, state: PlatformApplication.State
-) -> None:
+def _require_state(application: AccessApplication, state: ApplicationState) -> None:
     if application.state != state:
         msg = f"Application must be {state}, is {application.state}."
         raise ValidationError(msg)
 
 
-def _validate(application: PlatformApplication) -> bool:
+def _validate(application: AccessApplication) -> bool:
     # TODO
     return True
 
@@ -88,7 +93,8 @@ def create_research_project(
     state: WizardState,
 ) -> ResearchProject:
     """Persist a draft: one Application per selected VLOPSE, an Answer per
-    answered question + the platforms' overrides
+    answered question + the platforms' overrides.
+    Creates an intermediate AccessCase object as a link.
     """
     # TODO: validate file uploads
     # TODO: use questionaire to separate platform specific from non platform specific
@@ -97,19 +103,20 @@ def create_research_project(
 
     project = ResearchProject.objects.create(owner=owner)
     vlopses = Vlopse.objects.in_bulk(state["vlopses"])
-    platforms = {
-        vlopse_id: PlatformApplication.objects.create(
-            project=project, vlopse=vlopses[vlopse_id]
-        )
+    cases = {
+        vlopse_id: AccessCase.objects.create(project=project, vlopse=vlopses[vlopse_id])
         for vlopse_id in state["vlopses"]
         if vlopse_id in vlopses
     }
-    for platform in platforms.values():
+    for case in cases.values():
+        application_draft = AccessApplication.objects.create(
+            access_case=case, state=ApplicationState.DRAFT
+        )
         for key, value in state["answers"].items():
             if key not in questions or is_unanswered(value):
                 continue
-            answer = PlatformSpecificAnswer.objects.create(
-                application=platform, key=key, value=value
+            answer = PlatformSpecificAnswer.objects.create(  # noqa: F841
+                application=application_draft, key=key, value=value
             )
 
     return project
