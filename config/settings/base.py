@@ -91,6 +91,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "django_htmx",
     "django_cotton",
+    "polymorphic",
 ]
 
 LOCAL_APPS = [
@@ -99,6 +100,7 @@ LOCAL_APPS = [
     "idat.core",
     "idat.vlopse",
     "idat.dsa40_form_handler",
+    "idat.dsa40_applications",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
