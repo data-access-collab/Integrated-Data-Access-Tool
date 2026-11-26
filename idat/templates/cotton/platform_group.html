@@ -1,0 +1,103 @@
+{% comment %}
+  One platform type in the platform picker (Figma 02.1, "Group · …" rows): a header that
+  expands and collapses the group's <c-platform-row>s, and "Select all" for its
+  checkboxes.
+
+  Props:
+    label     group name, e.g. "Social media & video" (Vlopse.PlatformType label)
+    members   platform names, shown in the header while the group is collapsed
+    expanded  boolean attribute: open on page load (the server decides: a selected
+              platform in it, or a type that always starts open)
+    slot      the group's <c-platform-row>s
+
+  - "Select all" checks every checkbox in the group and opens it; when all are checked it
+    reads "Deselect all" and clears them. Each changed checkbox fires a bubbling "change"
+    event, so listeners on the form see it.
+  - Collapsed rows are hidden, not removed: their checkboxes are still submitted.
+  - A full-width block with a bottom border; the list drops the last one:
+    class="overflow-hidden rounded-lg border border-default bg-surface *:last:border-b-0".
+
+  Usage:
+    {% for group in form.platform_groups %}
+      <c-platform-group :label="group.label" :members="group.members" :expanded="group.open">
+        {% for choice in group.choices %}<c-platform-row … />{% endfor %}
+      </c-platform-group>
+    {% endfor %}
+{% endcomment %}
+
+{% load i18n %}
+<c-vars label="" members="" :expanded="False" class="" />
+{% translate "Select all" as select_label %}
+{% translate "Deselect all" as deselect_label %}
+<div
+  x-data="{
+    open: {% if expanded %}true{% else %}false{% endif %},
+    total: 0,
+    checked: 0,
+    get allChecked() { return this.total > 0 && this.checked === this.total },
+    boxes() { return [...this.$refs.rows.querySelectorAll('input[type=checkbox]:not(:disabled)')] },
+    sync() { const boxes = this.boxes(); this.total = boxes.length; this.checked = boxes.filter((b) => b.checked).length },
+    toggleAll() {
+      const check = !this.allChecked;
+      for (const box of this.boxes()) {
+        if (box.checked !== check) { box.checked = check; box.dispatchEvent(new Event('change', { bubbles: true })) }
+      }
+      if (check) this.open = true;
+      this.sync();
+    },
+  }"
+  x-init="sync()"
+  x-on:change="sync()"
+  x-id="['platform-group']"
+  class="border-b border-default last:border-b-0 {{ class }}"
+  {{ attrs }}
+>
+  <div
+    class="flex items-center gap-sm border-default bg-surface-muted px-md py-sm {% if expanded %}border-b{% endif %}"
+    x-bind:class="{ 'border-b': open }"
+  >
+    <h2 class="flex min-w-0 flex-1">
+      <button
+        type="button"
+        x-on:click="open = !open"
+        aria-expanded="{% if expanded %}true{% else %}false{% endif %}"
+        x-bind:aria-expanded="open"
+        x-bind:aria-controls="$id('platform-group')"
+        class="flex min-w-0 flex-1 cursor-pointer items-center gap-sm text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        <c-icon
+          name="chevron-right"
+          class="size-4 text-icon-default transition-transform {% if expanded %}rotate-90{% endif %}"
+          x-bind:class="{ 'rotate-90': open }"
+        />
+        <span class="shrink-0 type-label-lg text-primary">{{ label }}</span>
+        {% if members %}
+          <span
+            class="min-w-0 flex-1 truncate type-body-sm text-tertiary"
+            {% if expanded %}hidden{% endif %}
+            x-bind:hidden="open"
+          >{{ members }}</span>
+        {% endif %}
+      </button>
+    </h2>
+    <button
+      type="button"
+      x-on:click="toggleAll()"
+      class="shrink-0 cursor-pointer type-label-md text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      <span
+        x-text="allChecked ? '{{ deselect_label|escapejs }}' : '{{ select_label|escapejs }}'"
+      >{{ select_label }}</span>
+      <span class="sr-only">{{ label }}</span>
+    </button>
+  </div>
+  <div
+    x-ref="rows"
+    x-bind:id="$id('platform-group')"
+    {% if not expanded %}hidden{% endif %}
+    x-bind:hidden="!open"
+    class="*:last:border-b-0"
+  >
+    {{ slot }}
+  </div>
+</div>

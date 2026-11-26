@@ -1,6 +1,6 @@
 <div class="flex flex-wrap gap-md">
   <div class="h-208">
-    <c-wizard.sidebar current-step="enter-details">
+    <c-wizard.sidebar :steps="wizard_steps_demo.enter_details">
       <c-wizard.section-item state="complete" icon="user" label="About you" count="5/5" href="#wizard-sidebar" />
       <c-wizard.section-item
         state="complete"
@@ -29,9 +29,9 @@
     </c-wizard.sidebar>
   </div>
   <div class="h-208">
-    <c-wizard.sidebar current-step="generate" :hrefs="wizard_hrefs" />
+    <c-wizard.sidebar :steps="wizard_steps_demo.generate" />
   </div>
   <div class="h-208">
-    <c-wizard.sidebar current-step="choose-vlopses" />
+    <c-wizard.sidebar :steps="wizard_steps_demo.choose_vlopses" />
   </div>
 </div>

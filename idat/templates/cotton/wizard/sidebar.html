@@ -7,21 +7,19 @@
   wizard.
 
   Props:
-    current-step  "choose-vlopses" · "enter-details" (default) · "review" · "generate" ·
-                  "submit". Earlier steps show as done, later ones as upcoming.
-    hrefs         optional dict of step links, keys choose_vlopses, enter_details,
-                  review, generate, submit (:hrefs="wizard_urls"). Only done steps
-                  become links.
+    steps  all steps in order, from the view (:steps="wizard_steps", see
+           get_wizard_steps in dsa40_wizard/views.py): each with slug, number, label,
+           state ("done" · "current" · "upcoming") and href (done steps only).
 
   Slot: the Enter details sections (<c-wizard.section-item> with <c-wizard.sub-item>
-  inside), shown under "Enter your details" while that step is current.
+  inside), shown under the current step; only Enter details passes them.
 
   The search box dispatches "wizard-search" with { query } while typing.
   Each step item carries data-wizard-step="<step slug>", e.g. for scripts that save the
   current step before following a step link.
 
   Usage:
-    <c-wizard.sidebar current-step="enter-details" :hrefs="wizard_urls">
+    <c-wizard.sidebar :steps="wizard_steps">
       <c-wizard.section-item state="complete" icon="user" label="About you" count="5/5" href="…" />
       <c-wizard.section-item state="current" icon="flask" label="Research project" count="4/9" href="…">
         <c-wizard.sub-item label="Research question" href="#research-question" current />
@@ -30,7 +28,7 @@
 {% endcomment %}
 
 {% load i18n %}
-<c-vars current-step="enter-details" hrefs="" class="" />
+<c-vars steps="" class="" />
 <aside class="flex h-full w-75 shrink-0 flex-col gap-md overflow-y-auto bg-nav px-2.5 py-md {{ class }}" {{ attrs }}>
   <label
     x-data
@@ -49,40 +47,15 @@
 
   <nav aria-label="{% translate "Application steps" %}">
     <ol class="flex flex-col gap-2xs">
-      <c-wizard.step-item
-        number="1"
-        data-wizard-step="choose-vlopses"
-        label="{% translate "Choose platforms" %}"
-        state="{% if current_step == "choose-vlopses" %}current{% else %}done{% endif %}"
-        href="{% if current_step != "choose-vlopses" %}{{ hrefs.choose_vlopses }}{% endif %}"
-      />
-      <c-wizard.step-item
-        number="2"
-        data-wizard-step="enter-details"
-        label="{% translate "Enter your details" %}"
-        state="{% if current_step == "choose-vlopses" %}upcoming{% elif current_step == "enter-details" %}current{% else %}done{% endif %}"
-        href="{% if current_step != "choose-vlopses" and current_step != "enter-details" %}{{ hrefs.enter_details }}{% endif %}"
-      >{% if current_step == "enter-details" %}{{ slot }}{% endif %}</c-wizard.step-item>
-      <c-wizard.step-item
-        number="3"
-        data-wizard-step="review"
-        label="{% translate "Review" %}"
-        state="{% if current_step == "review" %}current{% elif current_step == "generate" or current_step == "submit" %}done{% else %}upcoming{% endif %}"
-        href="{% if current_step == "generate" or current_step == "submit" %}{{ hrefs.review }}{% endif %}"
-      />
-      <c-wizard.step-item
-        number="4"
-        data-wizard-step="generate"
-        label="{% translate "Generate" %}"
-        state="{% if current_step == "generate" %}current{% elif current_step == "submit" %}done{% else %}upcoming{% endif %}"
-        href="{% if current_step == "submit" %}{{ hrefs.generate }}{% endif %}"
-      />
-      <c-wizard.step-item
-        number="5"
-        data-wizard-step="submit"
-        label="{% translate "Submit" %}"
-        state="{% if current_step == "submit" %}current{% else %}upcoming{% endif %}"
-      />
+      {% for step in steps %}
+        <c-wizard.step-item
+          :number="step.number"
+          :label="step.label"
+          :state="step.state"
+          :href="step.href"
+          data-wizard-step="{{ step.slug }}"
+        >{% if step.state == "current" %}{{ slot }}{% endif %}</c-wizard.step-item>
+      {% endfor %}
     </ol>
   </nav>
 </aside>

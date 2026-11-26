@@ -35,7 +35,26 @@ jobs:
         with:
           extra_args:
 
-  # With no caching at all the entire ci process takes 3m to complete!
+  icons:
+    # idat/core/icons/icons.json is generated from idat/assets/icons/allowlist.json and
+    # committed: fail when it's out of sync.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build:icons
+      - name: Check icons.json is up to date
+        run: git diff --exit-code idat/core/icons/icons.json
+
+  # With no caching at all the entire ci process takes 3m to complete
   pytest:
     runs-on: ubuntu-latest
 

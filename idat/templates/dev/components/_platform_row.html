@@ -1,34 +1,57 @@
 <div class="flex flex-col gap-md">
-  <p class="type-label-md text-secondary">672px and wider: table columns (scroll sideways)</p>
+  <p class="type-label-md text-secondary">672px and wider: table columns · with typical reply (scroll sideways)</p>
   <div class="overflow-x-auto">
-    <div class="w-180 overflow-hidden rounded-md border border-default *:last:border-b-0">
+    <div class="w-180 overflow-hidden rounded-lg border border-default bg-surface *:last:border-b-0">
       <c-platform-row
         name="TikTok"
+        logo="logo-tiktok"
         operator="TikTok Technology Ltd."
-        questions="14"
         channel="Web form"
         response="4–6 weeks"
         input-name="row_vlopses_{{ theme }}"
         value="1"
       />
       <c-platform-row
-        name="TikTok"
-        operator="TikTok Technology Ltd."
-        questions="14"
-        channel="Web form"
-        response="4–6 weeks"
+        name="Instagram"
+        logo="logo-instagram"
+        operator="Meta Platforms Ireland Ltd."
+        channel="ICPSR portal"
+        response="6–8 weeks"
         input-name="row_vlopses_{{ theme }}"
         value="2"
         selected
       />
     </div>
   </div>
-  <p class="type-label-md text-secondary">Narrower than 672px: the columns move under the name</p>
-  <div class="max-w-md overflow-hidden rounded-md border border-default *:last:border-b-0">
+  <p class="type-label-md text-secondary">Without typical reply: the column is left out (as in the platform picker)</p>
+  <div class="overflow-x-auto">
+    <div class="w-180 overflow-hidden rounded-lg border border-default bg-surface *:last:border-b-0">
+      <c-platform-row
+        name="Snapchat"
+        logo="logo-snapchat"
+        operator="Snap B.V."
+        channel="E-mail"
+        input-name="row_vlopses_noreply_{{ theme }}"
+        value="1"
+      />
+      <c-platform-row
+        name="Temu"
+        operator="Whaleco Technology Limited"
+        channel="Web form"
+        input-name="row_vlopses_noreply_{{ theme }}"
+        value="2"
+        selected
+      />
+    </div>
+  </div>
+  <p class="type-label-md text-secondary">
+    Narrower than 672px: the columns move under the name · without logo: letter tile
+  </p>
+  <div class="max-w-md overflow-hidden rounded-lg border border-default bg-surface *:last:border-b-0">
     <c-platform-row
       name="TikTok"
+      logo="logo-tiktok"
       operator="TikTok Technology Ltd."
-      questions="14"
       channel="Web form"
       response="4–6 weeks"
       input-name="row_vlopses_narrow_{{ theme }}"
@@ -36,12 +59,21 @@
     />
     <c-platform-row
       name="Google Search"
+      logo="logo-google"
       operator="Google Ireland Ltd."
-      questions="1"
-      channel="E-mail"
+      channel="Web form"
+      response="3–5 weeks"
       input-name="row_vlopses_narrow_{{ theme }}"
       value="2"
       selected
+    />
+    <c-platform-row
+      name="Booking.com"
+      operator="Booking.com B.V."
+      channel="Web form"
+      response="unknown"
+      input-name="row_vlopses_narrow_{{ theme }}"
+      value="3"
     />
   </div>
 </div>

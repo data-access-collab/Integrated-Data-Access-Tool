@@ -82,6 +82,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     # "django.contrib.humanize", # Handy template tags
     "django.contrib.admin",
+    "django.contrib.postgres",  # ArrayField (dsa40_wizard.WizardInfo)
     "django.forms",
 ]
 THIRD_PARTY_APPS = [

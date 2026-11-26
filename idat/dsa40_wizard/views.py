@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import typing
-from enum import StrEnum
 from http import HTTPStatus
-from typing import Any
+from typing import Any, NamedTuple
 
 from django.core.exceptions import SuspiciousOperation
 from django.http import (
@@ -29,6 +28,7 @@ from idat.dsa40_wizard.forms import (
     QuestionsForm,
     VlopseSelectionForm,
 )
+from idat.dsa40_wizard.help import HelpTips, find_help_tips
 from idat.dsa40_wizard.services.preview import build_application_previews
 from idat.dsa40_wizard.state import (
     DRAFT_UNAVAILABLE_HEADER,
@@ -44,6 +44,7 @@ from idat.dsa40_wizard.state import (
     encode_file_encryption_key,
     load_wizard_state,
 )
+from idat.dsa40_wizard.steps import WizardStep, get_step_url
 from idat.vlopse.models import Vlopse
 
 if typing.TYPE_CHECKING:
@@ -68,29 +69,41 @@ def is_save(request: HttpRequest) -> bool:
     return bool(match and match.view_name == "dsa40_wizard:wizard_save")
 
 
-class WizardStep(StrEnum):
-    """The wizard steps in order: URL slugs and the sidebar's `current-step`.
-    Keep in sync with the steps of templates/cotton/wizard/sidebar.html."""
+class WizardStepStatus(NamedTuple):
+    """One wizard step relative to the current step."""
 
-    CHOOSE_VLOPSES = "choose-vlopses"
-    ENTER_DETAILS = "enter-details"
-    REVIEW = "review"
-    GENERATE = "generate"
-    SUBMIT = "submit"
-
-
-def get_step_url(step: WizardStep) -> str:
-    return reverse("dsa40_wizard:wizard_step", args=[step])
+    slug: str
+    number: int
+    label: str
+    state: str  # "done", "current", "upcoming"
+    href: str  # done steps that have a view; else ""
 
 
-def get_wizard_urls() -> dict[str, str]:
-    """Links of the sidebar's done steps (wizard.sidebar `hrefs`), keyed by slug with
-    underscores (choose_vlopses …): only steps that have a view.
-
-    Note: Underscores are needed because Django templates do not accept hyphenated
-    variable names.
+def get_wizard_steps(current_step: WizardStep) -> list[WizardStepStatus]:
+    """All steps in order, as seen from `current_step`: steps before it are marked
+    'done', later ones 'upcoming'.
     """
-    return {step.replace("-", "_"): get_step_url(step) for step in STEP_VIEWS}
+    current = list(WizardStep).index(current_step)
+    steps = []
+    for index, step in enumerate(WizardStep):
+        if index < current:
+            state = "done"
+        elif index == current:
+            state = "current"
+        else:
+            state = "upcoming"
+        href = get_step_url(step) if state == "done" and step in STEP_VIEWS else ""
+        steps.append(WizardStepStatus(step.value, index + 1, step.label, state, href))
+    return steps
+
+
+def get_steps_context(current_step: WizardStep) -> dict[str, Any]:
+    """The current step, the sidebar's steps and the WizardStep enum."""
+    return {
+        "current_step": current_step,
+        "wizard_steps": get_wizard_steps(current_step),
+        "WizardStep": WizardStep,
+    }
 
 
 def get_mapped_vlopse_questions(vlopse_ids: list[int]) -> list[FormQuestion]:
@@ -117,8 +130,7 @@ def get_shell_context(load_url: str, current_step: WizardStep) -> dict[str, Any]
     """
     return {
         "load_url": load_url,
-        "current_step": current_step,
-        "wizard_urls": get_wizard_urls(),
+        **get_steps_context(current_step),
         "state_ttl": int(MAX_STATE_AGE / 60 / 60),
     }
 
@@ -255,6 +267,10 @@ class WizardFormStep(View):
         """Extra template context, applied however the step gets rendered."""
         return {}
 
+    def get_help_tips(self, form: forms.Form) -> HelpTips:
+        """The help panel's tips: those of the step."""
+        return find_help_tips(self.step)
+
     def go_to(self, step_cls: type[WizardFormStep] | None) -> HttpResponse:
         """Render another step with the current state, without its dispatch;
         check_prerequisites still applies.
@@ -274,9 +290,12 @@ class WizardFormStep(View):
             "dsa40_wizard/_step.html",
             {
                 "step_template": self.template_name,
-                "current_step": self.step,
-                "wizard_urls": get_wizard_urls(),
+                **get_steps_context(self.step),
+                # "Step 1 of 5"
+                "step_number": list(WizardStep).index(self.step) + 1,
+                "step_count": len(WizardStep),
                 "form": form,
+                "help_tips": self.get_help_tips(form),
                 **context,
             },
         )
@@ -354,6 +373,13 @@ class QuestionsStep(WizardFormStep):
     def update_state(self, form: forms.Form) -> None:
         self.state["answers"] = dict(form.cleaned_data)
 
+    def get_help_tips(self, form: QuestionsForm) -> HelpTips:
+        """The tips of the step and of the form's sections and questions; fields
+        with an accordion tip get a help icon."""
+        tips = find_help_tips(self.step, form)
+        form.set_help_tips(tips)
+        return tips
+
     def save(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         """Store the entered answers without enforcing them, refresh the token and
         update the sections' answered counts (out of band; the form isn't swapped, so
@@ -370,8 +396,7 @@ class QuestionsStep(WizardFormStep):
             {
                 # unbound: counts from the stored answers, no errors before a submit
                 "form": self.get_form(),
-                "current_step": self.step,
-                "wizard_urls": get_wizard_urls(),
+                **get_steps_context(self.step),
             },
         )
         return self.add_response_headers(response)

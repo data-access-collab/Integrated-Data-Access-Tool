@@ -1,0 +1,53 @@
+{% comment %}
+  Help / Panel: the open help column on the right of the wizard, 360px
+  wide. <c-help.rail> is its minimised form; <c-help.region> switches between the two.
+
+  - The minimise button dispatches a bubbling "help-panel" event with { open: false };
+    <c-help.region> listens and decides what open and minimised mean (in the flow on
+    wide screens, an overlay on narrow ones).
+  - Empty named slots render nothing, so a step without tips shows only the header and
+    the default slot.
+
+  Props:
+    title    header text; defaults to "Help & tips"
+    context  named slot under the header: what the tips are about, e.g.
+             <p class="type-overline text-tertiary">Tips for</p>
+             <p class="type-title-md text-primary">Main research question</p>
+    cards    named slot: <c-help.insight-card>s, stacked with gap-sm
+    slot     <c-help.accordion>s (full-width rows; the last divider stays, as in Figma)
+    footer   named slot: a link row, e.g. a video
+
+  Usage:
+    <c-help.panel>
+      <c-slot name="context">…</c-slot>
+      <c-slot name="cards"><c-help.insight-card … /></c-slot>
+      <c-help.accordion title="…" tip="research-question">…</c-help.accordion>
+    </c-help.panel>
+{% endcomment %}
+
+{% load i18n %}
+<c-vars title="" class="" />
+{% translate "Help & tips" as default_title %}
+<aside
+  aria-label="{{ title|default:default_title }}"
+  class="flex w-90 flex-col overflow-y-auto border-l border-default bg-surface pb-md {{ class }}"
+  {{ attrs }}
+>
+  <div class="flex items-center gap-xs py-md pr-md pl-lg">
+    <c-icon name="lightbulb" class="-ml-2xs size-5 text-accent" />
+    <h2 class="min-w-0 flex-1 type-title-lg text-primary">{{ title|default:default_title }}</h2>
+    <button
+      type="button"
+      x-data
+      x-on:click="$dispatch('help-panel', { open: false })"
+      aria-label="{% translate 'Minimise help' %}"
+      class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-sm text-icon-default hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      <c-icon name="panel-right" class="size-4.5" />
+    </button>
+  </div>
+  {% if context %}<div class="flex flex-col gap-2xs px-lg pb-md">{{ context }}</div>{% endif %}
+  {% if cards %}<div class="flex flex-col gap-sm px-lg pb-md">{{ cards }}</div>{% endif %}
+  {% if slot %}<div class="border-t border-default">{{ slot }}</div>{% endif %}
+  {% if footer %}<div class="flex flex-col gap-xs px-lg pt-md">{{ footer }}</div>{% endif %}
+</aside>

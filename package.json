@@ -6,12 +6,16 @@
   "scripts": {
     "build:css": "tailwindcss -i idat/assets/css/input.css -o idat/static/dist/main.css --minify",
     "build:js": "esbuild idat/assets/js/main.js --bundle --minify --outfile=idat/static/dist/main.js",
-    "build": "npm run build:css && npm run build:js",
+    "build": "npm run build:icons && npm run build:css && npm run build:js",
     "watch:css": "tailwindcss -i idat/assets/css/input.css -o idat/static/dist/main.css --watch=always",
     "watch:js": "esbuild idat/assets/js/main.js --bundle --sourcemap --outfile=idat/static/dist/main.js --watch=forever",
-    "watch": "concurrently -n css,js npm:watch:css npm:watch:js"
+    "watch": "concurrently -n css,js npm:watch:css npm:watch:js",
+    "build:icons": "node idat/assets/icons/build.mjs"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "1.2.158",
+    "@iconify-json/simple-icons": "1.2.103",
+    "@iconify/utils": "3.1.7",
     "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/forms": "^0.5.11",
     "concurrently": "^9.2.5",

@@ -13,20 +13,23 @@ the file named there.
 
 ## Setup
 
-| Part                                                    | Where                                                                |
-|---------------------------------------------------------|----------------------------------------------------------------------|
-| Components ([django-cotton](https://django-cotton.com)) | `idat/templates/cotton/`                                             |
-| Design tokens (Tailwind v4 theme)                       | `idat/assets/css/input.css`                                          |
-| Alpine components                                       | `idat/assets/js/components/`, registered in `idat/assets/js/main.js` |
-| Icons (Lucide SVGs)                                     | `idat/templates/icons/`, rendered by `<c-icon>`                      |
-| Component gallery (DEBUG only)                          | `/dev/components/` · `idat/core/views/dev_gallery.py`                |
+| Part                                                    | Where                                                                                                             |
+|---------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| Components ([django-cotton](https://django-cotton.com)) | `idat/templates/cotton/`                                                                                          |
+| Design tokens (Tailwind v4 theme)                       | `idat/assets/css/input.css`                                                                                       |
+| Alpine components                                       | `idat/assets/js/components/`, registered in `idat/assets/js/main.js`                                              |
+| Icon allowlist (Lucide, Simple Icons)                   | `idat/assets/icons/allowlist.json` → `npm run build:icons` → `idat/core/icons/icons.json`, rendered by `<c-icon>` |
+| Component gallery (DEBUG only)                          | `/dev/components/` · `idat/core/views/dev_gallery.py`                                                             |
 
-- `django_cotton` is in `INSTALLED_APPS`; `idat_base_tags` (`define`, `icon_content`) is a
+- `django_cotton` is in `INSTALLED_APPS`; `idat_base_tags` (`define`, `get_icon`) is a
   template builtin.
 - A file's path sets its tag: `wizard/section_item.html` → `<c-wizard.section-item>`.
 - Tokens only: Tailwind's default colours, radii and shadows are removed.
 - Build assets on the host: `npm run build` (or `npm run watch`). The output in
   `idat/static/dist/` is loaded by `base.html`.
+- Icons: only names in `idat/assets/icons/allowlist.json` exist. To add one, add a line
+  (internal name → the Lucide or Simple Icons name), run `npm run build:icons` and commit the
+  allowlist with the generated `idat/core/icons/icons.json`. CI fails if they disagree.
 
 ### Using a component
 

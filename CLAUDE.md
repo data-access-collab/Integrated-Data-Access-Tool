@@ -131,8 +131,10 @@ shadow-md, rounded-xl … generate NO CSS.
 ### Icons and assets
 - Figma icons are Lucide (24px grid, 1.75 stroke): <c-icon name="check" class="size-4
   text-success" />, never figma.com/api/mcp/asset URLs, never <img> (can't be recolored).
-- c-icon inlines the shapes of idat/templates/icons/<name>.svg ({% icon_content name %})
-  and sets size, stroke and aria itself, so currentColor and dark mode work.
-- Icon files are complete, valid SVGs (24×24 viewBox, stroke="currentColor") with an XML
-  comment above the root (<!-- Lucide "x" (ISC licence) … -->), never {# #}.
+- Only allowlisted icons exist: idat/assets/icons/allowlist.json maps our names to
+  @iconify-json/lucide and (logo-*) @iconify-json/simple-icons. To add one: add a line,
+  run `npm run build:icons`, commit both the allowlist and idat/core/icons/icons.json
+  (generated, never edited by hand; CI checks it's up to date). No hand-made SVG files.
+- c-icon inlines the shapes from icons.json ({% get_icon name as icon %}) and sets size,
+  stroke/fill and aria itself, so currentColor and dark mode work.
 - Other images: idat/static/img/, via {% load static %} … {% static 'img/…' %}.

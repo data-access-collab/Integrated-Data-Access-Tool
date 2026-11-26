@@ -30,6 +30,9 @@ from idat.vlopse.models import Vlopse
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
+    from django.forms.boundfield import BoundWidget
+
+    from idat.dsa40_wizard.help import HelpTips
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +70,26 @@ def has_mapping(vlopse: Vlopse) -> bool:
     return True
 
 
+class PlatformGroup(NamedTuple):
+    """One group of the platform picker: a Vlopse.PlatformType and its choices."""
+
+    type: str
+    label: str
+    choices: list[BoundWidget]  # the field's subwidgets, one checkbox each
+    members: str  # platform names, shown while the group is collapsed
+    open: bool
+
+
+# Groups that start expanded even without a selection
+OPEN_PLATFORM_TYPES = {
+    Vlopse.PlatformType.SOCIAL_MEDIA,
+    Vlopse.PlatformType.SEARCH_ENGINE,
+}
+
+
 class VlopseSelectionForm(forms.Form):
     vlopses = forms.ModelMultipleChoiceField(
-        queryset=Vlopse.objects.all(),
+        queryset=Vlopse.objects.order_by("name"),
         widget=forms.CheckboxSelectMultiple,
         required=True,
         error_messages={"required": "Please select at least one VLOPSE"},
@@ -89,6 +109,37 @@ class VlopseSelectionForm(forms.Form):
                 params={"names": ", ".join(unavailable)},
             )
         return vlopses
+
+    @cached_property
+    def platform_groups(self) -> list[PlatformGroup]:
+        """The checkboxes grouped by platform type, in Vlopse.PlatformType order; empty
+        groups are left out. A group starts open when one of its platforms is selected,
+        its type is in OPEN_PLATFORM_TYPES, or it is the only group."""
+        by_type = defaultdict(list)
+        for choice in self["vlopses"]:
+            by_type[choice.data["value"].instance.platform_type].append(choice)
+        groups = []
+        for value, label in Vlopse.PlatformType.choices:
+            if not (choices := by_type.get(value)):
+                continue
+            groups.append(
+                PlatformGroup(
+                    type=value,
+                    label=label,
+                    choices=choices,
+                    members=", ".join(c.data["value"].instance.name for c in choices),
+                    open=value in OPEN_PLATFORM_TYPES
+                    or any(c.data["selected"] for c in choices),
+                )
+            )
+        if len(groups) == 1:
+            groups[0] = groups[0]._replace(open=True)
+        return groups
+
+    @property
+    def platform_count(self) -> int:
+        """Number of platforms in the picker."""
+        return sum(len(group.choices) for group in self.platform_groups)
 
 
 class ClientFileWidget(forms.Widget):
@@ -301,6 +352,12 @@ class QuestionsForm(forms.Form):
             field.help_text = question.help_text
         self.fields[question.key] = field
         self.questions[question.key] = question
+
+    def set_help_tips(self, tips: HelpTips) -> None:
+        """Mark the fields of questions with tips (help_tip = field name): they get a
+        help icon, and the help panel shows their tips while they are active."""
+        for question in tips.questions:
+            self.fields[question.key].help_tip = question.key
 
     @cached_property
     def sections(self) -> list[FormSection]:

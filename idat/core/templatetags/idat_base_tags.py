@@ -1,14 +1,13 @@
-import re
+import logging
 from typing import Any
 
 from django import template
-from django.template.loader import get_template
-from django.utils.safestring import SafeString, mark_safe
+
+from idat.core.icons import get_icon, icons
+
+logger = logging.getLogger(__name__)
 
 register = template.Library()
-
-_SVG_CONTENT = re.compile(r"<svg\b[^>]*>(?P<content>.*)</svg>", re.DOTALL)
-_XML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 @register.simple_tag
@@ -22,20 +21,24 @@ def define(value: Any) -> Any:  # noqa: ANN401
     return value
 
 
-@register.simple_tag
-def icon_content(name: str) -> SafeString:
-    """Return the shapes inside idat/templates/icons/<name>.svg, without the <svg> root
+# {% get_icon name as icon %}: icon.body (shapes), icon.filled. Used by <c-icon>.
+register.simple_tag(get_icon)
 
-    The files are complete SVG documents (previewable, valid XML). <c-icon> renders
-    its own <svg> root (size, stroke, aria attributes) and puts these shapes in it.
-    Comments are dropped. An unknown name raises TemplateDoesNotExist.
+
+@register.filter
+def has_icon(name: str) -> bool:
+    """Whether icon <name> is in the allowlist. For icon names that come from data
+    (e.g. Vlopse.logo), which can outlive their icon: check before <c-icon>, which
+    raises on unknown names, and fall back. A missing icon is logged as a warning.
 
     Example:
-        <svg viewBox="0 0 24 24" …>{% icon_content "check" %}</svg>
+        {% if vlopse.logo|has_icon %}
+          <c-icon :name="vlopse.logo" />
+        {% else %}…{% endif %}
     """
-    source = get_template(f"icons/{name}.svg").template.source
-    match = _SVG_CONTENT.search(source)
-    if match is None:
-        msg = f"icons/{name}.svg has no <svg> root element"
-        raise ValueError(msg)
-    return mark_safe(_XML_COMMENT.sub("", match["content"]).strip())  # noqa: S308 (trusted project file)
+    if not name:
+        return False
+    if name not in icons():
+        logger.warning("Icon %r is not in idat/assets/icons/allowlist.json", name)
+        return False
+    return True

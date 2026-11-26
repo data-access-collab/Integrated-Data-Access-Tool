@@ -1,59 +1,55 @@
 {% comment %}
-  Help-panel card. Community numbers (tone "insight") are only shown above a minimum sample
-  (n ≥ 10) and always state the sample; below it use tone "not-enough-data".
-  Pass :sample to enforce this: an insight with sample < 10 renders as not-enough-data.
+  Help-panel card.
 
   Props:
-    tone     "insight" (default) · "platform" · "warning" · "not-enough-data"
-    eyebrow  overline, e.g. "Community insight"; not-enough-data defaults to "Not enough data yet"
+    tone     "insight" (default) · "info" · "warning" (the Figma tones) · "danger"
+             (colours and icon from Figma Review / Warning Item, Severity=Blocking,
+             43:5387) · "neutral" (grey, the colours of Figma's Tone=Not enough data).
+             Same names as WizardInfo.Tone.
+    eyebrow  overline, e.g. "Community insight"
     body     text (or use the slot)
-    icon     icon name; defaults per tone: target · info · alert-triangle · users
-    sample   number of comparable applications behind an insight (:sample="11")
+    icon     icon name; defaults per tone: target · info · alert-triangle · alert-circle ·
+             info
 
   Usage:
-    <c-help.insight-card eyebrow="Community insight" :sample="11"
+    <c-help.insight-card eyebrow="Community insight"
       body="8 of 11 researchers who named a concrete Art. 34 risk category here were granted access." />
-    <c-help.insight-card tone="platform" eyebrow="TikTok" body="Expects at least 1,500 characters." />
+    <c-help.insight-card tone="info" eyebrow="TikTok" body="Expects at least 1,500 characters." />
+
+  Figma drift: Figma's Tone=Platform is "info" here (blue, not only for platform facts).
 {% endcomment %}
 
-{% load i18n %}
-<c-vars tone="insight" eyebrow="" body="" icon="" sample="" class="" />
-{% if tone == "not-enough-data" or tone == "insight" and sample != "" and sample < 10 %}
-  {% translate "Not enough data yet" as nod_eyebrow %}
-  {% translate "Fewer than 10 comparable applications so far. We show community numbers once enough researchers share anonymised data." as nod_body %}
-  <div class="flex items-start gap-sm rounded-md bg-surface-muted p-md {{ class }}" {{ attrs }}>
-    <c-icon name="{{ icon|default:'users' }}" class="size-5 text-icon-default" />
-    <div class="flex min-w-0 flex-1 flex-col gap-1">
-      <p class="type-overline text-tertiary">
-        {% if tone == "not-enough-data" %}{{ eyebrow|default:nod_eyebrow }}{% else %}{{ nod_eyebrow }}{% endif %}
-      </p>
-      <p class="type-body-md text-primary">
-        {% if tone == "not-enough-data" and body %}{{ body }}{% elif tone == "not-enough-data" and slot %}{{ slot }}{% else %}{{ nod_body }}{% endif %}
-      </p>
-    </div>
-  </div>
+<c-vars tone="insight" eyebrow="" body="" icon="" class="" />
+{% if tone == "info" %}
+  {% define "bg-info-subtle" as card_class %}
+  {% define "text-info" as accent_class %}
+  {% define "text-info" as icon_class %}
+  {% define "info" as default_icon %}
+{% elif tone == "warning" %}
+  {% define "bg-warning-subtle" as card_class %}
+  {% define "text-warning" as accent_class %}
+  {% define "text-warning" as icon_class %}
+  {% define "alert-triangle" as default_icon %}
+{% elif tone == "danger" %}
+  {% define "bg-danger-subtle" as card_class %}
+  {% define "text-danger" as accent_class %}
+  {% define "text-danger" as icon_class %}
+  {% define "alert-circle" as default_icon %}
+{% elif tone == "neutral" %}
+  {% define "bg-surface-muted" as card_class %}
+  {% define "text-tertiary" as accent_class %}
+  {% define "text-icon-default" as icon_class %}
+  {% define "info" as default_icon %}
 {% else %}
-  <div
-    class="
-      flex items-start gap-sm rounded-md p-md {{ class }}
-      {% if tone == "platform" %}bg-info-subtle{% elif tone == "warning" %}bg-warning-subtle{% else %}bg-accent-subtle{% endif %}
-    "
-    {{ attrs }}
-  >
-    {% if tone == "platform" %}
-      <c-icon name="{{ icon|default:'info' }}" class="size-5 text-info" />
-    {% elif tone == "warning" %}
-      <c-icon name="{{ icon|default:'alert-triangle' }}" class="size-5 text-warning" />
-    {% else %}
-      <c-icon name="{{ icon|default:'target' }}" class="size-5 text-accent" />
-    {% endif %}
-    <div class="flex min-w-0 flex-1 flex-col gap-1">
-      {% if eyebrow %}
-        <p class="type-overline {% if tone == "platform" %}text-info{% elif tone == "warning" %}text-warning{% else %}text-accent{% endif %}">
-          {{ eyebrow }}
-        </p>
-      {% endif %}
-      <p class="type-body-md text-primary">{% if body %}{{ body }}{% else %}{{ slot }}{% endif %}</p>
-    </div>
-  </div>
+  {% define "bg-accent-subtle" as card_class %}
+  {% define "text-accent" as accent_class %}
+  {% define "text-accent" as icon_class %}
+  {% define "target" as default_icon %}
 {% endif %}
+<div class="flex items-start gap-sm rounded-md p-md {{ card_class }} {{ class }}" {{ attrs }}>
+  <c-icon name="{{ icon|default:default_icon }}" class="size-5 {{ icon_class }}" />
+  <div class="flex min-w-0 flex-1 flex-col gap-1">
+    {% if eyebrow %}<p class="type-overline {{ accent_class }}">{{ eyebrow }}</p>{% endif %}
+    <p class="type-body-md text-primary">{% if body %}{{ body }}{% else %}{{ slot }}{% endif %}</p>
+  </div>
+</div>

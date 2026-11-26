@@ -4,8 +4,10 @@ from pydantic import BaseModel
 
 
 class ApplicationModality(StrEnum):
+    unknown = "unknown"
     form = "form"
     email = "email"
+    icpsr = "icpsr"
 
 
 class PlatformInformation(BaseModel):

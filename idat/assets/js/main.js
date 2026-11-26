@@ -2,11 +2,13 @@ import Alpine from "alpinejs";
 
 import countrySelect from "./components/country_select";
 import dateField from "./components/date_field";
+import helpRegion from "./components/help_region";
 import plainFile from "./components/plain_file";
 
 window.Alpine = Alpine;
 Alpine.data("countrySelect", countrySelect);
 Alpine.data("dateField", dateField);
+Alpine.data("helpRegion", helpRegion);
 Alpine.data("plainFile", plainFile);
 Alpine.start();
 

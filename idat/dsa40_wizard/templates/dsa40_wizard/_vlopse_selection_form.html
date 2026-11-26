@@ -1,15 +1,23 @@
 {% load i18n %}
 
+<div class="flex items-center gap-xs">
+  {% blocktranslate asvar step_label %}Step {{ step_number }} of {{ step_count }}{% endblocktranslate %}
+  <c-badge tone="accent" :dot="False" :label="step_label" />
+  <span class="type-label-lg text-secondary">{{ current_step.label }}</span>
+</div>
+
 <h1 class="type-headline-lg">{% translate 'Which platforms do you want data from?' %}</h1>
 
 <p class="type-body-lg text-secondary">
-  {% blocktranslate %}
-    Pick every very large online platform or search engine (VLOPSE) you want data from.
+  {% blocktranslate trimmed with n=form.platform_count %}
+    Pick every very large online platform or search engine (VLOPSE) you want data from. {{ n }}
+    services designated as VLOPSE by the European Commission are listed here, grouped by type. Shared questions will be
+    asked only once.
   {% endblocktranslate %}
 </p>
 
 <form
-  hx-post="{% url 'dsa40_wizard:wizard_submit' 'choose-vlopses' %}"
+  hx-post="{% url 'dsa40_wizard:wizard_submit' current_step %}"
   hx-target="#application-wizard-body"
   hx-swap="innerHTML"
   class="flex flex-col gap-lg"
@@ -23,27 +31,31 @@
     >
       <legend class="sr-only">{{ field.label }}</legend>
 
-      <div class="overflow-hidden rounded-md border border-default *:last:border-b-0">
+      <div class="overflow-hidden rounded-lg border border-default bg-surface *:last:border-b-0">
         {# Column header: visual only, each row's label already names the platform. #}
         <div class="@container" aria-hidden="true">
           <div class="flex items-start gap-md bg-surface-muted px-md py-xs type-overline text-tertiary">
             <span class="w-17 shrink-0"></span>
             <span class="min-w-0 flex-1">{% translate 'Platform' %}</span>
-            <span class="hidden w-37.5 shrink-0 @2xl:block"></span>
             <span class="hidden w-30 shrink-0 @2xl:block">{% translate 'How you apply' %}</span>
-            <span class="hidden w-25 shrink-0 @2xl:block"></span>
           </div>
         </div>
 
-        {% for choice in field %}
-          <c-platform-row
-            :name="choice.data.value.instance.name"
-            channel="{{ choice.data.value.instance.modality }}"
-            :input-name="choice.data.name"
-            :value="choice.data.value"
-            :selected="choice.data.selected"
-            id="{{ choice.id_for_label }}"
-          />
+        {% for group in form.platform_groups %}
+          <c-platform-group :label="group.label" :members="group.members" :expanded="group.open">
+            {% for choice in group.choices %}
+              <c-platform-row
+                :name="choice.data.value.instance.name"
+                :logo="choice.data.value.instance.logo"
+                channel="{{ choice.data.value.instance.get_modality_display }}"
+                operator="{{ choice.data.value.instance.operator }}"
+                :input-name="choice.data.name"
+                :value="choice.data.value"
+                :selected="choice.data.selected"
+                id="{{ choice.id_for_label }}"
+              />
+            {% endfor %}
+          </c-platform-group>
         {% endfor %}
       </div>
       {% if field.errors %}

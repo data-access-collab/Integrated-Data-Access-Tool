@@ -8,6 +8,8 @@ from idat.vlopse.models import Vlopse
 
 class VlopseFactory(DjangoModelFactory[Vlopse]):
     name = Faker("name")
+    operator = Faker("company")
+    platform_type = fuzzy.FuzzyChoice(Vlopse.PlatformType.values)
     platform_information = Faker("paragraph")
     account_required = Faker("pybool")
     application_link = Faker("url")

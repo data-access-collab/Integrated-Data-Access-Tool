@@ -4,7 +4,7 @@
 
 | Module                              | What                                                                   |
 |-------------------------------------|------------------------------------------------------------------------|
-| `templatetags/idat_base_tags.py`    | `define` and `icon_content` tags; registered as template builtins      |
+| `templatetags/idat_base_tags.py`    | `define` and `get_icon` tags; registered as template builtins          |
 | `forms.py`                          | Shared form helpers, e.g. `country_choices()` for `<c-country-select>` |
 | `views/dev_gallery.py`              | Component gallery at `/dev/components/` (DEBUG only)                   |
 | `api/schema.py`                     | Shared API schemas, e.g. `ActionOut`                                   |

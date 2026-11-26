@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+import pytest
 from django import forms
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
@@ -14,9 +15,12 @@ from idat.dsa40_wizard.forms import (
     ClientFileField,
     FormQuestion,
     QuestionsForm,
+    VlopseSelectionForm,
     get_question_field,
 )
 from idat.dsa40_wizard.sections import SECTION_META
+from idat.vlopse.models import Vlopse
+from idat.vlopse.tests.factories import VlopseFactory
 
 
 class QuestionsFormTests(SimpleTestCase):
@@ -305,3 +309,51 @@ class QuestionFieldComponentTests(SimpleTestCase):
                 "misc": "text",
             },
         )
+
+
+@pytest.mark.django_db
+def test_platform_groups_follow_type_order_and_skip_empty_types():
+    Vlopse.objects.all().delete()
+    VlopseFactory.create(name="Zalando", platform_type=Vlopse.PlatformType.MARKETPLACE)
+    VlopseFactory.create(name="TikTok", platform_type=Vlopse.PlatformType.SOCIAL_MEDIA)
+    VlopseFactory.create(name="Amazon", platform_type=Vlopse.PlatformType.MARKETPLACE)
+
+    groups = VlopseSelectionForm().platform_groups
+
+    assert [g.type for g in groups] == ["social_media", "marketplace"]
+    assert groups[1].members == "Amazon, Zalando"
+    assert [c.data["value"].instance.name for c in groups[1].choices] == [
+        "Amazon",
+        "Zalando",
+    ]
+
+
+@pytest.mark.django_db
+def test_platform_groups_open_with_selection_or_default_type():
+    Vlopse.objects.all().delete()
+    VlopseFactory.create(name="TikTok", platform_type=Vlopse.PlatformType.SOCIAL_MEDIA)
+    VlopseFactory.create(name="Bing", platform_type=Vlopse.PlatformType.SEARCH_ENGINE)
+    zalando = VlopseFactory.create(
+        name="Zalando", platform_type=Vlopse.PlatformType.MARKETPLACE
+    )
+    VlopseFactory.create(name="Wikipedia", platform_type=Vlopse.PlatformType.KNOWLEDGE)
+
+    groups = VlopseSelectionForm(data={"vlopses": [zalando.pk]}).platform_groups
+
+    assert {g.type: g.open for g in groups} == {
+        "social_media": True,
+        "search_engine": True,
+        "marketplace": True,
+        "knowledge": False,
+    }
+
+
+@pytest.mark.django_db
+def test_platform_groups_open_the_only_group():
+    Vlopse.objects.all().delete()
+    VlopseFactory.create(name="Wikipedia", platform_type=Vlopse.PlatformType.KNOWLEDGE)
+    VlopseFactory.create(name="Other", platform_type=Vlopse.PlatformType.OTHER)
+    assert [g.open for g in VlopseSelectionForm().platform_groups] == [False, False]
+
+    Vlopse.objects.filter(name="Wikipedia").delete()
+    assert [g.open for g in VlopseSelectionForm().platform_groups] == [True]

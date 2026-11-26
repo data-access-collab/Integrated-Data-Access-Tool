@@ -7,13 +7,18 @@ one questionnaire, and `AnswerTransformer` maps the answers back to each platfor
 
 ## Steps
 
-| Step             | Slug             | View                  | Does                                                                       |
-|------------------|------------------|-----------------------|----------------------------------------------------------------------------|
-| Choose platforms | `choose-vlopses` | `VlopseSelectionStep` | Select VLOPSEs; drops answers no longer needed                             |
-| Enter details    | `enter-details`  | `QuestionsStep`       | Answer the mapped DSA questions, one section at a time                     |
-| Review           | `review`         | `ReviewStep`          | Stored answers, read-only; continuing re-validates them, submits none      |
-| Generate         | `generate`       | `GenerateStep`        | One read-only preview per VLOPSE, with any mapping errors                  |
-| Submit           | `submit`         | none                  | Planned; its URL returns 404                                               |
+| Step             | Slug       | View                  | Does                                                                       |
+|------------------|------------|-----------------------|----------------------------------------------------------------------------|
+| Choose platforms | `vlopses`  | `VlopseSelectionStep` | Select VLOPSEs; drops answers no longer needed                             |
+| Enter details    | `details`  | `QuestionsStep`       | Answer the mapped DSA questions, one section at a time                     |
+| Review           | `review`   | `ReviewStep`          | Stored answers, read-only; continuing re-validates them, submits none      |
+| Generate         | `generate` | `GenerateStep`        | One read-only preview per VLOPSE, with any mapping errors                  |
+| Submit           | `submit`   | none                  | Planned; its URL returns 404                                               |
+
+`WizardStep` (`steps.py`) is the only place that defines the steps' order, slugs and
+names. Code uses its members, never the slug strings; templates get the enum as
+`WizardStep` and the current step as `current_step` (`get_steps_context` in `views.py`),
+e.g. `{% url 'dsa40_wizard:wizard_step' WizardStep.REVIEW %}`.
 
 Each step subclasses `WizardFormStep` (`views.py`): a form, a template, `next_step` and
 `check_prerequisites`. A step whose prerequisites fail (no valid VLOPSE selected, an
@@ -101,7 +106,8 @@ saving logic belongs in `wizard.js`.
   URL, not the method, tells showing, submitting and saving apart.
 - A plain page load (reload, typed URL) or a history restore returns the shell
   (`base.html`), which then requests the step into `#application-wizard-body`.
-- Steps render through `_step.html` (step template plus an out-of-band sidebar).
+- Steps render through `_step.html` (step template plus an out-of-band sidebar and help
+  panel).
 - On Enter details, all sections stay in one form; Alpine's `section` state shows one at
   a time. Answers are saved in the background on a section switch, a file change and
   after 30 seconds without typing; "Back to platforms" and sidebar step links save
@@ -109,3 +115,41 @@ saving logic belongs in `wizard.js`.
 - `static/dsa40_wizard/wizard.js` is an ES module loaded on the wizard page only: it
   attaches and stores the token, handles the file key and IndexedDB, "Discard draft",
   and the `clientFile` Alpine component.
+
+## Help panel and tips
+
+The right-hand help panel shows tips that staff write in the admin as `WizardInfo`
+(`models.py`). A tip appears wherever one of its targets is shown.
+
+The panel has two levels:
+
+- **General tips:** the tips of the current section (Enter details only), then the tips
+  of the step.
+- **Question tips:** the tips of the active question, shown *instead of* the general
+  ones, with a "General tips" link back. A question is activated when its field is
+  focused, or after its (?) icon is clicked.
+
+### Defining tips (admin)
+
+*Admin → DSA40 Application Wizard → Wizard infos.* Infos can target a step,
+section (question category), DSA question, or VLOPSE question.
+
+Notes:
+
+- **Targets combine:** A tip can have multiple targets and is shown for all of them.
+- **Order:** cards come before accordions; within general tips, section tips come before
+  step tips; otherwise by Order.
+- **Tips without a target show nowhere:** The list's *By targets → None* filter finds
+  them.
+
+### Technical notes
+
+- `help.py` loads all `WizardInfo`s into a `HelpIndex` (by step, section and question),
+  cached for an hour; `signals.py` clears it after any change. `find_help_tips(step,
+  form)` picks a page's tips from it without querying.
+- Every step gets them as `help_tips`. On Enter details, `form.set_help_tips()` marks
+  fields with tips, and `c-field-layout` shows their (?) icon.
+- `_help_panel.html` renders all of a step's tips at once (out of band, with every step);
+  Alpine's `x-show` picks what to show.
+- The active `question` is state of `<c-help.region>`, set by the `help-tip` (icon) and
+  `help-question` (focus) events and cleared by each new panel.

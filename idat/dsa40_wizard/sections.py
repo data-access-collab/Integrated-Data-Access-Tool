@@ -11,7 +11,7 @@ from idat.dsa40_form_handler.models import QuestionCategory
 
 @dataclass(frozen=True)
 class SectionMeta:
-    icon: str  # a file in templates/icons/
+    icon: str  # a name in idat/assets/icons/allowlist.json
     description: str = ""
     label: str = ""  # overrides the category's label
 

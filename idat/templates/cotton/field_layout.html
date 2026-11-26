@@ -13,7 +13,9 @@
     required   boolean, without a form
     help-text  helper text without a form
     help-tip   id of the help-panel tip; shows the help icon, which dispatches
-               "help-tip" with { tip } (listen with x-on:help-tip.window)
+               "help-tip" with { tip } (listen with x-on:help-tip.window), and sets
+               data-help-tip on the root (the wizard shows a field's tips while it has
+               focus). Defaults to the field's help_tip (IdatBoundField)
     warning    recommendation message (never blocks); ignored while there are errors
     slot       the control; give it aria-describedby="{input-id}-error|-warning|-help"
     helper     named slot replacing the help text, for live helpers, e.g. "2 selected"
@@ -31,14 +33,15 @@
 
 {% load i18n %}
 <c-vars field="" input-id="" label="" :required="False" help-text="" help-tip="" warning="" :inline="False" class="" />
-{% with label_text=field.label|default:label help=field.help_text|default:help_text %}
+{% with label_text=field.label|default:label help=field.help_text|default:help_text tip=field.help_tip|default:help_tip %}
   <div
     class="group flex w-full {% if inline %}items-center gap-lg{% else %}flex-col gap-xs{% endif %} {{ class }}"
+    {% if tip %}data-help-tip="{{ tip }}"{% endif %}
     {{ attrs }}
   >
     {# the label column of inline; display: contents (no box) otherwise #}
     <div class="{% if inline %}flex min-w-0 flex-1 flex-col gap-2xs{% else %}contents{% endif %}">
-      {% if label_text or help_tip %}
+      {% if label_text or tip %}
         <div class="flex items-center gap-1.5">
           {% if label_text and inline %}
             <span
@@ -58,13 +61,13 @@
             >*</span>
           {% endif %}
 
-          {% if help_tip %}
+          {% if tip %}
             <button
               type="button"
               class="cursor-pointer rounded-full text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
               aria-label="{% translate "Help" %}: {{ label_text }}"
               x-data
-              x-on:click="$dispatch('help-tip', { tip: '{{ help_tip|escapejs }}' })"
+              x-on:click="$dispatch('help-tip', { tip: '{{ tip|escapejs }}' })"
             >
               <c-icon name="help-circle" class="size-4" />
             </button>

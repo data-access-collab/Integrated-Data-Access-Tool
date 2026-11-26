@@ -1,0 +1,60 @@
+<div class="flex flex-col gap-md">
+  <p class="type-label-md text-secondary">Expanded (with a selection) · expanded (no selection) · collapsed</p>
+  <div class="overflow-hidden rounded-lg border border-default bg-surface *:last:border-b-0">
+    <c-platform-group label="Social media & video" members="TikTok, Instagram" expanded>
+      <c-platform-row
+        name="TikTok"
+        logo="logo-tiktok"
+        operator="TikTok Technology Ltd."
+        channel="Web form"
+        input-name="group_vlopses_{{ theme }}"
+        value="1"
+        selected
+      />
+      <c-platform-row
+        name="Instagram"
+        logo="logo-instagram"
+        operator="Meta Platforms Ireland Ltd."
+        channel="ICPSR portal"
+        input-name="group_vlopses_{{ theme }}"
+        value="2"
+      />
+    </c-platform-group>
+    <c-platform-group label="Search engines" members="Bing, Google Search" expanded>
+      <c-platform-row
+        name="Bing"
+        logo="logo-bing"
+        operator="Microsoft Ireland Operations Ltd."
+        channel="Web form"
+        input-name="group_vlopses_{{ theme }}"
+        value="3"
+      />
+      <c-platform-row
+        name="Google Search"
+        logo="logo-google"
+        operator="Google Ireland Ltd."
+        channel="Web form"
+        input-name="group_vlopses_{{ theme }}"
+        value="4"
+      />
+    </c-platform-group>
+    <c-platform-group label="Marketplaces" members="AliExpress, Amazon Store, Google Shopping, Shein, Temu, Zalando">
+      <c-platform-row
+        name="AliExpress"
+        logo="logo-aliexpress"
+        operator="AliExpress International (Netherlands) B.V."
+        channel="Web form"
+        input-name="group_vlopses_{{ theme }}"
+        value="5"
+      />
+      <c-platform-row
+        name="Zalando"
+        logo="logo-zalando"
+        operator="Zalando SE"
+        channel="Web form"
+        input-name="group_vlopses_{{ theme }}"
+        value="6"
+      />
+    </c-platform-group>
+  </div>
+</div>
