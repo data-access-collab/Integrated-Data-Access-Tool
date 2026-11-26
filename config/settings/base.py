@@ -91,7 +91,6 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "django_htmx",
     "django_cotton",
-    "polymorphic",
 ]
 
 LOCAL_APPS = [
