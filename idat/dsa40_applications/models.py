@@ -3,6 +3,7 @@ logged-in user submits it."""
 
 from __future__ import annotations
 
+from pathlib import PurePath
 from typing import TYPE_CHECKING, ClassVar
 
 from django.conf import settings
@@ -324,6 +325,11 @@ class VersionedUploadedFile(models.Model):
         if self.dsa_answer is not None:
             return self.dsa_answer
         return self.vlopse_answer
+
+    @property
+    def file_type(self) -> str:
+        """The file extension in capitals, e.g. "PDF"; "" without an extension."""
+        return PurePath(self.name).suffix.lstrip(".").upper()
 
     def _answer_lookup(self) -> dict[str, int]:
         if self.dsa_answer_id is not None:

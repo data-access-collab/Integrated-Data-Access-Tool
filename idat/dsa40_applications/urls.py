@@ -12,4 +12,9 @@ urlpatterns = [
     path(
         "case/<int:pk>", view=views.AccessCaseOverview.as_view(), name="case_overview"
     ),
+    path(
+        "document/<int:pk>/download",
+        view=views.DocumentDownload.as_view(),
+        name="document_download",
+    ),
 ]

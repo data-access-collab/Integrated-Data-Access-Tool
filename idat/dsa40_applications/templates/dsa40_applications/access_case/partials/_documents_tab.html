@@ -1,6 +1,7 @@
 {% comment %}
   Documents tab of the access case: one <c-document-row> per document of the case.
-  Context: case_documents (TODO: not passed yet; VersionedUploadedFile list assumed)
+  Context: case_documents (VersionedUploadedFile list, newest version per document,
+  each with version_count; see AccessCaseOverview.get_case_documents)
 {% endcomment %}
 
 {% load i18n %}
@@ -17,8 +18,15 @@
   </div>
   <ul class="border-t border-default">
     {% for document in case_documents %}
-      {# TODO: missing — meta (type · fields · versions · where it is attached), status of the latest version, versions href and download href #}
-      <c-document-row :title="document.name" date="{{ document.uploaded_at|date:'j M Y' }}" />
+      {% blocktranslate count count=document.version_count asvar versions %}{{ count }} version{% plural %}{{ count }} versions{% endblocktranslate %}
+      {# TODO: missing — versions href; status of the latest version (generated applications only); #}
+      {# where the document is attached ("attached to all three applications") once files belong to the case #}
+      <c-document-row
+        :title="document.name"
+        meta="{% if document.file_type %}{{ document.file_type }} · {% endif %}{{ versions }}"
+        date="{{ document.uploaded_at|date:'j M Y' }}"
+        download-href="{% url 'dsa40_applications:document_download' document.pk %}"
+      />
     {% empty %}
       <li class="list-none border-b border-default px-lg py-md type-body-md text-secondary">
         {% translate "No documents yet." %}

@@ -6,7 +6,12 @@ import pytest
 from django.test import RequestFactory
 from django.urls import reverse
 
-from idat.dsa40_applications.models import AccessCase
+from idat.dsa40_applications.models import (
+    AccessApplication,
+    AccessCase,
+    VersionedUploadedFile,
+    VLOPSEAnswer,
+)
 from idat.dsa40_applications.tests.factories import (
     AccessCaseFactory,
     ResearchProjectFactory,
@@ -15,6 +20,8 @@ from idat.dsa40_applications.views import (
     AccessCaseOverview,
     ProjectOverview,
 )
+from idat.dsa40_form_handler.models import InputType
+from idat.dsa40_form_handler.tests.factories import VlopseQuestionFactory
 from idat.users.tests.factories import UserFactory
 from idat.vlopse.tests.factories import VlopseFactory
 
@@ -37,7 +44,42 @@ def case_overview_url() -> tuple[str, object]:
     )
 
 
-@pytest.mark.parametrize("make_url", [project_overview_url, case_overview_url])
+# TODO: Maybe refactor to a factory (onces the File model has settled)
+def upload_case_file(
+    case: AccessCase, key: str, name: str, versions: int = 1
+) -> list[VersionedUploadedFile]:
+    """Uploads ``versions`` versions of a file to a file question of the case."""
+    answer = VLOPSEAnswer.objects.create(
+        application=AccessApplication.objects.get_or_create(access_case=case)[0],
+        question=VlopseQuestionFactory.create(
+            key=key, vlopse=case.vlopse, input_type=InputType.FILE_UPLOAD
+        ),
+    )
+    return [
+        VersionedUploadedFile.objects.create(
+            vlopse_answer=answer,
+            name=name,
+            creator=case.project.owner,
+            version=version,
+            project=case.project,
+            data=f"%PDF-1.4 v{version}".encode(),
+        )
+        for version in range(1, versions + 1)
+    ]
+
+
+def document_download_url() -> tuple[str, object]:
+    case = AccessCaseFactory.create()
+    (document,) = upload_case_file(case, "TEST-DOWNLOAD", "Ethics approval.pdf")
+    return (
+        reverse("dsa40_applications:document_download", args=[document.pk]),
+        case.project.owner,
+    )
+
+
+@pytest.mark.parametrize(
+    "make_url", [project_overview_url, case_overview_url, document_download_url]
+)
 class TestProjectOwnerRequired:
     """Each view builds its URL and returns (url, project owner)."""
 
@@ -128,6 +170,42 @@ class TestAccessCaseOverview:
         )
 
         assert response.status_code == HTTPStatus.NOT_FOUND
+
+    def test_lists_the_newest_version_of_each_case_document(self, client) -> None:
+        case = AccessCaseFactory.create()
+        other_case = AccessCaseFactory.create(project=case.project)
+        *_, ethics_v2 = upload_case_file(
+            case, "TEST-DOC-1", "Ethics approval.pdf", versions=2
+        )
+        (agreement,) = upload_case_file(case, "TEST-DOC-2", "Data use agreement.pdf")
+        upload_case_file(other_case, "TEST-DOC-3", "Other platform.pdf")
+        client.force_login(case.project.owner)
+
+        response = client.get(
+            reverse("dsa40_applications:case_overview", args=[case.pk])
+        )
+
+        documents = response.context["case_documents"]
+        assert documents == [agreement, ethics_v2]
+        assert [d.version_count for d in documents] == [1, 2]
+
+
+class TestDocumentDownload:
+    def test_sends_the_version_as_attachment(self, client) -> None:
+        case = AccessCaseFactory.create()
+        v1, _v2 = upload_case_file(
+            case, "TEST-DOWNLOAD", "Ethics approval.pdf", versions=2
+        )
+        client.force_login(case.project.owner)
+
+        response = client.get(
+            reverse("dsa40_applications:document_download", args=[v1.pk])
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert b"".join(response.streaming_content) == b"%PDF-1.4 v1"
+        assert response["Content-Type"] == "application/pdf"
+        assert response["Content-Disposition"].startswith("attachment;")
 
 
 def owned_project() -> list:

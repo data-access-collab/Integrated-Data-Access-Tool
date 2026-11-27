@@ -3,7 +3,10 @@ from __future__ import annotations
 import typing
 from typing import Literal, NamedTuple
 
-from idat.dsa40_applications.models import AccessCase, CaseStatusEvent
+from idat.dsa40_applications.models import (
+    AccessCase,
+    CaseStatusEvent,
+)
 
 if typing.TYPE_CHECKING:
     import datetime
