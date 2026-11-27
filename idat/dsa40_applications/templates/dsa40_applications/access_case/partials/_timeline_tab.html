@@ -2,7 +2,8 @@
   Timeline tab of the access case: correspondence & status events, then the expected
   decision; the project context card on the right. Figma's "Silent for too long?" info
   card is left out for now.
-  Context: case, project, timeline_events (TODO: not passed yet)
+  Context: case, project, status (current CaseStatusEvent status),
+  status_events (ui.StatusEventContext list from status_timeline(), oldest first)
 {% endcomment %}
 
 {% load i18n %}
@@ -21,31 +22,30 @@
       </p>
     </div>
     <ol class="flex flex-col">
-      {# TODO: no event model yet — attribute names (state, title, date, body, file) are assumed #}
-      {% for event in timeline_events %}
+      {% for event in status_events %}
+        {# Past events: the default green tick; only the latest gets its own icon and tone #}
         <c-timeline-event
-          :state="event.state"
+          icon="{% if forloop.last %}{{ event.icon.icon }}{% endif %}"
+          tone="{% if forloop.last %}{{ event.icon.color }}{% endif %}"
           :title="event.title"
-          date="{{ event.date|date:'j M Y' }}"
+          date="{{ event.date|date:'j M Y'|default:'—' }}"
           datetime="{{ event.date|date:'Y-m-d' }}"
         >
-          <p>{{ event.body }}</p>
-          {% if event.state == "action-needed" %}
-            {# TODO: missing — link to the platform's e-mail in the case documents #}
-            {% if event.file %}<a
-                href="#"
-                class="type-label-lg text-link hover:underline"
-              >{{ event.file.name }}</a>{% endif %}
+          {% if event.subtitle %}<p>{{ event.subtitle }}</p>{% endif %}
+          {# Only the latest event can still need an answer #}
+          {% if forloop.last and status == "infos_requested" %}
             <div class="flex flex-wrap gap-xs pt-xs">
-              {# TODO: missing — href of the reply editor and the "mark as sent" action #}
+              {# TODO: missing — link to the platform's e-mail, href of the reply editor and the "mark as sent" action #}
               <c-button variant="brand" label="{% translate 'Write your reply' %} <todo>" href="#" />
               <c-button variant="ghost" label="{% translate 'Mark reply as sent' %} <todo>" />
             </div>
           {% endif %}
         </c-timeline-event>
       {% endfor %}
-      {# TODO: missing — expected decision date and community median, e.g. "expected ~ Dec 2026" · "Community median for TikTok: 9 weeks after submission (n = 23)." (only with n ≥ 10) #}
-      <c-timeline-event state="upcoming" title="{% translate 'Decision' %}" date="—" class="*:last:pb-0" />
+      {% if status != "granted" and status != "rejected" and status != "withdrawn" %}
+        {# TODO: missing — expected decision date and community median, e.g. "expected ~ Dec 2026" · "Community median for TikTok: 9 weeks after submission (n = 23)." (only with n ≥ 10) #}
+        <c-timeline-event state="upcoming" title="{% translate 'Decision' %}" date="—" />
+      {% endif %}
     </ol>
   </section>
 

@@ -5,6 +5,10 @@
   Props:
     state  "done" · "current" · "upcoming" (default)
     label  step name
+    icon   optional marker icon; replaces the state's marker (state still sets the text
+           style and aria-current)
+    tone   marker colour with icon: "info" (default) · "success" · "warning" · "danger" ·
+           "neutral" (same tones as <c-timeline-event>)
 
   Renders an <li>: put the steps in an <ol>. The current step gets aria-current="step";
   done steps say "done" to screen readers.
@@ -15,16 +19,27 @@
       <c-lifecycle-step state="current" label="Submitted" />
       <c-lifecycle-step label="Decision" />
     </ol>
+    <c-lifecycle-step state="current" icon="alert-triangle" tone="warning" label="More information requested" />
 {% endcomment %}
 
 {% load i18n %}
-<c-vars state="upcoming" label="" class="" />
+<c-vars state="upcoming" icon="" tone="info" label="" class="" />
+{% if tone == "success" %}{% define "bg-success" as tone_class %}
+{% elif tone == "warning" %}{% define "bg-warning" as tone_class %}
+{% elif tone == "danger" %}{% define "bg-danger" as tone_class %}
+{% elif tone == "neutral" %}{% define "bg-current text-tertiary" as tone_class %}
+{% else %}{% define "bg-info" as tone_class %}
+{% endif %}
 <li
   class="flex list-none items-center gap-xs {{ class }}"
   {% if state == "current" %}aria-current="step"{% endif %}
   {{ attrs }}
 >
-  {% if state == "done" %}
+  {% if icon %}
+    <span class="flex size-5 shrink-0 items-center justify-center rounded-full {{ tone_class }}">
+      <c-icon name="{{ icon }}" class="size-3 text-on-nav" />
+    </span>
+  {% elif state == "done" %}
     <span class="flex size-5 shrink-0 items-center justify-center rounded-full bg-success">
       <c-icon name="check" class="size-3 text-on-nav" />
     </span>

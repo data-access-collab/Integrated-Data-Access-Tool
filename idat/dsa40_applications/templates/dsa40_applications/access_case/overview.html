@@ -6,8 +6,8 @@
   the ?tab= query parameter (default timeline).
 
   Context (AccessCaseOverview view):
-    case              AccessCase
-    timeline_events   TODO: not passed yet (no event model)
+    case              AccessCase; badge and lifecycle follow case.current_state
+    status_events     the case's CaseStatusEvents, oldest first (timeline)
     case_documents    TODO: not passed yet (documents per case)
 {% endcomment %}
 
@@ -18,7 +18,7 @@
 {% endblock title %}
 
 {% block content %}
-  {% with project=case.project application=case.accessapplication tab=request.GET.tab|default:"timeline" %}
+  {% with project=case.project application=case.current_application status=case.current_state.status|default:"draft" tab=request.GET.tab|default:"timeline" %}
     <c-breadcrumb>
       <c-breadcrumb.item>{% translate "My projects" %}</c-breadcrumb.item>
       <c-breadcrumb.item
@@ -35,10 +35,10 @@
         <h1 class="type-headline-lg text-primary">{{ case.vlopse.name }}</h1>
         <div class="flex flex-wrap items-center gap-xs">
           {# TODO: missing — reply deadline in the badge, e.g. "· reply by 10 Nov" #}
-          <c-badge
-            tone="{% if case.state == 'draft' %}neutral{% else %}info{% endif %}"
-            label="{{ case.get_state_display }}"
-          />
+          {# Same title and tone as the latest timeline event (ui.status_timeline) #}
+          {% with latest=status_events|last %}
+            {% if latest %}<c-badge :tone="latest.icon.color" :label="latest.title" />{% endif %}
+          {% endwith %}
           <p class="type-body-sm text-tertiary">
             {% blocktranslate with id=case.id %}Case {{ id }}{% endblocktranslate %}
             {% if application.submitted_at %}
@@ -49,26 +49,7 @@
           </p>
         </div>
 
-        {# Lifecycle. TODO: derive the steps and their dates from the case's status events; for now only from case.state #}
-        <ol class="flex flex-wrap items-center gap-2.5" aria-label="{% translate 'Case progress' %}">
-          <c-lifecycle-step
-            state="{% if case.state == 'draft' %}current{% else %}done{% endif %}"
-            label="{% translate 'Draft' %}"
-          />
-          <li
-            class="min-w-3 flex-1 list-none border-t-2 {% if case.state == 'draft' %}border-default{% else %}border-success{% endif %}"
-            aria-hidden="true"
-          >
-          </li>
-          <c-lifecycle-step
-            state="{% if case.state == 'submitted' %}current{% else %}upcoming{% endif %}"
-            label="{% translate 'Submitted' %}"
-          />
-          <li class="min-w-3 flex-1 list-none border-t-2 border-default" aria-hidden="true"></li>
-          <c-lifecycle-step label="{% translate 'Platform reply' %}" />
-          <li class="min-w-3 flex-1 list-none border-t-2 border-default" aria-hidden="true"></li>
-          <c-lifecycle-step label="{% translate 'Decision' %}" />
-        </ol>
+        {% include "dsa40_applications/access_case/partials/_case_progress.html" %}
         {# TODO: missing — community median, e.g. "Art. 40(12) process · TikTok usually decides 9 weeks after submission (community median, n = 23). Your case is on day 32." (only with n ≥ 10) #}
       </div>
       <div class="flex flex-wrap gap-md">

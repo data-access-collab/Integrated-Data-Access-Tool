@@ -60,6 +60,8 @@ class CaseStatusEvent(models.Model):
         GRANTED = "granted", _("Access granted")
         WITHDRAWN = "withdrawn", _("Withdrawn")
 
+        # Probably missing: REQUEST_ANSWERS, PENDING_REQUEST, SUBMISSION_CONFIRMED
+
     access_case = models.ForeignKey(
         "AccessCase",
         on_delete=models.CASCADE,
@@ -74,6 +76,8 @@ class CaseStatusEvent(models.Model):
         default=State.DRAFT,
     )
     registered_at = models.DateTimeField(null=True, blank=True, default=timezone.now)
+
+    # TODO: Should triggered_by be added?
 
     def __str__(self) -> str:
         return self.status
@@ -175,7 +179,7 @@ class AccessApplication(models.Model):
     answers: QuerySet[VLOPSEAnswer]
 
     def __str__(self) -> str:
-        return f"AccessApplication[{self.state.value}]({self.access_case.vlopse.name})"
+        return f"{self.access_case.vlopse.name} {self.created_at:%Y-%m-%d}"
 
     @property
     def project(self) -> ResearchProject:

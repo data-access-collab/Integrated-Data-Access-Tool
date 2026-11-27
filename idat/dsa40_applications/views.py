@@ -6,6 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.detail import DetailView
 
 from idat.dsa40_applications.models import AccessCase, ResearchProject
+from idat.dsa40_applications.ui import status_timeline
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -58,3 +59,13 @@ class AccessCaseOverview(ProjectOwnerRequiredMixin, DetailView):
     project_owner_lookup = "project__owner"
     template_name = "dsa40_applications/access_case/overview.html"
     context_object_name = "case"
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "cases": self.object.project.access_cases.all(),
+                "status_events": status_timeline(self.object),
+            }
+        )
+        return context
