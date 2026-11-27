@@ -1,0 +1,39 @@
+{% load i18n %}
+<section
+  class="flex w-full flex-col overflow-hidden rounded-lg border border-default bg-surface"
+  aria-labelledby="cases-heading"
+>
+  <h2 id="cases-heading" class="px-lg py-md type-title-lg text-primary">
+    {% translate "Applications per platform" %}
+  </h2>
+  <ul class="divide-y divide-default">
+    {% for case in cases %}
+      {% if case.state == case_states.DRAFT %}
+        {% define "neutral" as tone %}
+      {% else %}
+        {% define "info" as tone %}
+      {% endif %}
+      <li class="flex flex-col gap-sm px-lg py-md sm:flex-row sm:items-center sm:gap-md">
+        <div class="flex shrink-0 sm:w-37.5">
+          <c-platform-chip :name="case.vlopse.name" :logo="case.vlopse.logo" />
+        </div>
+        <div class="flex min-w-0 flex-1 flex-col items-start gap-1">
+          <c-badge :tone="tone" label="{{ case.get_state_display }}" />
+          <p class="type-body-sm text-secondary">
+            Access Case {{ case.id }}
+            {# TODO: missing — submitted date (AccessCase has none), e.g. "· submitted 2 Oct" #}
+          </p>
+        </div>
+        <a
+          href="{% url 'dsa40_applications:case_overview' case.pk %}"
+          class="flex shrink-0 items-center gap-1 rounded-sm type-label-lg whitespace-nowrap text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          {% translate "Open case" %}<span class="sr-only">: {{ case.vlopse.name }}</span>
+          <c-icon name="chevron-right" class="size-4" />
+        </a>
+      </li>
+    {% empty %}
+      <li class="px-lg pb-md type-body-md text-secondary">{% translate "No platform applications yet." %}</li>
+    {% endfor %}
+  </ul>
+</section>

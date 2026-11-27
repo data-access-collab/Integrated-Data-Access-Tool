@@ -1,0 +1,38 @@
+{% comment %}
+  "Shared documents" card of the project overview: one <c-document-card> per document.
+  Context: shared_documents (VersionedUploadedFile list)
+  TODO: Several things are unclear and block implementation currently.
+{% endcomment %}
+
+{% load i18n %}
+<section
+  class="flex w-full flex-col gap-sm rounded-lg border border-default bg-surface p-lg"
+  aria-labelledby="shared-documents-heading"
+>
+  <h2 id="shared-documents-heading" class="type-title-lg text-primary">{% translate "Shared documents" %}</h2>
+  <div class="flex flex-col gap-sm">
+    {% for document in shared_documents %}
+      {% with versions=document.versions.all %}
+        {% blocktranslate with date=document.uploaded_at|date:"j M Y" count counter=versions|length asvar meta %}Uploaded {{ date }} · {{ counter }} version{% plural %}Uploaded {{ date }} · {{ counter }} versions{% endblocktranslate %}
+        {# TODO: missing — what the document is attached to, e.g. "Attached to all three applications" / "Current: v1 · sent to YouTube on 2 Oct" #}
+        {% blocktranslate with version=document.most_recent.version asvar summary %}Current: v{{ version }}{% endblocktranslate %}
+        <c-document-card :title="document.name" :meta="meta" :summary="summary">
+          {% for version in versions %}
+            {% blocktranslate with name=version.creator.display_name date=version.uploaded_at|date:"j M Y" asvar version_meta %}Uploaded by {{ name }} · {{ date }}{% endblocktranslate %}
+            {# TODO: missing — sent state ("draft" / "sent" + "Sent to TikTok · 2 Oct" badge) and download URL (download-href) #}
+            <c-document-version-row
+              state="superseded"
+              version="v{{ version.version }}"
+              :title="version.name"
+              :meta="version_meta"
+            />
+          {% endfor %}
+          {# TODO: missing — URL of the version comparison: #}
+          {# <c-slot name="footer"><a class="type-label-lg text-link hover:underline" href="…">Compare v1 and v2</a></c-slot> #}
+        </c-document-card>
+      {% endwith %}
+    {% empty %}
+      <p class="type-body-md text-secondary">{% translate "No documents yet." %}</p>
+    {% endfor %}
+  </div>
+</section>

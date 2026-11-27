@@ -35,6 +35,8 @@ class ResearchProject(models.Model):
         related_name="projects",
     )
 
+    created_on = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         verbose_name = "DSA40 Research Project"
 

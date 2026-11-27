@@ -8,7 +8,7 @@
     sidebar       the App Sidebar; pages of My account (and the allauth pages) set
                   in_account_area around it to highlight the user block:
                     {% block sidebar %}{% with in_account_area=True %}{{ block.super }}{% endwith %}{% endblock sidebar %}
-    sidebar_nav   <c-nav.app-item> items, default: Home
+    sidebar_nav   <c-nav.app-item> items, default: Home and My projects
     content       the page; messages are shown above it
     page          wraps content; override it to put a frame around content (the
                   allauth pages: account/base_manage.html)
@@ -37,6 +37,28 @@
         >
           {% block sidebar_nav %}
             <c-nav.app-item label="{% translate 'Home' %}" icon="layout-grid" href="{% url 'home' %}" />
+            {% if user.is_authenticated %}
+              {# My projects: one item per project of the user; a page passing `project` marks it current #}
+              <li class="list-none">
+                <h2
+                  id="sidebar-projects-heading"
+                  class="flex items-center gap-sm py-2.5 pr-sm pl-md type-label-lg text-on-nav"
+                >
+                  <c-icon name="file-text" class="size-4.5" />
+                  {% translate "My projects" %}
+                </h2>
+                <ul aria-labelledby="sidebar-projects-heading" class="flex flex-col gap-0.5 pl-5">
+                  {% for sidebar_project in user.projects.all %}
+                    <c-nav.app-item
+                      label="{{ sidebar_project.title|default:_('Untitled project') }}"
+                      icon="circle"
+                      href="{% url 'dsa40_applications:project_overview' sidebar_project.pk %}"
+                      current="{% if sidebar_project.pk == project.pk %}1{% endif %}"
+                    />
+                  {% endfor %}
+                </ul>
+              </li>
+            {% endif %}
           {% endblock sidebar_nav %}
         </c-app-sidebar>
       </div>
