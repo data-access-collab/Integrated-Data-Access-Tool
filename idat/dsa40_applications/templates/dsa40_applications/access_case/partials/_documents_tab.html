@@ -1,11 +1,14 @@
 {% comment %}
   Documents tab of the access case: one <c-document-row> per document of the case.
+  The row's download button gets the newest version. With more than one version, "n
+  versions" opens a dialog listing every version, newest first, each with its download.
   Context: case_documents (VersionedUploadedFile list, newest version per document,
-  each with version_count; see AccessCaseOverview.get_case_documents)
+  each with its versions in document.history; see AccessCaseOverview.get_case_documents)
 {% endcomment %}
 
 {% load i18n %}
 <section
+  x-data
   class="flex w-full flex-col overflow-hidden rounded-lg border border-default bg-surface"
   aria-labelledby="case-documents-heading"
 >
@@ -18,21 +21,59 @@
   </div>
   <ul class="border-t border-default">
     {% for document in case_documents %}
-      {% blocktranslate count count=document.version_count asvar versions %}{{ count }} version{% plural %}{{ count }} versions{% endblocktranslate %}
-      {# TODO: missing — versions href; status of the latest version (generated applications only); #}
+      {% blocktranslate count count=document.history|length asvar versions %}{{ count }} version{% plural %}{{ count }} versions{% endblocktranslate %}
+      {# TODO: missing — status of the latest version (generated applications only); #}
       {# where the document is attached ("attached to all three applications") once files belong to the case #}
       <c-document-row
         :title="document.name"
-        meta="{% if document.file_type %}{{ document.file_type }} · {% endif %}{{ versions }}"
         date="{{ document.uploaded_at|date:'j M Y' }}"
         download-href="{% url 'dsa40_applications:document_download' document.pk %}"
-      />
+      >
+        <c-slot name="meta">
+          {% if document.file_type %}{{ document.file_type }} ·
+          {% endif %}
+          {% if document.history|length > 1 %}
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              x-on:click="$dispatch('open-dialog', { id: 'document-{{ document.pk }}-versions' })"
+              class="relative z-10 cursor-pointer rounded-sm text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              {{ versions }}
+            </button>
+          {% else %}
+            {{ versions }}
+          {% endif %}
+        </c-slot>
+      </c-document-row>
     {% empty %}
       <li class="list-none border-b border-default px-lg py-md type-body-md text-secondary">
         {% translate "No documents yet." %}
       </li>
     {% endfor %}
   </ul>
+  {% for document in case_documents %}
+    {% if document.history|length > 1 %}
+      <c-dialog
+        id="document-{{ document.pk }}-versions"
+        :title="document.name"
+        description="{% translate 'All versions of this document:' %}"
+      >
+        <ul class="flex flex-col">
+          {% for version in document.history %}
+            {# Uploads are neither draft nor sent: "superseded" only gives the grey version tag #}
+            <c-document-version-row
+              state="superseded"
+              version="v{{ version.version }}"
+              :title="version.name"
+              meta="{% blocktranslate with creator=version.creator.display_name date=version.uploaded_at|date:'j M Y' %}Uploaded by {{ creator }} · {{ date }}{% endblocktranslate %}"
+              download-href="{% url 'dsa40_applications:document_download' version.pk %}"
+            />
+          {% endfor %}
+        </ul>
+      </c-dialog>
+    {% endif %}
+  {% endfor %}
   <p class="px-lg py-md type-body-sm text-secondary">
     {% translate "Every generated application and every later edit is kept as a version. Versions that were sent can’t be changed." %}
   </p>

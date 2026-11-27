@@ -174,7 +174,7 @@ class TestAccessCaseOverview:
     def test_lists_the_newest_version_of_each_case_document(self, client) -> None:
         case = AccessCaseFactory.create()
         other_case = AccessCaseFactory.create(project=case.project)
-        *_, ethics_v2 = upload_case_file(
+        ethics_v1, ethics_v2 = upload_case_file(
             case, "TEST-DOC-1", "Ethics approval.pdf", versions=2
         )
         (agreement,) = upload_case_file(case, "TEST-DOC-2", "Data use agreement.pdf")
@@ -187,7 +187,7 @@ class TestAccessCaseOverview:
 
         documents = response.context["case_documents"]
         assert documents == [agreement, ethics_v2]
-        assert [d.version_count for d in documents] == [1, 2]
+        assert [d.history for d in documents] == [[agreement], [ethics_v2, ethics_v1]]
 
 
 class TestDocumentDownload:

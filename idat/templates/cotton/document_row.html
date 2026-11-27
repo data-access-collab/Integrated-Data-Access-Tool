@@ -4,8 +4,10 @@
 
   Props:
     title          e.g. "Application · TikTok"
-    meta           e.g. "Web form · 18 fields · 2 versions"
-    href           opens the versions; the whole row is the hit target
+    meta           e.g. "Web form · 18 fields · 2 versions"; or a named slot of the same
+                   name for markup, e.g. a button that opens the versions dialog (give
+                   it "relative z-10" so it stays clickable above an href)
+    href          opens the versions; the whole row is the hit target
     icon           document icon, default "file-text"
     status         badge label of the latest version; omitted when empty
     status-tone    badge tone, default "warning" (see <c-badge>)
@@ -18,6 +20,9 @@
     <ul>
       <c-document-row title="Application · TikTok" meta="Web form · 18 fields · 2 versions"
         href="{% url … %}" status="Draft" date="3 Nov 2026" download-href="…" />
+      <c-document-row title="Ethics approval.pdf" date="2 Nov 2026" download-href="…">
+        <c-slot name="meta">PDF · <button type="button" …>2 versions</button></c-slot>
+      </c-document-row>
     </ul>
 {% endcomment %}
 
