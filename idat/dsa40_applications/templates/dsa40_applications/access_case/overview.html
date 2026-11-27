@@ -7,11 +7,13 @@
 
   Context (AccessCaseOverview view):
     case              AccessCase; badge and lifecycle follow case.current_state
-    status_events     the case's CaseStatusEvents, oldest first (timeline)
-    case_documents    newest version of each case document, by name (documents tab)
+    status_events     the case's CaseStatusEvents, oldest first (timeline); a list, so
+                      |last and negative |slice work
+    case_files        files related to the case
+    case_applications versions of the case's application; counted once, with case_files, in the Documents tab
 {% endcomment %}
 
-{% load i18n %}
+{% load i18n case_ui %}
 
 {% block title %}
   {{ case.vlopse.name }} · {{ case.project.title }}
@@ -35,9 +37,13 @@
         <h1 class="type-headline-lg text-primary">{{ case.vlopse.name }}</h1>
         <div class="flex flex-wrap items-center gap-xs">
           {# TODO: missing — reply deadline in the badge, e.g. "· reply by 10 Nov" #}
-          {# Same title and tone as the latest timeline event (ui.status_timeline) #}
+          {# Same title and tone as the latest timeline event #}
           {% with latest=status_events|last %}
-            {% if latest %}<c-badge :tone="latest.icon.color" :label="latest.title" />{% endif %}
+            {% if latest %}
+              {% with marker=latest.status|status_icon %}
+                <c-badge :tone="marker.color" :label="latest.get_status_display" />
+              {% endwith %}
+            {% endif %}
           {% endwith %}
           <p class="type-body-sm text-tertiary">
             {% blocktranslate with id=case.id %}Case {{ id }}{% endblocktranslate %}
@@ -68,7 +74,7 @@
         current="{% if tab == 'timeline' %}true{% endif %}"
       />
       <c-tabs.tab
-        label="{% blocktranslate with count=case_documents|length %}Documents · {{ count }}{% endblocktranslate %}"
+        label="{% with application_count=case_applications|yesno:'1,0' %}{% blocktranslate with count=case_files|length|add:application_count %}Documents · {{ count }}{% endblocktranslate %}{% endwith %}"
         href="{{ case_url }}?tab=documents"
         current="{% if tab == 'documents' %}true{% endif %}"
       />

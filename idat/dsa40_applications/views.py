@@ -14,7 +14,6 @@ from idat.dsa40_applications.models import (
     ResearchProject,
     VersionedUploadedFile,
 )
-from idat.dsa40_applications.ui import status_timeline
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -74,13 +73,18 @@ class AccessCaseOverview(ProjectOwnerRequiredMixin, DetailView):
         context.update(
             {
                 "cases": self.object.project.access_cases.all(),
-                "status_events": status_timeline(self.object),
-                "case_documents": self.get_case_documents(),
+                "status_events": list(
+                    self.object.case_states.select_related(
+                        "access_application__access_case__vlopse"
+                    ).order_by("registered_at")
+                ),
+                "case_files": self.get_case_files(),
+                "case_applications": self.object.applications.order_by("-created_at"),
             }
         )
         return context
 
-    def get_case_documents(self) -> list[VersionedUploadedFile]:
+    def get_case_files(self) -> list[VersionedUploadedFile]:
         """The newest version of each file uploaded to the case's applications, by
         name; ``document.history`` holds all its versions, newest first."""
         files = (
@@ -93,12 +97,12 @@ class AccessCaseOverview(ProjectOwnerRequiredMixin, DetailView):
         history: defaultdict[int, list[VersionedUploadedFile]] = defaultdict(list)
         for file in files:
             history[file.vlopse_answer_id].append(file)
-        documents = []
+        file_documents = []
         for versions in history.values():
             newest = versions[0]
             newest.history = versions
-            documents.append(newest)
-        return sorted(documents, key=lambda document: document.name)
+            file_documents.append(newest)
+        return sorted(file_documents, key=lambda document: document.name)
 
 
 class DocumentDownload(ProjectOwnerRequiredMixin, SingleObjectMixin, View):

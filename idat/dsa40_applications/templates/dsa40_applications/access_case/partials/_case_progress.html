@@ -3,10 +3,10 @@
   like the Correspondence & timeline tab (past events done, the latest with its own icon
   and tone), then "Decision" while the case is open. At most 4 steps including Decision;
   older events collapse into a leading "…".
-  Context: status (current CaseStatusEvent status), status_events (ui.status_timeline())
+  Context: status (current CaseStatusEvent status), status_events (CaseStatusEvents, oldest first)
 {% endcomment %}
 
-{% load i18n %}
+{% load i18n case_ui %}
 {# Closed cases end with their decision event; open ones keep a step for the Decision #}
 {% if status == "granted" or status == "rejected" or status == "withdrawn" %}
   {% define "-4:" as visible_events %}{% define 4 as max_events %}{% define False as show_decision %}
@@ -25,12 +25,14 @@
     {% if not forloop.first %}
       <li class="min-w-3 flex-1 list-none border-t-2 border-success" aria-hidden="true"></li>
     {% endif %}
-    <c-lifecycle-step
-      state="{% if forloop.last %}current{% else %}done{% endif %}"
-      icon="{% if forloop.last %}{{ event.icon.icon }}{% endif %}"
-      tone="{% if forloop.last %}{{ event.icon.color }}{% endif %}"
-      :label="event.title"
-    />
+    {% with marker=event.status|status_icon %}
+      <c-lifecycle-step
+        state="{% if forloop.last %}current{% else %}done{% endif %}"
+        icon="{% if forloop.last %}{{ marker.icon }}{% endif %}"
+        tone="{% if forloop.last %}{{ marker.color }}{% endif %}"
+        :label="event.get_status_display"
+      />
+    {% endwith %}
   {% endfor %}
   {% if show_decision %}
     {% if status_events %}

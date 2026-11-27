@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from http import HTTPStatus
 
 import pytest
 from django.test import RequestFactory
 from django.urls import reverse
+from django.utils import timezone
 
 from idat.dsa40_applications.models import (
     AccessApplication,
     AccessCase,
+    CaseStatusEvent,
     VersionedUploadedFile,
     VLOPSEAnswer,
 )
@@ -171,6 +174,47 @@ class TestAccessCaseOverview:
 
         assert response.status_code == HTTPStatus.NOT_FOUND
 
+    def test_lists_only_the_cases_status_events_oldest_first(self, client) -> None:
+        case = AccessCaseFactory.create()  # registers its own draft event
+        AccessCaseFactory.create()  # another case's draft event
+        now = timezone.now()
+        later = CaseStatusEvent.objects.create(
+            access_case=case,
+            status=CaseStatusEvent.State.GRANTED,
+            registered_at=now + timedelta(days=2),
+        )
+        earlier = CaseStatusEvent.objects.create(
+            access_case=case,
+            status=CaseStatusEvent.State.SUBMITTED,
+            registered_at=now + timedelta(days=1),
+        )
+        client.force_login(case.project.owner)
+
+        response = client.get(
+            reverse("dsa40_applications:case_overview", args=[case.pk])
+        )
+
+        assert response.context["status_events"] == [
+            case.case_states.get(status=CaseStatusEvent.State.DRAFT),
+            earlier,
+            later,
+        ]
+
+    def test_lists_the_application_versions_newest_first(self, client) -> None:
+        case = AccessCaseFactory.create()
+        first = AccessApplication.objects.create(access_case=case)
+        second = AccessApplication.objects.create(access_case=case)
+        AccessApplication.objects.filter(pk=first.pk).update(
+            created_at=timezone.now() - timedelta(days=1)
+        )
+        client.force_login(case.project.owner)
+
+        response = client.get(
+            reverse("dsa40_applications:case_overview", args=[case.pk])
+        )
+
+        assert list(response.context["case_applications"]) == [second, first]
+
     def test_lists_the_newest_version_of_each_case_document(self, client) -> None:
         case = AccessCaseFactory.create()
         other_case = AccessCaseFactory.create(project=case.project)
@@ -185,7 +229,7 @@ class TestAccessCaseOverview:
             reverse("dsa40_applications:case_overview", args=[case.pk])
         )
 
-        documents = response.context["case_documents"]
+        documents = response.context["case_files"]
         assert documents == [agreement, ethics_v2]
         assert [d.history for d in documents] == [[agreement], [ethics_v2, ethics_v1]]
 
