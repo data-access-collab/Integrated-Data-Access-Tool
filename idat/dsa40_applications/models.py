@@ -38,15 +38,15 @@ class ResearchProject(models.Model):
 
     created_on = models.DateTimeField(auto_now_add=True)
 
+    files: QuerySet[VersionedUploadedFile]
+    answers: QuerySet[DSAAnswer]
+    access_cases: QuerySet[AccessCase]
+
     class Meta:
         verbose_name = "DSA40 Research Project"
 
     def __str__(self) -> str:
         return f"{self.title}"
-
-    answers: QuerySet[DSAAnswer]
-
-    access_cases: QuerySet[AccessCase]
 
 
 class CaseStatusEvent(models.Model):
@@ -289,7 +289,7 @@ class VersionedUploadedFile(models.Model):
     project = models.ForeignKey(
         ResearchProject,
         on_delete=models.CASCADE,
-        related_name="answers",
+        related_name="files",
     )
     data = models.BinaryField()
     uploaded_at = models.DateTimeField(auto_now_add=True)
