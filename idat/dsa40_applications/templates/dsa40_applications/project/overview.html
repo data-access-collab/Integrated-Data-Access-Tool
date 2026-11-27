@@ -1,0 +1,51 @@
+{% extends "layouts/app.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {{ project.title }}
+{% endblock title %}
+
+{% block content %}
+  <c-breadcrumb>
+    <c-breadcrumb.item>{% translate "My projects" %}</c-breadcrumb.item>
+    <c-breadcrumb.item current>{{ project.title }}</c-breadcrumb.item>
+  </c-breadcrumb>
+
+  <header class="flex flex-col gap-md sm:flex-row sm:items-center">
+    <div class="flex min-w-0 flex-1 flex-col gap-xs">
+      <h1 class="type-headline-lg text-primary">{{ project.title }}</h1>
+      <div class="flex flex-wrap items-center gap-xs">
+        {# TODO: not yet implemented (out of scope) — open todo badges (see Figma) #}
+        <p class="type-body-sm text-tertiary">
+          {% translate "Research project" %}
+          ·
+          {% blocktranslate count counter=cases|length %}{{ counter }} platform application{% plural %}{{ counter }} platform applications{% endblocktranslate %}
+          ·
+          {% translate "started" %}
+          {{ project.created_on|date:"j M Y" }}
+        </p>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-md">
+      {# TODO: missing — href of the "edit answers" page #}
+      <c-button variant="secondary" leading-icon="pencil" label="{% translate 'Edit answers' %} <todo>" href="#" />
+      {# TODO: missing — href of the "add platform" flow #}
+      <c-button variant="secondary" leading-icon="plus" label="{% translate 'Add platform' %} <todo>" href="#" />
+    </div>
+  </header>
+
+  <div class="flex flex-col items-start gap-lg lg:flex-row">
+    <div class="flex w-full min-w-0 flex-1 flex-col gap-lg">
+      {% include "dsa40_applications/project/partials/_case_card.html" %}
+      {% include "dsa40_applications/project/partials/_shared_answers_card.html" %}
+    </div>
+    <div class="flex w-full shrink-0 flex-col gap-md lg:w-85">
+      {# Reminders: scaffold only, no settings model yet #}
+      {% comment %}
+        {% include "dsa40_applications/project/partials/_reminders_card.html" %}
+      {% endcomment %}
+      {% include "dsa40_applications/project/partials/_shared_documents_card.html" %}
+    </div>
+  </div>
+{% endblock content %}

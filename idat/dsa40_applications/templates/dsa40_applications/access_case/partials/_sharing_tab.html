@@ -1,0 +1,66 @@
+{% comment %}
+  Sharing tab of the access case. Scaffold: there is no sharing settings model or form
+  yet, so the switches are disabled and saved nowhere. Once there is a form, wrap the
+  rows in a <form> and pass :field="form.x" to each <c-settings-row>.
+  Context: case, project
+{% endcomment %}
+
+{% load i18n %}
+<div class="flex flex-col items-start gap-lg lg:flex-row">
+  <section
+    class="flex w-full min-w-0 flex-1 flex-col gap-1 rounded-lg border border-default bg-surface p-lg"
+    aria-labelledby="sharing-heading"
+  >
+    <div class="flex items-center gap-sm">
+      <h2 id="sharing-heading" class="min-w-0 flex-1 type-title-lg text-primary">{% translate "Sharing" %}</h2>
+      {# TODO: derive from the settings once they exist #}
+      <p class="shrink-0 type-label-md text-success">{% translate "Only you can see this case" %}</p>
+    </div>
+    <p class="type-body-md text-secondary">
+      {% translate "Everything is off until you switch it on, and you can change it any time. Switching something off later stops future use; it does not undo reports that are already published." %}
+    </p>
+    {# TODO: missing — sharing settings (form fields) #}
+    <c-settings-row
+      name="share_staff_review"
+      title="{% translate 'Staff review' %}"
+      description="{% translate 'DSA40 staff may open this case when you request a review. They can comment, never change answers or status.' %}"
+      disabled
+    />
+    <c-settings-row
+      name="share_regulators"
+      title="{% translate 'Sharing with regulators' %}"
+      description="{% translate 'We may pass this case to the Digital Services Coordinator or the European Commission if you raise a complaint.' %}"
+      disabled
+    />
+    <c-settings-row
+      name="share_statistics"
+      title="{% translate 'Aggregate statistics' %}"
+      description="{% translate 'Count this case in anonymised community numbers, e.g. median reply time per platform (shown only with n ≥ 10).' %}"
+      disabled
+    />
+    <c-settings-row
+      name="share_citations"
+      title="{% translate 'Citations' %}"
+      description="{% translate 'The collaboratory may cite this case, anonymised, in reports and policy papers.' %}"
+      disabled
+    />
+    <c-settings-row
+      name="share_research_data"
+      title="{% translate 'Research data' %}"
+      description="{% translate 'Your answers and the platform’s correspondence may be used in DSA40 research on data access.' %}"
+      disabled
+    />
+    {# TODO: missing — action that copies the settings to the project's other cases #}
+    <a href="#" class="self-start pt-sm type-label-lg text-link hover:underline">
+      {% blocktranslate count counter=project.access_cases.count %}Apply these settings to {{ counter }} application in this project{% plural %}Apply these settings to all {{ counter }} applications in this project{% endblocktranslate %}
+      &lt;todo&gt;
+    </a>
+  </section>
+
+  <div class="flex w-full shrink-0 flex-col gap-md lg:w-85">
+    <c-help.insight-card
+      eyebrow="{% translate 'Why sharing helps' %}"
+      body="{% translate 'Anonymised reply times and reasons show how platforms really handle Art. 40 requests — and help spot unfair rejections.' %}"
+    />
+  </div>
+</div>

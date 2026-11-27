@@ -3,11 +3,13 @@ logged-in user submits it."""
 
 from __future__ import annotations
 
+from pathlib import PurePath
 from typing import TYPE_CHECKING, ClassVar
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from idat.dsa40_form_handler.models import DSAQuestion, InputType, VLOPSEQuestion
@@ -35,22 +37,59 @@ class ResearchProject(models.Model):
         related_name="projects",
     )
 
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    files: QuerySet[VersionedUploadedFile]
+    answers: QuerySet[DSAAnswer]
+    access_cases: QuerySet[AccessCase]
+
     class Meta:
         verbose_name = "DSA40 Research Project"
 
     def __str__(self) -> str:
         return f"{self.title}"
 
-    answers: QuerySet[DSAAnswer]
 
-    access_cases: QuerySet[AccessCase]
+class CaseStatusEvent(models.Model):
+    """Describes the status of an access case."""
+
+    class State(models.TextChoices):
+        DRAFT = "draft", _("Draft")
+        SUBMITTED = "submitted", _("Submitted")
+        INFOS_REQUESTED = "infos_requested", _("More Information requested")
+        REJECTED = "rejected", _("Rejected")
+        GRANTED = "granted", _("Access granted")
+        WITHDRAWN = "withdrawn", _("Withdrawn")
+
+        # Probably missing: REQUEST_ANSWERS, PENDING_REQUEST, SUBMISSION_CONFIRMED
+
+    access_case = models.ForeignKey(
+        "AccessCase",
+        on_delete=models.CASCADE,
+        related_name="case_states",
+    )
+    access_application = models.ForeignKey(
+        "AccessApplication", on_delete=models.CASCADE, null=True
+    )
+    status = models.CharField(
+        max_length=16,
+        choices=State,
+        default=State.DRAFT,
+    )
+    registered_at = models.DateTimeField(null=True, blank=True, default=timezone.now)
+
+    # TODO: Should triggered_by be added?
+
+    def __str__(self) -> str:
+        return self.status
 
 
 class AccessCase(models.Model):
-    """An access case related to a specific VLOPSE. Contains one
-    application object"""
+    """An access case related to a specific VLOPSE. Contains one or more
+    applications; the most recently created one is the current application."""
 
     class State(models.TextChoices):
+        # TODO: Likely deprecated and replaced by/derived from CaseStatusEvent
         DRAFT = "draft", _("Draft")
         OPEN = "open", _("Open")
         SUBMITTED = "submitted", _("Submitted")
@@ -67,6 +106,9 @@ class AccessCase(models.Model):
     )
     vlopse = models.ForeignKey(Vlopse, on_delete=models.PROTECT)
 
+    applications: QuerySet[AccessApplication]
+    case_states: QuerySet[CaseStatusEvent]
+
     class Meta:
         ordering: ClassVar = ["vlopse__name"]
         constraints: ClassVar = [
@@ -78,6 +120,33 @@ class AccessCase(models.Model):
 
     def __str__(self) -> str:
         return f"Case {self.vlopse.name} ({self.project.title})"
+
+    def save(self, *args, **kwargs) -> None:
+        """For new cases, create initial draft state"""
+        is_new = not self.pk
+
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+
+            if is_new:
+                CaseStatusEvent.objects.create(
+                    access_case=self,
+                    access_application=self.current_application,
+                )
+
+    @property
+    def current_application(self) -> AccessApplication | None:
+        try:
+            return self.applications.latest("created_at")
+        except AccessApplication.DoesNotExist:
+            return None
+
+    @property
+    def current_state(self) -> CaseStatusEvent | None:
+        try:
+            return self.case_states.latest("registered_at")
+        except CaseStatusEvent.DoesNotExist:
+            return None
 
 
 class AccessApplication(models.Model):
@@ -100,13 +169,18 @@ class AccessApplication(models.Model):
         default=State.DRAFT,
     )
 
-    access_case = models.OneToOneField(AccessCase, on_delete=models.CASCADE)
+    access_case = models.ForeignKey(
+        AccessCase,
+        on_delete=models.CASCADE,
+        related_name="applications",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
 
     answers: QuerySet[VLOPSEAnswer]
 
     def __str__(self) -> str:
-        return f"AccessApplication[{self.state.value}]({self.access_case.vlopse.name})"
+        return f"{self.access_case.vlopse.name} {self.created_at:%Y-%m-%d}"
 
     @property
     def project(self) -> ResearchProject:
@@ -216,7 +290,7 @@ class VersionedUploadedFile(models.Model):
     project = models.ForeignKey(
         ResearchProject,
         on_delete=models.CASCADE,
-        related_name="answers",
+        related_name="files",
     )
     data = models.BinaryField()
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -252,8 +326,13 @@ class VersionedUploadedFile(models.Model):
             return self.dsa_answer
         return self.vlopse_answer
 
+    @property
+    def file_type(self) -> str:
+        """The file extension in capitals, e.g. "PDF"; "" without an extension."""
+        return PurePath(self.name).suffix.lstrip(".").upper()
+
     def _answer_lookup(self) -> dict[str, int]:
-        if self.dsa_answer.id is not None:
+        if self.dsa_answer_id is not None:
             return {"dsa_answer_id": self.dsa_answer_id}
         return {"vlopse_answer_id": self.vlopse_answer_id}
 

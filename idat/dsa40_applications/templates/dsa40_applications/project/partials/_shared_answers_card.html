@@ -1,0 +1,39 @@
+{% comment %}
+  "Shared answers" card of the project overview.
+  Context: shared_answers (DSAAnswer list)
+{% endcomment %}
+
+{% load i18n %}
+<section
+  class="flex w-full flex-col overflow-hidden rounded-lg border border-default bg-surface"
+  aria-labelledby="shared-answers-heading"
+>
+  <div class="flex items-center gap-md px-lg pt-5 pb-sm">
+    <h2 id="shared-answers-heading" class="min-w-0 flex-1 type-title-lg text-primary">
+      {% translate "Shared answers" %}
+    </h2>
+    {# TODO: missing — href of the "edit answers" page #}
+    <a
+      href="#"
+      class="shrink-0 rounded-sm type-label-lg text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      {% translate "Edit answers" %}
+    </a>
+  </div>
+  <p class="px-lg pb-sm type-body-sm text-secondary">
+    {% translate "You answered once — every platform application in this project is filled from these answers. Changes after submission only affect new applications." %}
+  </p>
+  {% if shared_answers %}
+    <dl class="divide-y divide-default border-t border-default">
+      {% for answer in shared_answers %}
+        <div class="flex flex-col gap-2xs px-lg py-sm sm:flex-row sm:gap-lg">
+          <dt class="shrink-0 type-label-lg text-secondary sm:w-50">{{ answer.question.text }}</dt>
+          <dd class="min-w-0 flex-1 type-body-md text-primary">{{ answer.value|default:"—" }}</dd>
+        </div>
+      {% endfor %}
+      {# TODO: missing — summary row: "Answers · 50 of 50 fields · last edited 30 Sep 2026" (total field count, last edit date) #}
+    </dl>
+  {% else %}
+    <p class="border-t border-default px-lg py-sm type-body-md text-secondary">{% translate "No answers yet." %}</p>
+  {% endif %}
+</section>

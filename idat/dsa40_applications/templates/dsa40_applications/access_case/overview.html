@@ -1,0 +1,103 @@
+{% extends "layouts/app.html" %}
+
+{% comment %}
+  Access case overview (Figma 43:6199, "07 · Access case"): one platform application with
+  its lifecycle and four tabs (Timeline, Documents, Sharing, Reminders). The open tab is
+  the ?tab= query parameter (default timeline).
+
+  Context (AccessCaseOverview view):
+    case              AccessCase; badge and lifecycle follow case.current_state
+    status_events     the case's CaseStatusEvents, oldest first (timeline); a list, so
+                      |last and negative |slice work
+    case_files        files related to the case
+    case_applications versions of the case's application; counted once, with case_files, in the Documents tab
+{% endcomment %}
+
+{% load i18n case_ui %}
+
+{% block title %}
+  {{ case.vlopse.name }} · {{ case.project.title }}
+{% endblock title %}
+
+{% block content %}
+  {% with project=case.project application=case.current_application status=case.current_state.status|default:"draft" tab=request.GET.tab|default:"timeline" %}
+    <c-breadcrumb>
+      <c-breadcrumb.item>{% translate "My projects" %}</c-breadcrumb.item>
+      <c-breadcrumb.item
+        href="{% url 'dsa40_applications:project_overview' project.pk %}"
+      >{{ project.title }}</c-breadcrumb.item>
+      <c-breadcrumb.item
+        current
+      >{% blocktranslate with platform=case.vlopse.name %}{{ platform }} · access case{% endblocktranslate %}</c-breadcrumb.item>
+    </c-breadcrumb>
+
+    <header class="flex flex-col gap-md sm:flex-row sm:items-start">
+      <div class="flex min-w-0 flex-1 flex-col gap-xs">
+        {# TODO: missing — name of the platform's access programme, e.g. "TikTok — Research API access" #}
+        <h1 class="type-headline-lg text-primary">{{ case.vlopse.name }}</h1>
+        <div class="flex flex-wrap items-center gap-xs">
+          {# TODO: missing — reply deadline in the badge, e.g. "· reply by 10 Nov" #}
+          {# Same title and tone as the latest timeline event #}
+          {% with latest=status_events|last %}
+            {% if latest %}
+              {% with marker=latest.status|status_icon %}
+                <c-badge :tone="marker.color" :label="latest.get_status_display" />
+              {% endwith %}
+            {% endif %}
+          {% endwith %}
+          <p class="type-body-sm text-tertiary">
+            {% blocktranslate with id=case.id %}Case {{ id }}{% endblocktranslate %}
+            {% if application.submitted_at %}
+              ·
+              {% blocktranslate with date=application.submitted_at|date:"j M Y" %}submitted {{ date }}{% endblocktranslate %}
+            {% endif %}
+            {# TODO: missing — platform case reference (e.g. TT-RA-2026-1187) and day count ("· day 32") #}
+          </p>
+        </div>
+
+        {% include "dsa40_applications/access_case/partials/_case_progress.html" %}
+        {# TODO: missing — community median, e.g. "Art. 40(12) process · TikTok usually decides 9 weeks after submission (community median, n = 23). Your case is on day 32." (only with n ≥ 10) #}
+      </div>
+      <div class="flex flex-wrap gap-md">
+        {# TODO: missing — reply form for <c-dialog.log-platform-reply>; then open it with x-on:click="$dispatch('open-dialog', { id: 'log-platform-reply' })" #}
+        <c-button variant="secondary" leading-icon="pencil" label="{% translate 'Log platform reply' %} <todo>" />
+        {# TODO: missing — href of the reply editor #}
+        <c-button leading-icon="pencil" label="{% translate 'Write reply' %} <todo>" href="#" />
+      </div>
+    </header>
+
+    {% url 'dsa40_applications:case_overview' case.pk as case_url %}
+    <c-tabs label="{% translate 'Case sections' %}">
+      <c-tabs.tab
+        label="{% translate 'Timeline' %}"
+        href="{{ case_url }}"
+        current="{% if tab == 'timeline' %}true{% endif %}"
+      />
+      <c-tabs.tab
+        label="{% with application_count=case_applications|yesno:'1,0' %}{% blocktranslate with count=case_files|length|add:application_count %}Documents · {{ count }}{% endblocktranslate %}{% endwith %}"
+        href="{{ case_url }}?tab=documents"
+        current="{% if tab == 'documents' %}true{% endif %}"
+      />
+      <c-tabs.tab
+        label="{% translate 'Sharing' %}"
+        href="{{ case_url }}?tab=sharing"
+        current="{% if tab == 'sharing' %}true{% endif %}"
+      />
+      <c-tabs.tab
+        label="{% translate 'Reminders' %}"
+        href="{{ case_url }}?tab=reminders"
+        current="{% if tab == 'reminders' %}true{% endif %}"
+      />
+    </c-tabs>
+
+    {% if tab == "documents" %}
+      {% include "dsa40_applications/access_case/partials/_documents_tab.html" %}
+    {% elif tab == "sharing" %}
+      {% include "dsa40_applications/access_case/partials/_sharing_tab.html" %}
+    {% elif tab == "reminders" %}
+      {% include "dsa40_applications/access_case/partials/_reminders_tab.html" %}
+    {% else %}
+      {% include "dsa40_applications/access_case/partials/_timeline_tab.html" %}
+    {% endif %}
+  {% endwith %}
+{% endblock content %}

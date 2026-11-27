@@ -1,0 +1,43 @@
+{% comment %}
+  Mini-timeline in the case header: the latest status events as <c-lifecycle-step>s, styled
+  like the Correspondence & timeline tab (past events done, the latest with its own icon
+  and tone), then "Decision" while the case is open. At most 4 steps including Decision;
+  older events collapse into a leading "…".
+  Context: status (current CaseStatusEvent status), status_events (CaseStatusEvents, oldest first)
+{% endcomment %}
+
+{% load i18n case_ui %}
+{# Closed cases end with their decision event; open ones keep a step for the Decision #}
+{% if status == "granted" or status == "rejected" or status == "withdrawn" %}
+  {% define "-4:" as visible_events %}{% define 4 as max_events %}{% define False as show_decision %}
+{% else %}
+  {% define "-3:" as visible_events %}{% define 3 as max_events %}{% define True as show_decision %}
+{% endif %}
+
+<ol class="flex flex-wrap items-center gap-2.5" aria-label="{% translate 'Case progress' %}">
+  {% if status_events|length > max_events %}
+    <li class="list-none type-label-md text-tertiary">
+      <span aria-hidden="true">…</span><span class="sr-only">{% translate "Earlier steps" %}</span>
+    </li>
+    <li class="min-w-3 flex-1 list-none border-t-2 border-success" aria-hidden="true"></li>
+  {% endif %}
+  {% for event in status_events|slice:visible_events %}
+    {% if not forloop.first %}
+      <li class="min-w-3 flex-1 list-none border-t-2 border-success" aria-hidden="true"></li>
+    {% endif %}
+    {% with marker=event.status|status_icon %}
+      <c-lifecycle-step
+        state="{% if forloop.last %}current{% else %}done{% endif %}"
+        icon="{% if forloop.last %}{{ marker.icon }}{% endif %}"
+        tone="{% if forloop.last %}{{ marker.color }}{% endif %}"
+        :label="event.get_status_display"
+      />
+    {% endwith %}
+  {% endfor %}
+  {% if show_decision %}
+    {% if status_events %}
+      <li class="min-w-3 flex-1 list-none border-t-2 border-default" aria-hidden="true"></li>
+    {% endif %}
+    <c-lifecycle-step label="{% translate 'Decision' %}" />
+  {% endif %}
+</ol>

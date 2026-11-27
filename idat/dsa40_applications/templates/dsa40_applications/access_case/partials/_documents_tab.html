@@ -1,0 +1,155 @@
+{% comment %}
+  Documents tab of the access case, one card in three groups, each a list of
+  <c-document-row>s under a grey subheading: Files, Application, Communication
+  In Files, the row's download button gets the newest version. With more than one version, "n
+  versions" opens a dialog listing every version, newest first, each with its download.
+  Context:
+    case_files         VersionedUploadedFile list, newest version per document, each with
+                       its versions in document.history (AccessCaseOverview.get_case_files)
+    case_applications  the versions of the case's application, newest first, each with
+                       its badge tone from case_ui|application_tone: one row for the newest,
+                       all of them in a dialog
+{% endcomment %}
+
+{% load i18n case_ui %}
+{% define "flex items-center gap-xs border-y border-default bg-surface-muted px-md py-xs type-overline text-tertiary" as group_heading_class %}
+{% define "list-none px-md py-md type-body-md text-tertiary" as group_empty_class %}
+<section
+  x-data
+  class="flex w-full flex-col overflow-hidden rounded-lg border border-default bg-surface pb-md"
+  aria-labelledby="case-documents-heading"
+>
+  <div class="flex items-center gap-md px-lg pt-5 pb-md">
+    <h2 id="case-documents-heading" class="min-w-0 flex-1 type-title-lg text-primary">
+      {% translate "Case documents" %}
+    </h2>
+    {# TODO: missing — upload flow #}
+    <c-button variant="secondary" leading-icon="upload" label="{% translate 'Add document' %} <todo>" />
+  </div>
+  <section aria-labelledby="case-files-heading">
+    <h3 id="case-files-heading" class="{{ group_heading_class }}">
+      {% translate "Files" %}
+    </h3>
+    <ul class="*:last:border-b-0">
+      {% for document in case_files %}
+        {% blocktranslate count count=document.history|length asvar versions %}{{ count }} version{% plural %}{{ count }} versions{% endblocktranslate %}
+        {# TODO: missing — status of the latest version (generated applications only); #}
+        {# where the document is attached ("attached to all three applications") once files belong to the case #}
+        <c-document-row
+          :title="document.name"
+          date="{{ document.uploaded_at|date:'j M Y' }}"
+          download-href="{% url 'dsa40_applications:document_download' document.pk %}"
+        >
+          <c-slot name="meta">
+            {% if document.file_type %}{{ document.file_type }} ·
+            {% endif %}
+            {% if document.history|length > 1 %}
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                x-on:click="$dispatch('open-dialog', { id: 'document-{{ document.pk }}-versions' })"
+                class="relative z-10 cursor-pointer rounded-sm text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              >
+                {{ versions }}
+              </button>
+            {% else %}
+              {{ versions }}
+            {% endif %}
+          </c-slot>
+        </c-document-row>
+      {% empty %}
+        <li class="{{ group_empty_class }}">{% translate "No files yet." %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section aria-labelledby="case-applications-heading">
+    <h3 id="case-applications-heading" class="{{ group_heading_class }}">{% translate "Application" %}</h3>
+    {% blocktranslate with platform=case.vlopse.name asvar application_title %}Application · {{ platform }}{% endblocktranslate %}
+    <ul>
+      {% with application=case_applications.0 count=case_applications|length %}
+        {% if application %}
+          {% blocktranslate count count=count asvar versions %}{{ count }} version{% plural %}{{ count }} versions{% endblocktranslate %}
+          {# TODO: missing — href to the application, its generated document (download) #}
+          <c-document-row
+            :title="application_title"
+            :status="application.get_state_display"
+            status-tone="{{ application.state|application_tone }}"
+            date="{{ application.submitted_at|default:application.created_at|date:'j M Y' }}"
+          >
+            <c-slot name="meta">
+              {% blocktranslate with date=application.created_at|date:'j M Y' %}Created {{ date }}{% endblocktranslate %}
+              ·
+              {% if count > 1 %}
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  x-on:click="$dispatch('open-dialog', { id: 'application-versions' })"
+                  class="relative z-10 cursor-pointer rounded-sm text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                >
+                  {{ versions }}
+                </button>
+              {% else %}
+                {{ versions }}
+              {% endif %}
+            </c-slot>
+          </c-document-row>
+        {% else %}
+          <li class="{{ group_empty_class }}">{% translate "No application generated yet." %}</li>
+        {% endif %}
+      {% endwith %}
+    </ul>
+    <p class="px-md py-sm type-body-sm text-tertiary">
+      {% translate "Every generated application and every later edit is kept as a version. Versions that were sent can’t be changed." %}
+    </p>
+  </section>
+  <section aria-labelledby="case-communication-heading" class="border-b border-default">
+    <h3 id="case-communication-heading" class="{{ group_heading_class }}">{% translate "Communication" %}</h3>
+    {# TODO: missing — messages with the platform (requests, replies) #}
+    <ul>
+      <li class="{{ group_empty_class }}">{% translate "No messages yet." %}</li>
+    </ul>
+  </section>
+  {% if case_applications|length > 1 %}
+    <c-dialog
+      id="application-versions"
+      :title="application_title"
+      description="{% translate 'All versions of the application:' %}"
+    >
+      <ul class="flex flex-col">
+        {% for version in case_applications %}
+          {# Only "draft" has its own look; every other state was sent to the platform #}
+          <c-document-version-row
+            state="{% if version.state == 'draft' %}draft{% else %}sent{% endif %}"
+            version="v{{ forloop.revcounter }}"
+            :title="application_title"
+            meta="{% blocktranslate with date=version.created_at|date:'j M Y' %}Created {{ date }}{% endblocktranslate %}{% if version.submitted_at %} · {% blocktranslate with date=version.submitted_at|date:'j M Y' %}Submitted {{ date }}{% endblocktranslate %}{% endif %}"
+            :status="version.get_state_display"
+            status-tone="{{ version.state|application_tone }}"
+          />
+        {% endfor %}
+      </ul>
+    </c-dialog>
+  {% endif %}
+  {% for document in case_files %}
+    {% if document.history|length > 1 %}
+      <c-dialog
+        id="document-{{ document.pk }}-versions"
+        :title="document.name"
+        description="{% translate 'All versions of this document:' %}"
+      >
+        <ul class="flex flex-col">
+          {% for version in document.history %}
+            {# Uploads are neither draft nor sent: "superseded" only gives the grey version tag #}
+            <c-document-version-row
+              state="superseded"
+              version="v{{ version.version }}"
+              :title="version.name"
+              meta="{% blocktranslate with creator=version.creator.display_name date=version.uploaded_at|date:'j M Y' %}Uploaded by {{ creator }} · {{ date }}{% endblocktranslate %}"
+              download-href="{% url 'dsa40_applications:document_download' version.pk %}"
+            />
+          {% endfor %}
+        </ul>
+      </c-dialog>
+    {% endif %}
+  {% endfor %}
+</section>

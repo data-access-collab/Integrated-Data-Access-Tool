@@ -1,0 +1,27 @@
+{% comment %}
+  TODO: Out of scope when project view was added; not reviewed yet here.
+{% endcomment %}
+
+{% load i18n %}
+<section
+  class="flex w-full flex-col gap-sm rounded-lg border border-default bg-surface p-lg"
+  aria-labelledby="reminders-heading"
+>
+  <div class="flex items-center gap-xs">
+    <c-icon name="bell" class="size-5 text-accent" />
+    <h2 id="reminders-heading" class="type-title-lg text-primary">{% translate "Reminders" %}</h2>
+  </div>
+  <p class="type-body-md text-secondary">
+    {% translate "Applies to all applications in this project. Each access case can override it." %}
+  </p>
+  {# TODO: missing — reminder settings (form fields) #}
+  <c-checkbox name="remind_deadline" label="{% translate 'Remind me 2 days before a reply deadline' %}" />
+  <c-checkbox
+    name="remind_silent"
+    label="{% translate 'Ask me for a status update if a platform is silent for 30 days' %}"
+  />
+  <c-checkbox name="weekly_summary" label="{% translate 'Weekly summary of all my cases' %}" />
+  <p class="type-body-sm text-tertiary">
+    {% translate "Your anonymised updates show how long platforms really take — evidence for standardising data access." %}
+  </p>
+</section>

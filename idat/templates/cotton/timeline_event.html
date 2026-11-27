@@ -7,17 +7,22 @@
     title     event, e.g. "Submitted to TikTok"
     date      display date, e.g. "2 Oct 2026" or "expected ~ Dec 2026"; "—" when unknown
     datetime  ISO date for <time datetime>; optional
+    icon      optional marker icon; replaces the state's marker (state then only matters
+              for "upcoming", which has no icon)
+    tone      marker colour with icon: "info" (default) · "success" · "warning" ·
+              "danger" · "neutral"
 
   Slot: the event body (quotes, links, community median …).
 
   Renders an <li>: put the events in an <ol>. The marker icon carries the state for
-  screen readers.
+  screen readers. The last event in the list has no connector line or bottom padding.
 
   Usage:
     <ol>
       <c-timeline-event title="Submitted to TikTok" date="2 Oct 2026" datetime="2026-10-02">
         Via TikTok Research API web form · application v1.
       </c-timeline-event>
+      <c-timeline-event icon="pencil" tone="info" title="Case created" date="1 Oct 2026" />
       <c-timeline-event state="upcoming" title="Decision" date="expected ~ Dec 2026">
         Community median for TikTok: 9 weeks after submission (n = 23).
       </c-timeline-event>
@@ -25,10 +30,20 @@
 {% endcomment %}
 
 {% load i18n %}
-<c-vars state="done" title="" date="" datetime="" class="" />
-<li class="flex list-none items-start gap-md {{ class }}" {{ attrs }}>
+<c-vars state="done" icon="" tone="info" title="" date="" datetime="" class="" />
+{% if tone == "success" %}{% define "bg-success" as tone_class %}
+{% elif tone == "warning" %}{% define "bg-warning" as tone_class %}
+{% elif tone == "danger" %}{% define "bg-danger" as tone_class %}
+{% elif tone == "neutral" %}{% define "bg-current text-tertiary" as tone_class %}
+{% else %}{% define "bg-info" as tone_class %}
+{% endif %}
+<li class="group/event flex list-none items-start gap-md {{ class }}" {{ attrs }}>
   <div class="flex shrink-0 flex-col items-center gap-2xs self-stretch">
-    {% if state == "upcoming" %}
+    {% if icon and state != "upcoming" %}
+      <span class="flex size-7 shrink-0 items-center justify-center rounded-full {{ tone_class }}">
+        <c-icon name="{{ icon }}" class="size-4 text-on-nav" />
+      </span>
+    {% elif state == "upcoming" %}
       <span
         class="size-7 shrink-0 rounded-full border border-strong bg-surface"
         role="img"
@@ -51,9 +66,9 @@
         <c-icon name="check" class="size-4 text-on-nav" label="{% translate "Done" %}" />
       </span>
     {% endif %}
-    <span class="w-0 flex-1 border-l-2 border-default" aria-hidden="true"></span>
+    <span class="w-0 flex-1 border-l-2 border-default group-last/event:hidden" aria-hidden="true"></span>
   </div>
-  <div class="flex min-w-0 flex-1 flex-col gap-2xs pb-lg">
+  <div class="flex min-w-0 flex-1 flex-col gap-2xs pb-lg group-last/event:pb-0">
     <div class="flex items-start gap-sm">
       <h3 class="min-w-0 flex-1 type-title-md text-primary">{{ title }}</h3>
       {% if date %}<time

@@ -14,4 +14,15 @@
     href="#document-row"
     date="31 Oct 2026"
   />
+  {# meta as a slot: "2 versions" opens the versions dialog #}
+  <c-document-row title="Ethics approval.pdf" date="2 Nov 2026" download-href="#document-row">
+    <c-slot name="meta">
+      PDF · <button
+        type="button"
+        class="relative z-10 cursor-pointer rounded-sm text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        2 versions
+      </button>
+    </c-slot>
+  </c-document-row>
 </ul>

@@ -1,0 +1,61 @@
+{% comment %}
+  Timeline tab of the access case: correspondence & status events, then the expected
+  decision; the project context card on the right. Figma's "Silent for too long?" info
+  card is left out for now.
+  Context: case, project, status (current CaseStatusEvent status),
+  status_events (the case's CaseStatusEvents, oldest first; icons via case_ui|status_icon)
+{% endcomment %}
+
+{% load i18n case_ui %}
+<div class="flex flex-col items-start gap-lg lg:flex-row">
+  <section
+    class="flex w-full min-w-0 flex-1 flex-col gap-md rounded-lg border border-default bg-surface p-lg"
+    aria-labelledby="timeline-heading"
+  >
+    <div class="flex items-center gap-xs">
+      <h2 id="timeline-heading" class="min-w-0 flex-1 type-title-lg text-primary">
+        {% translate "Correspondence & timeline" %}
+      </h2>
+      {# TODO: missing — platform case reference, e.g. "Case ID TT-RA-2026-1187" #}
+      <p class="shrink-0 type-body-sm text-tertiary">
+        {% blocktranslate with id=case.id %}Case ID {{ id }}{% endblocktranslate %}
+      </p>
+    </div>
+    <ol class="flex flex-col">
+      {% for event in status_events %}
+        {# Past events: the default green tick; only the latest gets its own icon and tone #}
+        {% with marker=event.status|status_icon %}
+          <c-timeline-event
+            icon="{% if forloop.last %}{{ marker.icon }}{% endif %}"
+            tone="{% if forloop.last %}{{ marker.color }}{% endif %}"
+            :title="event.get_status_display"
+            date="{{ event.registered_at|date:'j M Y'|default:'—' }}"
+            datetime="{{ event.registered_at|date:'Y-m-d' }}"
+          >
+            {% if event.access_application %}
+              <p>
+                {% blocktranslate with application=event.access_application %}Belongs to application {{ application }}{% endblocktranslate %}
+              </p>
+            {% endif %}
+            {# Only the latest event can still need an answer #}
+            {% if forloop.last and status == "infos_requested" %}
+              <div class="flex flex-wrap gap-xs pt-xs">
+                {# TODO: missing — link to the platform's e-mail, href of the reply editor and the "mark as sent" action #}
+                <c-button variant="brand" label="{% translate 'Write your reply' %} <todo>" href="#" />
+                <c-button variant="ghost" label="{% translate 'Mark reply as sent' %} <todo>" />
+              </div>
+            {% endif %}
+          </c-timeline-event>
+        {% endwith %}
+      {% endfor %}
+      {% if status != "granted" and status != "rejected" and status != "withdrawn" %}
+        {# TODO: missing — expected decision date and community median, e.g. "expected ~ Dec 2026" · "Community median for TikTok: 9 weeks after submission (n = 23)." (only with n ≥ 10) #}
+        <c-timeline-event state="upcoming" title="{% translate 'Decision' %}" date="—" />
+      {% endif %}
+    </ol>
+  </section>
+
+  <div class="flex w-full shrink-0 flex-col gap-md lg:w-85">
+    {% include "dsa40_applications/access_case/partials/_project_context_card.html" %}
+  </div>
+</div>

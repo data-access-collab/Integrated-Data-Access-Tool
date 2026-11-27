@@ -2,11 +2,14 @@
   One DocumentVersion (version, editor, edited_at) and where it was sent.
 
   Props:
-    state          "draft" (default) · "sent" · "superseded"; sets the tag and badge tone
+    state          "draft" (default) · "sent" · "superseded"; sets the tag, and the badge
+                   tone unless status-tone is set
     version        version tag, e.g. "v2"
     title          e.g. "Reply to clarification"
     meta           e.g. "Edited by Jana Doe · 3 Nov 2026"
     status         badge label, e.g. "Draft · not sent"; omitted when empty
+    status-tone    badge tone (see <c-badge>); default from state: draft → warning,
+                   sent → info, superseded → neutral
     download-href  download link; the icon is omitted when empty
 
   Renders an <li>: put the versions in a <ul>.
@@ -21,7 +24,7 @@
 {% endcomment %}
 
 {% load i18n %}
-<c-vars state="draft" version="" title="" meta="" status="" download-href="" class="" />
+<c-vars state="draft" version="" title="" meta="" status="" status-tone="" download-href="" class="" />
 <li class="flex list-none items-start gap-sm py-sm {{ class }}" {{ attrs }}>
   <span
     class="shrink-0 rounded-sm px-xs py-2xs type-label-md text-primary {% if state == "draft" %}bg-warning-subtle{% else %}bg-surface-muted{% endif %}"
@@ -31,7 +34,7 @@
     {% if meta %}<p class="type-body-sm text-tertiary">{{ meta }}</p>{% endif %}
     {% if status %}
       <c-badge
-        tone="{% if state == "sent" %}info{% elif state == "superseded" %}neutral{% else %}warning{% endif %}"
+        tone="{% if status_tone %}{{ status_tone }}{% elif state == "sent" %}info{% elif state == "superseded" %}neutral{% else %}warning{% endif %}"
         :label="status"
         :dot="False"
       />
