@@ -326,7 +326,7 @@ class VersionedUploadedFile(models.Model):
         return self.vlopse_answer
 
     def _answer_lookup(self) -> dict[str, int]:
-        if self.dsa_answer.id is not None:
+        if self.dsa_answer_id is not None:
             return {"dsa_answer_id": self.dsa_answer_id}
         return {"vlopse_answer_id": self.vlopse_answer_id}
 
