@@ -100,7 +100,7 @@ class AccessApplication(models.Model):
         default=State.DRAFT,
     )
 
-    access_case = models.OneToOneField(AccessCase, on_delete=models.CASCADE)
+    access_case = models.ForeignKey(AccessCase, on_delete=models.CASCADE)
     submitted_at = models.DateTimeField(null=True, blank=True)
 
     answers: QuerySet[VLOPSEAnswer]
