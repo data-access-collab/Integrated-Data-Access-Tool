@@ -17,6 +17,7 @@
         {# AccessCase.State → chip status; TODO: clarification / granted / rejected once the case has those states #}
         <c-platform-status-chip
           :name="project_case.vlopse.name"
+          :logo="project_case.vlopse.logo"
           status="{% if project_case.state == 'draft' %}draft{% else %}in-review{% endif %}"
         />
       </li>

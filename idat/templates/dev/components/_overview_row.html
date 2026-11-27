@@ -7,9 +7,9 @@
     href="#overview-row"
   >
     <c-slot name="platforms">
-      <c-platform-status-chip name="TikTok" />
+      <c-platform-status-chip name="TikTok" logo="logo-tiktok" />
       <c-platform-status-chip name="Meta" status="in-review" />
-      <c-platform-status-chip name="YouTube" status="clarification-requested" />
+      <c-platform-status-chip name="YouTube" logo="logo-youtube" status="clarification-requested" />
     </c-slot>
     <c-slot name="status"><c-badge tone="info" label="Complete" /></c-slot>
   </c-overview-row>
@@ -21,8 +21,8 @@
     href="#overview-row"
   >
     <c-slot name="platforms">
-      <c-platform-status-chip name="TikTok" status="granted" />
-      <c-platform-status-chip name="X" status="rejected" />
+      <c-platform-status-chip name="TikTok" logo="logo-tiktok" status="granted" />
+      <c-platform-status-chip name="X" logo="logo-x" status="rejected" />
     </c-slot>
     <c-slot name="status"><c-case-status status="access-granted" /></c-slot>
   </c-overview-row>

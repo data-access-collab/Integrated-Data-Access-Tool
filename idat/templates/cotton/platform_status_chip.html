@@ -8,6 +8,8 @@
 
   Props:
     name     platform name
+    logo     icon name of the platform logo (Vlopse.logo), e.g. "logo-tiktok"; without it,
+             or when the icon no longer exists, the disc shows a letter (as <c-platform-chip>)
     initial  letter in the logo disc; defaults to the first letter of name
     status   "draft" (default) · "in-review" · "clarification-requested" · "granted" ·
              "rejected" · "withdrawn"
@@ -15,11 +17,12 @@
   The status icon carries the status name for screen readers.
 
   Usage:
-    <c-platform-status-chip name="TikTok" status="clarification-requested" />
+    <c-platform-status-chip name="TikTok" logo="logo-tiktok" status="clarification-requested" />
+    <c-platform-status-chip :name="vlopse.name" :logo="vlopse.logo" status="granted" />
 {% endcomment %}
 
 {% load i18n %}
-<c-vars name="" initial="" status="draft" class="" />
+<c-vars name="" logo="" initial="" status="draft" class="" />
 <span
   class="
     inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border py-0.75 pr-xs pl-1 type-label-md text-secondary {{ class }}
@@ -27,10 +30,16 @@
   "
   {{ attrs }}
 >
-  <span
-    class="inline-flex size-4.5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-on-brand"
-    aria-hidden="true"
-  >{{ initial|default:name|slice:":1" }}</span>
+  {% if logo|has_icon %}
+    <span class="inline-flex size-4.5 shrink-0 items-center justify-center text-primary">
+      <c-icon :name="logo" class="size-4" />
+    </span>
+  {% else %}
+    <span
+      class="inline-flex size-4.5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-on-brand"
+      aria-hidden="true"
+    >{{ initial|default:name|slice:":1" }}</span>
+  {% endif %}
   <span {% if status == "withdrawn" %}class="line-through"{% endif %}>{{ name }}</span>
   {% if status == "in-review" %}
     <c-icon name="clock" class="size-3.5 text-info" label="{% translate "In review" %}" />
