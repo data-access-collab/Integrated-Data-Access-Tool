@@ -1,0 +1,55 @@
+{% comment %}
+  Timeline tab of the access case: correspondence & status events, then the expected
+  decision; the project context card on the right. Figma's "Silent for too long?" info
+  card is left out for now.
+  Context: case, project, timeline_events (TODO: not passed yet)
+{% endcomment %}
+
+{% load i18n %}
+<div class="flex flex-col items-start gap-lg lg:flex-row">
+  <section
+    class="flex w-full min-w-0 flex-1 flex-col gap-md rounded-lg border border-default bg-surface p-lg"
+    aria-labelledby="timeline-heading"
+  >
+    <div class="flex items-center gap-xs">
+      <h2 id="timeline-heading" class="min-w-0 flex-1 type-title-lg text-primary">
+        {% translate "Correspondence & timeline" %}
+      </h2>
+      {# TODO: missing — platform case reference, e.g. "Case ID TT-RA-2026-1187" #}
+      <p class="shrink-0 type-body-sm text-tertiary">
+        {% blocktranslate with id=case.id %}Case ID {{ id }}{% endblocktranslate %}
+      </p>
+    </div>
+    <ol class="flex flex-col">
+      {# TODO: no event model yet — attribute names (state, title, date, body, file) are assumed #}
+      {% for event in timeline_events %}
+        <c-timeline-event
+          :state="event.state"
+          :title="event.title"
+          date="{{ event.date|date:'j M Y' }}"
+          datetime="{{ event.date|date:'Y-m-d' }}"
+        >
+          <p>{{ event.body }}</p>
+          {% if event.state == "action-needed" %}
+            {# TODO: missing — link to the platform's e-mail in the case documents #}
+            {% if event.file %}<a
+                href="#"
+                class="type-label-lg text-link hover:underline"
+              >{{ event.file.name }}</a>{% endif %}
+            <div class="flex flex-wrap gap-xs pt-xs">
+              {# TODO: missing — href of the reply editor and the "mark as sent" action #}
+              <c-button variant="brand" label="{% translate 'Write your reply' %} <todo>" href="#" />
+              <c-button variant="ghost" label="{% translate 'Mark reply as sent' %} <todo>" />
+            </div>
+          {% endif %}
+        </c-timeline-event>
+      {% endfor %}
+      {# TODO: missing — expected decision date and community median, e.g. "expected ~ Dec 2026" · "Community median for TikTok: 9 weeks after submission (n = 23)." (only with n ≥ 10) #}
+      <c-timeline-event state="upcoming" title="{% translate 'Decision' %}" date="—" class="*:last:pb-0" />
+    </ol>
+  </section>
+
+  <div class="flex w-full shrink-0 flex-col gap-md lg:w-85">
+    {% include "dsa40_applications/access_case/partials/_project_context_card.html" %}
+  </div>
+</div>

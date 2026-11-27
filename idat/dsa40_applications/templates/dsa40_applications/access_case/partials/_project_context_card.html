@@ -1,0 +1,32 @@
+{% comment %}
+  "Part of project" card next to the case timeline: the project's title, a status chip
+  per case of the project and a link to the project overview.
+  Context: project
+{% endcomment %}
+
+{% load i18n %}
+<section
+  class="flex w-full flex-col items-start gap-sm rounded-lg border border-default bg-surface p-lg"
+  aria-labelledby="project-context-heading"
+>
+  <p class="type-overline text-tertiary">{% translate "Part of project" %}</p>
+  <h2 id="project-context-heading" class="type-title-md text-primary">{{ project.title }}</h2>
+  <ul class="flex flex-wrap gap-1.5">
+    {% for project_case in project.access_cases.all %}
+      <li class="list-none">
+        {# AccessCase.State → chip status; TODO: clarification / granted / rejected once the case has those states #}
+        <c-platform-status-chip
+          :name="project_case.vlopse.name"
+          status="{% if project_case.state == 'draft' %}draft{% else %}in-review{% endif %}"
+        />
+      </li>
+    {% endfor %}
+  </ul>
+  <a
+    href="{% url 'dsa40_applications:project_overview' project.pk %}"
+    class="flex items-center gap-1 rounded-sm type-label-lg text-link hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+  >
+    {% translate "Open project overview" %}
+    <c-icon name="arrow-right" class="size-4" />
+  </a>
+</section>

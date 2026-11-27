@@ -1,0 +1,31 @@
+{% comment %}
+  Documents tab of the access case: one <c-document-row> per document of the case.
+  Context: case_documents (TODO: not passed yet; VersionedUploadedFile list assumed)
+{% endcomment %}
+
+{% load i18n %}
+<section
+  class="flex w-full flex-col overflow-hidden rounded-lg border border-default bg-surface"
+  aria-labelledby="case-documents-heading"
+>
+  <div class="flex items-center gap-md px-lg pt-5 pb-md">
+    <h2 id="case-documents-heading" class="min-w-0 flex-1 type-title-lg text-primary">
+      {% translate "Case documents" %}
+    </h2>
+    {# TODO: missing — upload flow #}
+    <c-button variant="secondary" leading-icon="upload" label="{% translate 'Add document' %} <todo>" />
+  </div>
+  <ul class="border-t border-default">
+    {% for document in case_documents %}
+      {# TODO: missing — meta (type · fields · versions · where it is attached), status of the latest version, versions href and download href #}
+      <c-document-row :title="document.name" date="{{ document.uploaded_at|date:'j M Y' }}" />
+    {% empty %}
+      <li class="list-none border-b border-default px-lg py-md type-body-md text-secondary">
+        {% translate "No documents yet." %}
+      </li>
+    {% endfor %}
+  </ul>
+  <p class="px-lg py-md type-body-sm text-secondary">
+    {% translate "Every generated application and every later edit is kept as a version. Versions that were sent can’t be changed." %}
+  </p>
+</section>
